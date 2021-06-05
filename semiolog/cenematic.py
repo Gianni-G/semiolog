@@ -1,21 +1,4 @@
-# from collections import Counter, defaultdict
-# import importlib
-# import functools
-# import operator
-# import time
-# import regex as re
-# import os
-# import csv
-# import networkx as nx
-# import random
-# import graphviz as gv
-# import itertools
-# from scipy.sparse import csr_matrix, vstack
-# import numpy as np
-# import ast
-
 from thinc.api import Config
-from typing import Union, Iterable, Dict, Any
 from transformers import pipeline
 
 from .vocabulary import load_vocabulary
@@ -36,15 +19,9 @@ class Cenematic:
     def __repr__(self) -> str:
         return f"Cenematic({self.name})"
 
-    # @property
-    # def unmasker(self):
-    #     unmasker_f = pipeline('fill-mask', model=self.config["paradigm"]["model"],top_k=self.config["paradigm"]["top_k"])
-    #     return unmasker_f
     
     def __call__(self,raw_chain):
         return Text(raw_chain,self)
-
-
 
     def chain(self,raw_chain):
         return Chain(raw_chain, self)
@@ -54,3 +31,14 @@ class Cenematic:
         if isinstance(chain,str):
             chain = Chain(chain, self)
         return paradigm.chain_paradigm(chain,self.unmasker)
+
+    def test_sents(self,filename = None):
+    
+        if filename == None:
+            filename = self.config["general"]["testSentences"]
+
+        with open(paths.corpora / self.name / "_sentences_" / f"{filename}.txt", "r") as f:
+            sents = []
+            for line in f.readlines():
+                sents.append(line.rstrip())
+        return sents

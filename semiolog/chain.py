@@ -1,10 +1,8 @@
-from . import util
-from . import util_g
-
 import networkx as nx
 import graphviz as gv
 
-
+from . import util
+from . import util_g
 
 class Tree:
     def __init__(self, edges):

@@ -1,4 +1,3 @@
-from thinc.api import Config
 from scipy.stats import entropy
 import numpy as np
 
@@ -13,9 +12,7 @@ class Parad:
     def __repr__(self) -> str:
         return str(self.keys)
 
-def chain_paradigm(chain,semiotic, unmasker, thres=0):
-
-    # unmasker = pipeline('fill-mask', model=semiotic.config["paradigm"]["model"],top_k=semiotic.config["paradigm"]["top_k"])
+def chain_paradigm(chain, unmasker, thres=0):
 
     sent_list = chain.split
     sent_mask = [" ".join([token if n!=i else "[MASK]" for n,token in enumerate(sent_list)]) for i in range(len(sent_list))]

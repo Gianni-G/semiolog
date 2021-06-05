@@ -2,8 +2,6 @@ from typing import Union, Iterable, Dict, Any
 from pathlib import Path
 
 from . import cenematic
-from . import vocabulary
-
 
 def load(
     name: Union[str, Path],
@@ -17,3 +15,6 @@ def load(
     return cenematic.Cenematic(
         name
     )
+
+
+test_sent = "i have made my plans and i must stick to them"
