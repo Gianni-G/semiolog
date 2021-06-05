@@ -15,12 +15,14 @@
 # import ast
 
 from thinc.api import Config
-
+from typing import Union, Iterable, Dict, Any
+from transformers import pipeline
 
 from .vocabulary import load_vocabulary
 from . import paths
 from .chain import Chain
-
+from . import paradigm
+from .text import Text
 
 
 class Cenematic:
@@ -29,9 +31,26 @@ class Cenematic:
         self.config = Config().from_disk(paths.corpora / name / "config.cfg")
         self.voc = load_vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
         self.name = name
-
-    def __call__(self,raw_chain):
-        return Chain(raw_chain, self)
+        self.unmasker = pipeline('fill-mask', model=self.config["paradigm"]["model"],top_k=self.config["paradigm"]["top_k"])
 
     def __repr__(self) -> str:
         return f"Cenematic({self.name})"
+
+    # @property
+    # def unmasker(self):
+    #     unmasker_f = pipeline('fill-mask', model=self.config["paradigm"]["model"],top_k=self.config["paradigm"]["top_k"])
+    #     return unmasker_f
+    
+    def __call__(self,raw_chain):
+        return Text(raw_chain,self)
+
+
+
+    def chain(self,raw_chain):
+        return Chain(raw_chain, self)
+
+    def paradigm(self, chain):
+        
+        if isinstance(chain,str):
+            chain = Chain(chain, self)
+        return paradigm.chain_paradigm(chain,self.unmasker)
