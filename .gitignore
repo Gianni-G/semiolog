@@ -1,9 +1,11 @@
 README.pdf
 
-
 lsf.*
 *.pyc
 .ipynb_checkpoints/*
 .SynologyWorkingDirectory/
 .vscode/
 **/.DS_Store
+
+examples/*
+!examples/en_bnc
