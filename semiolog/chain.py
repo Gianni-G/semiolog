@@ -80,7 +80,7 @@ class Chain:
 
     def segment(self, model_name):
 
-        if model_name == "slg_sq":
+        if model_name == "sq":
             segments = " ".join(util.chain2seq(self.raw, self.model.voc.freq)).split()
 
             intervals = []
@@ -95,61 +95,61 @@ class Chain:
 
             return Tree(slg_edges)
 
-        elif model_name == "slg_tr":
+        elif model_name == "tr":
             slg_edges = util.chain2tree(self.raw, self.model.voc.freq)
             return Tree(slg_edges)
 
-        # elif model_name == "ud":
-        #     doc = model(self.raw)
-        #     doc_idx = {
-        #         token: (token.idx - i, token.idx - i + len(token))
-        #         for i, token in enumerate(doc)
-        #     }
-        #     ud_tree = [
-        #         ((token.head.text, doc_idx[token.head]), (token.text, doc_idx[token]))
-        #         for token in doc
-        #         if token != token.head
-        #     ]
-        #     return Tree(ud_tree)
+        elif model_name == "ud":
+            doc = self.model.ud(self.raw)
+            doc_idx = {
+                token: (token.idx - i, token.idx - i + len(token))
+                for i, token in enumerate(doc)
+            }
+            ud_tree = [
+                ((token.head.text, doc_idx[token.head]), (token.text, doc_idx[token]))
+                for token in doc
+                if token != token.head
+            ]
+            return Tree(ud_tree)
 
-        # elif model_name == "cp":
-        #     cp_sent = sorted(list(model(self.raw).sents), key=len)[
-        #         -1
-        #     ]  # In case wrong analysis it picks the longest (sub)sentences recognized. This would need better treatment.
-        #     test_label = str(cp_sent).replace(" ", "")
-        #     init = [cp_sent]
-        #     init_intervals = [(0, len(test_label))]
-        #     edges = []
-        #     it = 0
-        #     while init != []:
-        #         it += 1
-        #         init_collect = []
-        #         interval_collect = []
-        #         for i, interval in zip(init, init_intervals):
-        #             ch_label = [str(ch).replace(" ", "") for ch in i._.children]
-        #             ch_int = []
-        #             for n in range(1, len(ch_label) + 1):
-        #                 label_int = (
-        #                     interval[0] + len("".join(list(ch_label[: n - 1])))
-        #                 ), interval[0] + len("".join(list(ch_label[:n])))
-        #                 ch_int.append(label_int)
-        #             node_list = [
-        #                 (
-        #                     (str(i).replace(" ", ""), interval),
-        #                     (str(ch).replace(" ", ""), ch_i),
-        #                 )
-        #                 for ch, ch_i in zip(i._.children, ch_int)
-        #             ]
-        #             edges.append(node_list)
-        #             init_collect += i._.children
-        #             interval_collect += ch_int
-        #         init = init_collect
-        #         init_intervals = interval_collect
+        elif model_name == "cp":
+            cp_sent = sorted(list(self.model.cp(self.raw).sents), key=len)[
+                -1
+            ]  # In case wrong analysis it picks the longest (sub)sentences recognized. This would need better treatment.
+            test_label = str(cp_sent).replace(" ", "")
+            init = [cp_sent]
+            init_intervals = [(0, len(test_label))]
+            edges = []
+            it = 0
+            while init != []:
+                it += 1
+                init_collect = []
+                interval_collect = []
+                for i, interval in zip(init, init_intervals):
+                    ch_label = [str(ch).replace(" ", "") for ch in i._.children]
+                    ch_int = []
+                    for n in range(1, len(ch_label) + 1):
+                        label_int = (
+                            interval[0] + len("".join(list(ch_label[: n - 1])))
+                        ), interval[0] + len("".join(list(ch_label[:n])))
+                        ch_int.append(label_int)
+                    node_list = [
+                        (
+                            (str(i).replace(" ", ""), interval),
+                            (str(ch).replace(" ", ""), ch_i),
+                        )
+                        for ch, ch_i in zip(i._.children, ch_int)
+                    ]
+                    edges.append(node_list)
+                    init_collect += i._.children
+                    interval_collect += ch_int
+                init = init_collect
+                init_intervals = interval_collect
 
-        #     edges = util_g.flatten(edges)
-        #     return Tree(edges)
+            edges = util_g.flatten(edges)
+            return Tree(edges)
 
         else:
             return print(
-                "No recognizable model name. Try any of these: slg_sq, slg_tr, ud, cp."
+                "No recognizable model name. Try any of these: sq, tr, ud, cp."
             )
