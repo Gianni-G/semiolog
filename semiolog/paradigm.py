@@ -2,12 +2,16 @@ from scipy.stats import entropy
 import numpy as np
 
 class Parad:
-    def __init__(self,parad:dict) -> None:
+    def __init__(self,parad:dict,cum_thres=.7) -> None:
         self.len = len(parad)
         self.keys = tuple(parad.keys())
         self.values = np.array(list(parad.values()))
         self.mass = np.sum(self.values)
         self.entropy = entropy(self.values)
+        self.cumsum = np.cumsum(self.values)
+        len_truncate = len([i for i in self.cumsum if i <= cum_thres])
+        self.keys_t = tuple(list(self.keys)[:len_truncate])
+        self.values_t = self.values[:len_truncate]
     
     def __repr__(self) -> str:
         return str(self.keys)
