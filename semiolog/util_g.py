@@ -7,6 +7,7 @@ import os,sys
 import math
 import concurrent.futures
 import csv
+import json
 import itertools
 import ast
 from collections import Counter
@@ -41,6 +42,13 @@ def dict2csv(input: dict, filename: str, directory: str):
     with open(f"{directory}{filename}.csv", "w") as nf:
         for key in input.keys():
             nf.write(f"{key},{input[key]}\n")
+
+def dict2json(input: dict, filename: str, directory: str):
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+    with open(f"{directory}{filename}.json", 'w') as json_file:
+        json.dump(input, json_file)
+
 
 def str2txt(input: str, filename: str, directory: str):
     if not os.path.isdir(directory):
