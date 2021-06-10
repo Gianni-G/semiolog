@@ -64,12 +64,13 @@ class Chain:
         self.raw = raw_chain
         self.norm = raw_chain.replace(" ", "")
         self.split = raw_chain.split()
-        self.nodes = []
+        self.nodes_list = []
         for i in range(len(self.split)):
             start_i = len("".join(self.split[:i]))
             end_i = start_i + len(self.split[i])
-            self.nodes.append((self.split[i], (start_i, end_i)))
-        self.nodes = set(self.nodes)
+            self.nodes_list.append((self.split[i], (start_i, end_i)))
+            
+        self.nodes = set(self.nodes_list)
         self.model = model
 
     def __repr__(self) -> str:
@@ -99,18 +100,49 @@ class Chain:
             slg_edges = util.chain2tree(self.raw, self.model.voc.freq)
             return Tree(slg_edges)
 
-        elif model_name == "ud":
+        elif model_name == "ud_original":
             doc = self.model.ud(self.raw)
             doc_idx = {
                 token: (token.idx - i, token.idx - i + len(token))
                 for i, token in enumerate(doc)
             }
-            ud_tree = [
+            edges = [
                 ((token.head.text, doc_idx[token.head]), (token.text, doc_idx[token]))
                 for token in doc
                 if token != token.head
             ]
-            return Tree(ud_tree)
+            return Tree(edges)
+
+        elif model_name == "ud":
+
+            doc = self.model.ud(self.raw)
+
+            doc_idx = {token:(token.idx-i,token.idx-i+len(token)) for i,token in enumerate(doc)}
+
+            ud_segs = []
+            for token_doc in doc:
+                subtrees = []
+                # subtrees_control = []
+                for token in token_doc.subtree:
+                    # subtrees_control.append(doc_idx[token])
+                    for i in doc_idx[token]:
+                        subtrees.append(i)
+                contiguous_breaks = [l for l,r in util_g.subsequences(subtrees,2) if l==r]
+                real_breaks = [b for b in subtrees if b not in contiguous_breaks]
+                real_intervals = sorted([(real_breaks[2*i],real_breaks[2*i+1]) for i in range(int(len(real_breaks)/2))])
+                final_subtrees = [(self.norm[l:r],(l,r)) for l,r in real_intervals]
+                for subtree_f in final_subtrees:
+                    ud_segs.append((token_doc,subtree_f))
+
+            ud_segs_dict = dict(ud_segs)
+
+            ud_tree = [(ud_segs_dict[token.head],ud_segs_dict[token]) for token in doc if ud_segs_dict[token]!= ud_segs_dict[token.head]]
+            head_edges = [(node,(token.text,doc_idx[token])) for token,node in ud_segs if token.text!=node[0]]
+            ud_tree+=head_edges
+
+            edges = sorted(ud_tree, key=lambda x: (x[0][1][0],x[1][1][0])) # trick to order first on head and then on children
+
+            return Tree(edges)
 
         elif model_name == "cp":
             cp_sent = sorted(list(self.model.cp(self.raw).sents), key=len)[

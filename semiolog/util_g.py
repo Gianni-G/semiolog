@@ -16,6 +16,7 @@ from scipy.sparse import csr_matrix
 import time
 from tqdm.notebook import tqdm
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 # Definitions of Functions
@@ -218,6 +219,9 @@ def clear_df(df):
         df.loc[mask[col], col] = ''
     return df
 
+def df(list_of_list):
+    raw_df = pd.DataFrame(list_of_list)
+    return clear_df(raw_df.T)
 
 # Draft functions
 
