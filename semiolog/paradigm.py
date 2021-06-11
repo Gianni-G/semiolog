@@ -14,9 +14,9 @@ class Parad:
         self.entropy = entropy(self.values)
         self.cumsum = np.cumsum(self.values)
 
-        len_truncate = len([i for i in self.cumsum if i <= cum_thres])
-        self.keys_t = tuple(list(self.keys)[:len_truncate])
-        self.values_t = self.values[:len_truncate]
+        self.len_truncate = len([i for i in self.cumsum if i <= cum_thres])
+        self.keys_t = tuple(list(self.keys)[:self.len_truncate])
+        self.values_t = self.values[:self.len_truncate]
 
         parad_log = np.log(self.values)
         +(-np.min(self.values))
@@ -24,25 +24,11 @@ class Parad:
         self.soft_dist = parad_soft_offset/sum(parad_soft_offset)
         self.cumsum_soft = np.cumsum(self.soft_dist)
 
-        len_truncate_soft = len([i for i in self.cumsum_soft if i <= cum_thres])
-        self.keys_t_soft = tuple(list(self.keys)[:len_truncate_soft])
-        self.values_t_soft = self.soft_dist[:len_truncate_soft]
+        self.len_truncate_soft = len([i for i in self.cumsum_soft if i <= cum_thres])
+        self.keys_t_soft = tuple(list(self.keys)[:self.len_truncate_soft])
+        self.values_t_soft = self.soft_dist[:self.len_truncate_soft]
 
-        self.global_probs = np.array([semiotic.voc.prob.get(k,0) for k in self.keys_t])
-        if len_truncate == 0:
-             self.mass = 0
-             self.func_score = 1
-        else:
-            self.mass = np.mean(self.global_probs)
-            self.func_score = self.mass/len_truncate
 
-        self.global_probs_s = np.array([semiotic.voc.prob.get(k,0) for k in self.keys_t_soft])
-        if len_truncate_soft == 0:
-             self.mass_s = 0
-             self.func_score_s = 1
-        else:
-            self.mass_s = np.mean(self.global_probs_s)
-            self.func_score_s = self.mass_s/len_truncate_soft
 
     def __repr__(self) -> str:
         return str(self.keys)

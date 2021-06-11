@@ -9,7 +9,10 @@ class Voc:
         self.freq = voc
         self.freq_mass = sum(voc.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
-    
+
+        self.encode = {k:i for i,(k,v) in enumerate(voc.items())}
+        self.decode = {i:k for k,i in self.encode.items()}
+
     def __repr__(self) -> str:
         return f"Voc({self.freq})"
 
