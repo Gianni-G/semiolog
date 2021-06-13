@@ -33,19 +33,22 @@ class Parad:
     def __repr__(self) -> str:
         return str(self.keys)
 
-def chain_paradigm(chain, semiotic, thres=0):
+class ParadigmChain:
+    
+    def __init__(self,chain,semiotic) -> None:
 
-    sent_list = chain.split
-    sent_mask = [" ".join([token if n!=i else "[MASK]" for n,token in enumerate(sent_list)]) for i in range(len(sent_list))]
 
-    punctuation = {
-        ".",":",",","…","'","’","′",'"',"•",";","`","-","“","...","?","!","/","&","–"
-        }
+        # sent_list = [token.label for token in chain]
+        # sent_mask = [" ".join([token if n!=i else "[MASK]" for n,token in enumerate(sent_list)]) for i in range(len(sent_list))]
 
-    parads = []
-    for sent in sent_mask:
-        parad = {i['token_str']:i['score'] for i in semiotic.unmasker(sent) if i['score']>thres and i['token_str'] not in punctuation }
+        # punctuation = {
+        #     ".",":",",","…","'","’","′",'"',"•",";","`","-","“","...","?","!","/","&","–"
+        #     }
 
-        parads.append(Parad(parad,semiotic))
+        sent_mask = [" ".join([token.label for token in chain.mask(i)]) for i in range(chain.len)]
+        parads = []
+        for sent in sent_mask:
+            parad = {i['token_str']:i['score'] for i in semiotic.unmasker(sent)}
 
-    return parads
+            parads.append(Parad(parad,semiotic))
+        self.paradigms = parads

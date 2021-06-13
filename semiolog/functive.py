@@ -1,13 +1,13 @@
 
 class Functive:
 
-    def __init__(self,sequence,span,position,semiotic) -> None:
+    def __init__(self,label,span,position,semiotic) -> None:
         
         self.span = span
-        self.label = sequence  
+        self.label = label  
         self.position = position
-        self.id = semiotic.voc.encode.get(self.label,None) # this needs ot be fixed by handling UNK!!!
-        self.prob = semiotic.voc.prob.get(self.label,0)
+        self.id = semiotic.vocab.encode.get(self.label,None) # this needs ot be fixed by handling UNK!!!
+        self.prob = semiotic.vocab.prob.get(self.label,0)
 
         # self.parad
         # self.parad_t

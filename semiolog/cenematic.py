@@ -15,15 +15,15 @@ class Cenematic:
     def __init__(self,name) -> None:
         self.name = name
         self.config = Config().from_disk(paths.corpora / name / "config.cfg")
-        self.voc = load_vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
+        self.vocab = load_vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
 
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])
         # self.cp = spacy.load(self.config["evaluation"]["cp_model"])
         # self.cp.add_pipe("benepar", config={"model": "benepar_en3"})
 
-        # # Load transformers "fill-mask" task
-        # self.unmasker = pipeline('fill-mask', model=self.config["paradigm"]["model"],top_k=self.config["paradigm"]["top_k"])
+        # Load transformers "fill-mask" task
+        self.unmasker = pipeline('fill-mask', model=self.config["paradigm"]["model"],top_k=self.config["paradigm"]["top_k"])
 
 
 
@@ -31,11 +31,11 @@ class Cenematic:
         return f"Cenematic({self.name})"
 
     
-    def __call__(self,raw_chain):
-        return Text(raw_chain,self)
+    def __call__(self,input_chain):
+        return Text(input_chain,self)
 
-    def chain(self,raw_chain):
-        return Chain(raw_chain, self)
+    def chain(self,input_chain):
+        return Chain(input_chain, self)
 
     # def paradigm(self, chain):
         

@@ -17,4 +17,4 @@ def load(
     )
 
 
-test_sent = "i have made my plans and i must stick to them"
+# test_sent = "i have made my plans and i must stick to them"

@@ -4,7 +4,7 @@ from typing import Union, Iterable, Dict, Any
 from pathlib import Path
 
 class Voc:
-    def __init__(self,voc):
+    def __init__(self,voc,special_tokens = None):
         self.len = len(voc)
         self.freq = voc
         self.freq_mass = sum(voc.values())
