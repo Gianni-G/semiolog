@@ -14,6 +14,7 @@ class Vocabulary:
                     voc[line[0]] = int(line[1])
                 voc = dict(voc.most_common())
 
+            self.filename = filename
             self.len = len(voc)
             self.freq = voc
             self.freq_mass = sum(voc.values())

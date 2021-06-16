@@ -1,4 +1,3 @@
-from ..syntagmatic import Chain
 from . import normalizers
 from . import pre_tokenizers
 from . import processors
@@ -25,24 +24,8 @@ class Tokenizer:
     def decoder(self,input_string):
         pass
     
-    def __call__(self,chain:Chain,semiotic):
-        chain.norm = self.normalizer.normalize(chain.input)
-        chain.pre_tokens = self.pre_tokenizer.pre_tokenize(chain.norm)
-        chain.processor = self.processor.process(chain.pre_tokens, semiotic, is_pretokenized = self.is_pretokenized)
-        chain.tokens = self.post_processor.post_process(chain.processor)
-
-
-# # Constructor
-# def build_tokenizer_component(library,config):
-#     if config == "None":
-#         component = eval(f"{library}.")
-#     elif isinstance(config,list):
-#         def component(input):
-#             output = input
-#             for func_str in config:
-#                 func = eval(func_str)
-#                 output = func(output)
-#             return output
-#     else:
-#         component = eval(config)
-#     return component
+    # def __call__(self,chain,semiotic):
+    #     chain.norm = self.normalizer.normalize(chain.input)
+    #     chain.pre_tokens = self.pre_tokenizer.pre_tokenize(chain.norm)
+    #     chain.processor = self.processor.process(chain.pre_tokens, semiotic, is_pretokenized = self.is_pretokenized)
+    #     chain.tokens = self.post_processor.post_process(chain.processor)

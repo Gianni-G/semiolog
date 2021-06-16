@@ -24,25 +24,18 @@ class ChainIterator:
         raise StopIteration
 
 class Chain:
-    def __init__(self, input_chain: str):
+    def __init__(self, input_chain: str,semiotic):
         
         self.input = input_chain
+
+        self.norm = semiotic.tokenizer.normalizer.normalize(self.input)
+        self.pre_tokens = semiotic.tokenizer.pre_tokenizer.pre_tokenize(self.norm)
+        self.processor = semiotic.tokenizer.processor.process(self.pre_tokens, semiotic, is_pretokenized = semiotic.tokenizer.is_pretokenized)
+        self.tokens = semiotic.tokenizer.post_processor.post_process(self.processor)
+
         # self.split = input_chain.split()
-        # self.norm = None #normalizer(input_chain)
-        # self.pre_tokens = pre_tokenize(self.norm)
 
         # self.semiotic = semiotic
-        # self.tokenizer = Tokenizer()
-        # if True: #isinstance(semiotic.config["syntagmatic"]["normalizer"], list):
-            # from .tokenizer import lowercase
-            # self.tokenizer.normalizer = lowercase
-        # self.tokenizer.normalizer = 
-        # self.tokenizer.pre_tokenizer = 
-        # self.tokenizer.processor
-        # self.tokenizer.post_processor
-        # self.tokenizer.encoder
-        # self.tokenizer.decoder
-
 
 
 
