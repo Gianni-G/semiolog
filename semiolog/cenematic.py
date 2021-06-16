@@ -18,7 +18,9 @@ class Cenematic:
         self.config = Config().from_disk(paths.corpora / name / "config.cfg")
         self.vocab = Vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
 
-        self.tokenizer = Tokenizer(self.config["syntagmatic"],self)
+        self.syntagmatic = Tokenizer(self)
+
+        # self.paradigmatic = 
         
 
         # # Load universal dependencies (ud) and constituency parsing (cp) models

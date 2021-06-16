@@ -8,8 +8,6 @@ from . import util_g
 from .functive import Functive
 
 
-
-
 class ChainIterator:
     ''' Iterator class '''
     def __init__(self, chain):
@@ -26,24 +24,32 @@ class ChainIterator:
 class Chain:
     def __init__(self, input_chain: str,semiotic):
         
+        self.semiotic = semiotic
         self.input = input_chain
+        self.split = input_chain.split()
 
-        self.norm = semiotic.tokenizer.normalizer.normalize(self.input)
-        self.pre_tokens = semiotic.tokenizer.pre_tokenizer.pre_tokenize(self.norm)
-        self.processor = semiotic.tokenizer.processor.process(self.pre_tokens, semiotic, is_pretokenized = semiotic.tokenizer.is_pretokenized)
-        self.tokens = semiotic.tokenizer.post_processor.post_process(self.processor)
+        self.norm = None
+        self.pre_tokens = None
+        self.processor = None
+        self.tokens = None
 
-        # self.split = input_chain.split()
+        self.len = None
+        self.labels = None
 
-        # self.semiotic = semiotic
+    def mask(self,n):
+        """
+        Outputs a new list with the nth token(s) of the chain replaced with the "[MASK]" token. n can be an integer or a list of integers.
+        """
+        if isinstance(n,int):
+            n = [n]
+        masked_chain = [token if i not in n else Functive("[MASK]",token.span,token.position,self.semiotic) for i,token in enumerate(self.tokens)]
+        return masked_chain   
 
 
 
-        # self.tokens = tokenize(self.pre_tokens, self.tokenizer)
 
-        # self.len = len(self.tokens)
 
-        # self.labels = [token.label for token in self.tokens]
+
         # self.segmented = " ".join(self.labels)
 
         # self.nodes_list = []
@@ -68,14 +74,7 @@ class Chain:
     # def __getitem__(self, index:str):
     #     return self.tokens[index]
 
-    # def mask(self,n):
-    #     """
-    #     Outputs a new list with the nth token of the chain replaced with the "[MASK]" token
-    #     """
-    #     if isinstance(n,int):
-    #         n = [n]
-    #     masked_chain = [token if i not in n else Functive("[MASK]",token.span,token.position,self.model) for i,token in enumerate(self)]
-    #     return masked_chain
+
 
 
 
