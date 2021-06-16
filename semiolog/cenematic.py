@@ -5,8 +5,10 @@ import benepar
 
 from .vocabulary import load_vocabulary
 from . import paths
-from .chain import Chain
-from . import paradigm
+
+from .tokenizer import Tokenizer #, build_tokenizer
+from .syntagmatic import Chain
+from .paradigmatic import ParadigmChain
 from .text import Text
 
 
@@ -17,13 +19,20 @@ class Cenematic:
         self.config = Config().from_disk(paths.corpora / name / "config.cfg")
         self.vocab = load_vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
 
+        self.tokenizer = Tokenizer(self.config["syntagmatic"],self)
+
+        # build_tokenizer(self)
+        
+
+
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])
         # self.cp = spacy.load(self.config["evaluation"]["cp_model"])
         # self.cp.add_pipe("benepar", config={"model": "benepar_en3"})
 
         # Load transformers "fill-mask" task
-        self.unmasker = pipeline('fill-mask', model=self.config["paradigm"]["model"],top_k=self.config["paradigm"]["top_k"])
+
+        # self.unmasker = pipeline('fill-mask', model=self.config["paradigmatic"]["model"],top_k=self.config["paradigmatic"]["top_k"])
 
 
 
@@ -34,14 +43,14 @@ class Cenematic:
     def __call__(self,input_chain):
         return Text(input_chain,self)
 
-    def chain(self,input_chain):
-        return Chain(input_chain, self)
+    # def syntagmatic(self,input_chain):
+    #     return Chain(input_chain, self)
 
-    # def paradigm(self, chain):
+    # def paradigmatic(self, chain):
         
     #     if isinstance(chain,str):
     #         chain = Chain(chain, self)
-    #     return paradigm.chain_paradigm(chain,self.unmasker)
+    #     return ParadigmChain(chain,self.unmasker)
 
     def test_sents(self,filename = None):
     

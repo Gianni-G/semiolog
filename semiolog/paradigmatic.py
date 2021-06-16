@@ -52,3 +52,8 @@ class ParadigmChain:
 
             parads.append(Parad(parad,semiotic))
         self.paradigms = parads
+        for token,parad in zip(chain,self.paradigms):
+            token.paradigm = parad
+
+    def __getitem__(self, index:str):
+        return self.paradigms[index]

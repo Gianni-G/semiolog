@@ -1,20 +1,10 @@
 # EXTERNAL MODULES
 
-from . import util_g
 
-import networkx as nx
 
 # Functions for the Chain class
 
-def vocabulary_rank(
-    voc,
-    zipf_factor=.135
-    ):
-    # TODO: Zipf factor should (in principle) be computable following Mandelbrot
-    # print('Building ranked vocabulary (voc_rank)')
-    voc_rank = {k:(v+1)**zipf_factor for v,k in enumerate(voc.keys())}
-    # print('Done!\n')
-    return(voc_rank)
+
 
 def build_graph_data(
     string: str,
@@ -40,40 +30,7 @@ def build_graph_data(
     return edge_data
 
 
-# Possible weight functions for chain2seq:
-def invLogLen(freq, rank, length, lSt):
-    return 1/(log(freq + 1) + length)
 
-def rankOnly(freq, rank, length, lSt):
-    return rank
-
-def chain2seq(chain_sp, voc, weight_f=rankOnly, v_rank = None, zipf_factor=.135):
-    # Zipf's factor could (in principle) be computed following Mandelbrot
-    chain = chain_sp.replace(" ", "")
-    lSt = len(chain)
-    if v_rank == None:
-        voc_rank = vocabulary_rank(voc,zipf_factor)
-    else:
-        voc_rank = v_rank
-    for c in chain :
-        if c not in voc:
-            voc[c]=1
-            voc_rank[c]=(len(voc)+1)**zipf_factor
-    graph_data = build_graph_data(chain, voc)
-    seg_graph_full = nx.DiGraph()
-    seg_graph_full.add_edges_from(graph_data)
-    # Construct weights
-    for edge in seg_graph_full.edges:
-        freq = seg_graph_full.edges[edge]["freq"]
-        rank = voc_rank[seg_graph_full.edges[edge]["label"]]
-        length = seg_graph_full.edges[edge]["len"]
-        seg_graph_full.edges[edge]["weight"] = weight_f(freq, rank, length, lSt)
-    # Find best segmentation out of shortest path
-    shortest_path = nx.shortest_path(seg_graph_full, 0, lSt, weight="weight")
-    seg_sent = [
-        seg_graph_full.edges[edge]["label"] for edge in util_g.subsequences(shortest_path, 2)
-    ]
-    return seg_sent
 
 
 # Possible binary segmentation functions for binaray_segment:
@@ -109,31 +66,31 @@ def binary_segment(
     )
 
 
-def chain2tree(chain_sp, voc, weight_f = rankOnly, v_rank = None, zipf_factor=.135):
-    chain = chain_sp.replace(" ", "")
-    if v_rank == None:
-        voc_rank = vocabulary_rank(voc,zipf_factor)
-    else:
-        voc_rank = v_rank
-    pile = [(chain, (0, len(chain)))]
-    tree_data = []
-    while len(pile) > 0:
-        parent = pile[0]
-        chain_to_seg = parent[0]
-        pile = pile[1:]
-        if len(chain_to_seg) == 2:
-            l_child = (chain_to_seg[0], (parent[1][0], parent[1][0] + 1))
-            r_child = (chain_to_seg[1], (parent[1][1] - 1, parent[1][1]))
-        else:
-            parent_seg = chain2seq(chain_to_seg, voc, weight_f, voc_rank,zipf_factor)
-            children = binary_segment(parent_seg, interval=parent[1], voc=voc)
-            l_child = children[0]
-            r_child = children[1]
-            for child in [l_child, r_child]:
-                if len(child[0]) > 1:
-                    pile.append(child)
-        tree_data.extend([(parent, l_child), (parent, r_child)])
-    return tree_data
+# def chain2tree(chain_sp, voc, weight_f = rankOnly, v_rank = None, zipf_factor=.135):
+#     chain = chain_sp.replace(" ", "")
+#     if v_rank == None:
+#         voc_rank = vocabulary_rank(voc,zipf_factor)
+#     else:
+#         voc_rank = v_rank
+#     pile = [(chain, (0, len(chain)))]
+#     tree_data = []
+#     while len(pile) > 0:
+#         parent = pile[0]
+#         chain_to_seg = parent[0]
+#         pile = pile[1:]
+#         if len(chain_to_seg) == 2:
+#             l_child = (chain_to_seg[0], (parent[1][0], parent[1][0] + 1))
+#             r_child = (chain_to_seg[1], (parent[1][1] - 1, parent[1][1]))
+#         else:
+#             parent_seg = chain2seq(chain_to_seg, voc, weight_f, voc_rank,zipf_factor)
+#             children = binary_segment(parent_seg, interval=parent[1], voc=voc)
+#             l_child = children[0]
+#             r_child = children[1]
+#             for child in [l_child, r_child]:
+#                 if len(child[0]) > 1:
+#                     pile.append(child)
+#         tree_data.extend([(parent, l_child), (parent, r_child)])
+#     return tree_data
 
 
 
