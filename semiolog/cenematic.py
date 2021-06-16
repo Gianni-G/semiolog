@@ -3,10 +3,9 @@ from transformers import pipeline
 import spacy
 import benepar
 
-from .vocabulary import load_vocabulary
 from . import paths
-
-from .tokenizer import Tokenizer #, build_tokenizer
+from .vocabulary import Vocabulary
+from .tokenizer import Tokenizer
 from .syntagmatic import Chain
 from .paradigmatic import ParadigmChain
 from .text import Text
@@ -17,13 +16,10 @@ class Cenematic:
     def __init__(self,name) -> None:
         self.name = name
         self.config = Config().from_disk(paths.corpora / name / "config.cfg")
-        self.vocab = load_vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
+        self.vocab = Vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
 
         self.tokenizer = Tokenizer(self.config["syntagmatic"],self)
-
-        # build_tokenizer(self)
         
-
 
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])

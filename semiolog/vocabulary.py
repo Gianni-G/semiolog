@@ -3,15 +3,27 @@ import csv
 from typing import Union, Iterable, Dict, Any
 from pathlib import Path
 
-class Voc:
-    def __init__(self,voc,special_tokens = None):
-        self.len = len(voc)
-        self.freq = voc
-        self.freq_mass = sum(voc.values())
-        self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
+class Vocabulary:
+    def __init__(self,filename = None,special_tokens = None): # TODO: Handle special tokens
+        if filename != None:
+                
+            with open(filename, "r") as f:
+                csv_reader = csv.reader(f)
+                voc = Counter()
+                for line in csv_reader:
+                    voc[line[0]] = int(line[1])
+                voc = dict(voc.most_common())
 
-        self.encode = {k:i for i,(k,v) in enumerate(voc.items())}
-        self.decode = {i:k for k,i in self.encode.items()}
+            self.len = len(voc)
+            self.freq = voc
+            self.freq_mass = sum(voc.values())
+            self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
+
+            self.encode = {k:i for i,(k,v) in enumerate(voc.items())}
+            self.decode = {i:k for k,i in self.encode.items()}
+        else:
+            pass
+
 
     def __repr__(self) -> str:
         return f"Voc({self.freq})"
@@ -33,21 +45,3 @@ class Voc:
 
     def values(self):
         pass
-
-def load_vocabulary(
-    filename: Union[str,Path]
-    ) -> Voc:
-
-    """
-    Load a vocabulary from existing example or local path
-    RETURNS (Voc): The loaded vocabulary
-    """
-    
-    with open(filename, "r") as f:
-        csv_reader = csv.reader(f)
-        voc = Counter()
-        for line in csv_reader:
-            voc[line[0]] = int(line[1])
-        voc = dict(voc.most_common())
-        
-    return Voc(voc)
