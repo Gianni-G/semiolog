@@ -1,25 +1,18 @@
-import networkx as nx
-import graphviz as gv
-from thinc.api import Config
+from ..functive import Functive
 
 
-from . import util
-from . import util_g
-from .functive import Functive
-
-
-class ChainIterator:
-    ''' Iterator class '''
-    def __init__(self, chain):
-        self.chain = chain
-        # member variable to keep track of current index
-        self.index = 0
-    def __next__(self):
-        if self.index < self.chain.len:
-            result = self.chain[self.index]
-            self.index +=1
-            return result
-        raise StopIteration
+# class ChainIterator:
+#     ''' Iterator class '''
+#     def __init__(self, chain):
+#         self.chain = chain
+#         # member variable to keep track of current index
+#         self.index = 0
+#     def __next__(self):
+#         if self.index < self.chain.len:
+#             result = self.chain[self.index]
+#             self.index +=1
+#             return result
+#         raise StopIteration
 
 class Chain:
     def __init__(self, input_chain: str,semiotic):
@@ -67,9 +60,9 @@ class Chain:
     # def __str__(self) -> str:
     #     return self.segmented
 
-    def __iter__(self):
-       ''' Returns the Iterator object '''
-       return ChainIterator(self)
+    # def __iter__(self):
+    #    ''' Returns the Iterator object '''
+    #    return ChainIterator(self)
 
     # def __getitem__(self, index:str):
     #     return self.tokens[index]

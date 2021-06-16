@@ -1,13 +1,9 @@
 from thinc.api import Config
 from transformers import pipeline
-import spacy
-import benepar
 
 from . import paths
 from .vocabulary import Vocabulary
-from .tokenizer import Tokenizer
-from .syntagmatic import Chain
-from .paradigmatic import ParadigmChain
+from .syntagmatic import Syntagmatic
 from .text import Text
 
 
@@ -18,7 +14,8 @@ class Cenematic:
         self.config = Config().from_disk(paths.corpora / name / "config.cfg")
         self.vocab = Vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
 
-        self.syntagmatic = Tokenizer(self)
+        self.syntagmatic = Syntagmatic(self)
+        
 
         # self.paradigmatic = 
         

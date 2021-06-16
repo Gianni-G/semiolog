@@ -1,6 +1,6 @@
-from .. import util_g
-from .. import util
-from ..functive import Functive
+from ... import util_g
+from ... import util
+from ...functive import Functive
 
 import networkx as nx
         

@@ -6,7 +6,7 @@ class Text:
     
     def __init__(self,input_chain,semiotic) -> None:
         self.chain = Chain(input_chain,semiotic)
-        semiotic.syntagmatic(self.chain)
+        semiotic.syntagmatic.tokenizer(self.chain)
         # semiotic.paradigmatic(self.chain)
 
         # self.paradigmatic = ParadigmChain(self.chain,semiotic)
