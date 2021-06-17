@@ -1,8 +1,8 @@
 from scipy.stats import entropy
 import numpy as np
-from statistics import mean, geometric_mean
+# from ..syntagmatic import Chain
 
-class Parad:
+class Paradigm:
     def __init__(self,parad:dict,semiotic,cum_thres=.5) -> None:
         self.len = len(parad)
         self.keys = tuple(parad.keys())
@@ -35,24 +35,18 @@ class Parad:
 
 class ParadigmChain:
     
-    def __init__(self,chain,semiotic) -> None:
+    def __init__(self) -> None:
+        pass
 
-
-        # sent_list = [token.label for token in chain]
-        # sent_mask = [" ".join([token if n!=i else "[MASK]" for n,token in enumerate(sent_list)]) for i in range(len(sent_list))]
-
-        # punctuation = {
-        #     ".",":",",","…","'","’","′",'"',"•",";","`","-","“","...","?","!","/","&","–"
-        #     }
-
+    def __call__(self,chain):
         sent_mask = [" ".join([token.label for token in chain.mask(i)]) for i in range(chain.len)]
         parads = []
         for sent in sent_mask:
-            parad = {i['token_str']:i['score'] for i in semiotic.unmasker(sent)}
+            parad = {i['token_str']:i['score'] for i in chain.semiotic.paradigmatic.unmasker(sent)}
+            parads.append(Paradigm(parad,chain.semiotic))
 
-            parads.append(Parad(parad,semiotic))
-        self.paradigms = parads
-        for token,parad in zip(chain,self.paradigms):
+        chain.paradigms = parads
+        for token,parad in zip(chain,parads):
             token.paradigm = parad
 
     def __getitem__(self, index:str):

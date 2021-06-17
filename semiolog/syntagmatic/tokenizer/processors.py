@@ -88,3 +88,27 @@ class SequenceSLG(Processor):
             token.head = tree_root
 
         return tokens
+
+class StripWhitespaces(Processor):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def process(self, sequence: str, semiotic, is_pretokenized):
+        segments = sequence.split()
+
+        spans = []
+        for i in range(len(segments)):
+            start_i = len("".join(segments[:i]))
+            end_i = start_i + len(segments[i])
+            spans.append((start_i, end_i))
+
+        tokens = [Functive(segment,span,position,semiotic) for position,(segment,span) in enumerate(zip(segments,spans))]
+
+        no_wspace_sequence = "".join(segments)
+        tree_root = Functive(no_wspace_sequence, (0, len(no_wspace_sequence)), None, semiotic)
+        tree_root.children = tokens
+
+        for token in tokens:
+            token.head = tree_root
+
+        return tokens

@@ -8,7 +8,6 @@ class Tokenizer:
     """
 
     def __init__(self,semiotic) -> None:
-        # TODO: There must be a cleverer way of skipping steps in the pipeline, other than attributing the base class of the step (ex: "PreTokenizer" for pre-tokenizers). Maybe using the keyword "disable"
         config = semiotic.config["syntagmatic"]
         if isinstance(config['normalizer'],list):
             self.normalizer = normalizers.Sequence(config['normalizer'])

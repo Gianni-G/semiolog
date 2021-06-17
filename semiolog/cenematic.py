@@ -1,9 +1,9 @@
 from thinc.api import Config
-from transformers import pipeline
 
 from . import paths
 from .vocabulary import Vocabulary
 from .syntagmatic import Syntagmatic
+from .paradigmatic import Paradigmatic
 from .text import Text
 
 
@@ -15,21 +15,13 @@ class Cenematic:
         self.vocab = Vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
 
         self.syntagmatic = Syntagmatic(self)
-        
-
-        # self.paradigmatic = 
+        self.paradigmatic = Paradigmatic(self)
         
 
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])
         # self.cp = spacy.load(self.config["evaluation"]["cp_model"])
         # self.cp.add_pipe("benepar", config={"model": "benepar_en3"})
-
-        # Load transformers "fill-mask" task
-
-        # self.unmasker = pipeline('fill-mask', model=self.config["paradigmatic"]["model"],top_k=self.config["paradigmatic"]["top_k"])
-
-
 
     def __repr__(self) -> str:
         return f"Cenematic({self.name})"
@@ -38,8 +30,7 @@ class Cenematic:
     def __call__(self,input_chain):
         return Text(input_chain,self)
 
-    # def syntagmatic(self,input_chain):
-    #     return Chain(input_chain, self)
+
 
     # def paradigmatic(self, chain):
         
