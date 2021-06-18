@@ -9,3 +9,5 @@ lsf.*
 
 examples/*
 !examples/en_bnc
+
+analysis.ipynb
