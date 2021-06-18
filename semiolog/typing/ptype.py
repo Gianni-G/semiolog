@@ -1,6 +1,6 @@
 import numpy as np
 
-class Type:
+class PType:
 
     def __init__(self,parad,semiotic) -> None:
 
@@ -24,8 +24,22 @@ class Type:
 
         # self.func = 
 
-def chain_type(parad_chain, semiotic):
 
-    types = [Type(parad,semiotic) for parad in parad_chain]
+class Typer:
+    def __init__(self) -> None:
+        pass
 
-    return types
+    def __call__(self,parad_chain):
+        types = []
+        for parad in parad_chain:
+            types.append(PType(parad,parad_chain.semiotic))
+        parad_chain.types = types
+
+class TypeChain:
+
+    def __init__(self,parad_chain) -> None:
+        self.semiotic = parad_chain.semiotic
+        self.types = [ptype for ptype in parad_chain.types]
+
+    def __getitem__(self, index:str):
+        return self.types[index]

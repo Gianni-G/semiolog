@@ -1,13 +1,16 @@
 from .syntagmatic import Chain
 from .paradigmatic import ParadigmChain
-from . import ptype
+from .typing import TypeChain
 
 class Text:
     
     def __init__(self,input_chain,semiotic) -> None:
+
         self.chain = Chain(input_chain,semiotic)
         semiotic.syntagmatic.tokenizer(self.chain)
-        semiotic.paradigmatic.paradigm_chain(self.chain)
 
-        # self.paradigmatic = ParadigmChain(self.chain,semiotic)
-        # self.type = ptype.chain_type(self.paradigm,semiotic)
+        semiotic.paradigmatic.paradigmatizer(self.chain)
+        self.parad_chain = ParadigmChain(self.chain)
+
+        semiotic.typing.typer(self.parad_chain)
+        self.type_chain = TypeChain(self.parad_chain)

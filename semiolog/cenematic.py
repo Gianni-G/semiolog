@@ -4,6 +4,7 @@ from . import paths
 from .vocabulary import Vocabulary
 from .syntagmatic import Syntagmatic
 from .paradigmatic import Paradigmatic
+from .typing import Typing
 from .text import Text
 
 
@@ -16,6 +17,7 @@ class Cenematic:
 
         self.syntagmatic = Syntagmatic(self)
         self.paradigmatic = Paradigmatic(self)
+        self.typing = Typing(self)
         
 
         # # Load universal dependencies (ud) and constituency parsing (cp) models
