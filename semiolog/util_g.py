@@ -15,8 +15,9 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import time
 from tqdm.notebook import tqdm
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 
 # Definitions of Functions
@@ -219,8 +220,8 @@ def clear_df(df):
         df.loc[mask[col], col] = ''
     return df
 
-def df(list_of_list):
-    raw_df = pd.DataFrame(list_of_list)
+def df(list_of_list, keys = None):
+    raw_df = pd.DataFrame(list_of_list,index=keys)
     return clear_df(raw_df.T)
 
 # Draft functions
@@ -250,6 +251,17 @@ def csv2list_raw(file: str, directory: str, n_start=None, n_end=None,progress=Fa
             list_line = [ast.literal_eval(item) for item in line]
             my_list.append(list_line)
     return my_list[n_start:n_end]
+
+def plot_scatter_line(x,y,title=None,xaxis_title=None,yaxis_title=None,line_shape='spline'):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=y, line_shape=line_shape))
+    
+    fig.update_layout(
+        title=title,
+        xaxis_title=xaxis_title,
+        yaxis_title=xaxis_title,
+        )
+    return fig
 
 def scatter_plot(data:list,labels=None,legends=None,size=(15,10)):
     fig, ax = plt.subplots(figsize=size)  # Create a figure and an axes.

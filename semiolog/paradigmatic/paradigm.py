@@ -1,7 +1,8 @@
 from scipy.stats import entropy
 import numpy as np
 import string
-# from ..syntagmatic import Chain
+
+from ..util_g import df as slg_df
 
 class Paradigm:
     def __init__(self,parad:dict,semiotic,cum_thres=.5) -> None:
@@ -56,6 +57,18 @@ class ParadigmChain:
         self.keys = [token.paradigm.keys for token in chain.tokens]
         self.keys_t = [token.paradigm.keys_t for token in chain.tokens]
         self.keys_t_soft = [token.paradigm.keys_t_soft for token in chain.tokens]
-        
+
+        self.labels = [token.label for token in chain.tokens]
+        self.spans = [token.span for token in chain.tokens]
+        self.indexes = [f"{token.label}_{token.position}" for token in chain.tokens]
+    
     def __getitem__(self, index:str):
         return self.paradigms[index]
+    
+    def df(self,keys=None):
+        if keys == "keys":
+            return slg_df(self.keys, self.indexes)
+        elif keys == "keys_t":
+            return slg_df(self.keys_t, self.indexes)
+        else:
+            return slg_df(self.keys_t_soft, self.indexes)
