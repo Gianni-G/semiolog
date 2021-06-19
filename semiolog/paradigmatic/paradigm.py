@@ -54,6 +54,7 @@ class ParadigmChain:
     def __init__(self,chain) -> None:
         self.semiotic = chain.semiotic
         self.len = chain.len
+        self.probs = chain.probs
         self.paradigms = [token.paradigm for token in chain.tokens]
         self.keys = [token.paradigm.keys for token in chain.tokens]
         self.keys_t = [token.paradigm.keys_t for token in chain.tokens]

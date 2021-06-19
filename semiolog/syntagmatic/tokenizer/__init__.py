@@ -32,4 +32,5 @@ class Tokenizer:
 
         chain.len = len(chain.tokens)
         chain.labels = [token.label for token in chain.tokens]
+        chain.probs = [token.prob for token in chain.tokens]
         pass

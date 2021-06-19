@@ -252,14 +252,31 @@ def csv2list_raw(file: str, directory: str, n_start=None, n_end=None,progress=Fa
             my_list.append(list_line)
     return my_list[n_start:n_end]
 
-def plot_scatter_line(x,y,title=None,xaxis_title=None,yaxis_title=None,line_shape='spline'):
+def plot_scatter_line(
+    x,
+    y,
+    trace_name = None,
+    title=None,
+    xaxis_title=None,
+    yaxis_title=None,
+    line_shape='spline',
+    add_trace = None
+    ):
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=y, line_shape=line_shape))
+    fig.add_trace(go.Scatter(x=x, y=y, name = trace_name, line_shape=line_shape, mode='lines+markers'))
     
+    if add_trace != None:
+        if isinstance(add_trace,tuple):
+            add_trace = [add_trace]
+        for trace in add_trace:
+            fig.add_trace(go.Scatter(x=trace[0], y=trace[1], name = trace[2], line_shape=line_shape, mode='lines+markers')) # TODO: rewrite with **kwargs
+
+
     fig.update_layout(
         title=title,
         xaxis_title=xaxis_title,
         yaxis_title=xaxis_title,
+        
         )
     return fig
 
