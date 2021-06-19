@@ -42,6 +42,7 @@ class TypeChain:
 
     def __init__(self,parad_chain) -> None:
         self.semiotic = parad_chain.semiotic
+        self.len = parad_chain.len
         self.labels = parad_chain.labels
         self.indexes = parad_chain.indexes
         self.types = [ptype for ptype in parad_chain.types]
@@ -65,7 +66,7 @@ class TypeChain:
     def __getitem__(self, index:str):
         return self.types[index]
     
-    def plot_scores(self):
+    def plot_scores(self, show_mean=False):
 
         fig = plot_scatter_line(
             x=self.indexes,
@@ -73,5 +74,16 @@ class TypeChain:
             title=" ".join(self.labels),
             xaxis_title='Paradigm',
             yaxis_title='Functional Score',)
+
+        if show_mean == True:
+            score_mean = np.mean(self.func_scores)
+            fig.add_shape(
+                type="line",
+                x0=0, x1 = self.len-1, y0 = score_mean, y1 = score_mean, 
+                line=dict(
+                    color="LightSeaGreen",
+                    width=2,
+                    dash="dash",
+                ))  
 
         return fig
