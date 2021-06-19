@@ -1,4 +1,4 @@
-from .syntagmatic import Chain
+from .syntagmatic import Chain, Tree
 from .paradigmatic import ParadigmChain
 from .typing import TypeChain
 
@@ -8,6 +8,8 @@ class Text:
 
         self.chain = Chain(input_chain,semiotic)
         semiotic.syntagmatic.tokenizer(self.chain)
+
+        self.tree = Tree(self.chain.tokens)
 
         semiotic.paradigmatic.paradigmatizer(self.chain)
         self.parad_chain = ParadigmChain(self.chain)
