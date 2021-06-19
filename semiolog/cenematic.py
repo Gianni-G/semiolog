@@ -1,7 +1,7 @@
 from thinc.api import Config
 
 from . import paths
-from .vocabulary import Vocabulary
+from .vocabulary import Vocabulary, nGram
 from .syntagmatic import Syntagmatic
 from .paradigmatic import Paradigmatic
 from .typing import Typing
@@ -14,6 +14,7 @@ class Cenematic:
         self.name = name
         self.config = Config().from_disk(paths.corpora / name / "config.cfg")
         self.vocab = Vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
+        self.ng2 = nGram(paths.corpora / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 
         self.syntagmatic = Syntagmatic(self)
         self.paradigmatic = Paradigmatic(self)
@@ -28,17 +29,9 @@ class Cenematic:
     def __repr__(self) -> str:
         return f"Cenematic({self.name})"
 
-    
     def __call__(self,input_chain):
         return Text(input_chain,self)
 
-
-
-    # def paradigmatic(self, chain):
-        
-    #     if isinstance(chain,str):
-    #         chain = Chain(chain, self)
-    #     return ParadigmChain(chain,self.unmasker)
 
     def test_sents(self,filename = None):
     
