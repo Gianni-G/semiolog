@@ -11,8 +11,8 @@ class Text:
 
         self.tree = Tree(self.chain.tree_tokens)
 
-        # semiotic.paradigmatic.paradigmatizer(self.chain)
-        # self.parad_chain = ParadigmChain(self.chain)
+        semiotic.paradigmatic.paradigmatizer(self.chain)
+        self.parad_chain = ParadigmChain(self.chain)
 
-        # semiotic.typing.typer(self.parad_chain)
-        # self.type_chain = TypeChain(self.parad_chain)
+        semiotic.typing.typer(self.parad_chain)
+        self.type_chain = TypeChain(self.parad_chain)
