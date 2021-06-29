@@ -1,4 +1,7 @@
 import string
+import unicodedata
+
+punctuation = "...—•…–’"
 
 class Normalizer:
     """
@@ -33,6 +36,23 @@ class Sequence(Normalizer):
             output = normalizer_component.normalize(output)
         return output
 
+
+class NFKD(Normalizer):
+    """
+    NFKD Normalizer using unicodedata module
+
+    Args:
+        Normalizer ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def normalize(self, input_string: str):
+        return unicodedata.normalize("NFKD", input_string)
+
 class Lowercase(Normalizer):
     """
     """
@@ -50,7 +70,7 @@ class StripPunctuation(Normalizer):
         super().__init__()
     
     def normalize(self, input_string: str):
-        return input_string.translate(str.maketrans('', '', string.punctuation))
+        return input_string.translate(str.maketrans('', '', string.punctuation+punctuation))
 
 class StripWhitespaces(Normalizer):
     """

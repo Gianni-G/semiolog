@@ -1,6 +1,7 @@
 from scipy.stats import entropy
 import numpy as np
 import string
+from ..syntagmatic.tokenizer import normalizers
 from collections import Counter, defaultdict
 from math import log
 
@@ -91,7 +92,7 @@ class Paradigmatizer:
         sent_mask = [" ".join([token.label for token in chain.mask(i)]) for i in range(chain.len)]
         parads = []
         for sent in sent_mask:
-            parad = {i['token_str'].replace("#",""):i['score'] for i in chain.semiotic.paradigmatic.unmasker(sent) if exclude_punctuation and i['token_str'] not in string.punctuation+"...—•…–’"}
+            parad = {i['token_str'].replace("#",""):i['score'] for i in chain.semiotic.paradigmatic.unmasker(sent) if exclude_punctuation and i['token_str'] not in string.punctuation+normalizers.punctuation}
             parads.append(Paradigm(parad,chain.semiotic,chain.semiotic.config["paradigmatic"]["cumulative_sum_threshold"]))
 
         chain.paradigms = parads
