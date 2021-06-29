@@ -3,6 +3,7 @@ from ...functive import Functive
 from math import log
 
 import networkx as nx
+from nltk.tokenize import sent_tokenize
         
 
 class Processor:
@@ -241,3 +242,22 @@ class StripWhitespaces(Processor):
             token.head = tree_root
 
         return tokens
+
+class SentencesNLTK(Processor):
+    """
+    NLTK sentence tokenizer. Used for the normalization of initial datasets
+    """
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def process(self, sequence: str, semiotic=None, is_pretokenized=False):
+        
+        if is_pretokenized == False:
+            return sent_tokenize(sequence)
+        else:
+            sentences = []
+            for pre_token in sequence:
+                nltk_sents = sent_tokenize(pre_token)
+                for sent in nltk_sents:
+                    sentences.append(sent)
+            return sentences

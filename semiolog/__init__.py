@@ -1,20 +1,18 @@
 from typing import Union, Iterable, Dict, Any
 from pathlib import Path
 
-from . import cenematic
+from .cenematic import Cenematic
+from .corpus import Corpus
 
 def load(
     name: Union[str, Path],
-    ) -> cenematic.Cenematic:
+    ) -> Cenematic:
     """
     Load a SemioLog model from an installed corpus or a local path
 
     RETURNS (Cenematic): the loaded semiolog object
     """
 
-    return cenematic.Cenematic(
+    return Cenematic(
         name
     )
-
-
-# test_sent = "i have made my plans and i must stick to them"

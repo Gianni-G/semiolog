@@ -19,3 +19,12 @@ class disable:
 
     def post_process(self, sequence):
         return sequence
+
+class WikiFR(PostProcessor):
+    
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def post_process(self, sentences):
+
+        return {sent for sent in set(sentences) if not sent.startswith(("thumb|","Catégorie:"))}
