@@ -27,4 +27,13 @@ class WikiFR(PostProcessor):
     
     def post_process(self, sentences):
 
-        return {sent for sent in set(sentences) if not sent.startswith(("thumb|","Catégorie:"))}
+        return {sent for sent in set(sentences)
+                if
+                all([
+                not sent.startswith(("Catégorie:")),
+                " " in sent,
+                "│" not in sent,
+                "|" not in sent,
+                "─o" not in sent,
+                ])
+                }

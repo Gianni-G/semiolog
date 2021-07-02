@@ -12,9 +12,9 @@ class Cenematic:
     
     def __init__(self,name) -> None:
         self.name = name
-        self.config = Config().from_disk(paths.corpora / name / "config.cfg")
-        self.vocab = Vocabulary(paths.corpora / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
-        self.ng2 = nGram(paths.corpora / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
+        self.config = Config().from_disk(paths.examples / name / "config.cfg")
+        self.vocab = Vocabulary(paths.examples / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
+        self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 
         self.syntagmatic = Syntagmatic(self)
         self.paradigmatic = Paradigmatic(self)
@@ -38,7 +38,7 @@ class Cenematic:
         if filename == None:
             filename = self.config["general"]["testSentences"]
 
-        with open(paths.corpora / self.name / "_sentences_" / f"{filename}.txt", "r") as f:
+        with open(paths.examples / self.name / "_sentences_" / f"{filename}.txt", "r") as f:
             sents = []
             for line in f.readlines():
                 sents.append(line.rstrip())

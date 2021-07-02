@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-corpora = Path("././examples")
+# TODO: Create all the directories referred to here
+
+examples = Path("././examples")
+corpora = Path("././corpora")
 
 # # import config
 # import os

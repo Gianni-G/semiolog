@@ -24,6 +24,8 @@ import plotly.graph_objects as go
 
 def partition(lst, n_of_parts):
     """Partitions list in n parts."""
+    if not isinstance(lst,list):
+        lst = list(lst)
     chunk_size = math.ceil(len(lst) / n_of_parts)
     for i in range(0, len(lst), chunk_size):
         yield lst[i : i + chunk_size]
@@ -58,6 +60,13 @@ def str2txt(input: str, filename: str, directory: str):
     with open(f"{directory}{filename}.txt", "w") as nf:
         nf.write(input)
 
+def list2txt(input: list, filename: str = "text_list", directory = None):
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+    with open(f"{directory}/{filename}.txt", "w") as nf:
+        for element in input:
+            nf.write(element+"\n")
+
 def subsequences(sequence, n: int):
     list_of_tuples = [tuple(sequence[i:i+n]) for i in range(len(sequence)-n+1)]
     return list_of_tuples
@@ -69,10 +78,6 @@ def list2csv(input: list, filename: str, directory: str):
         wr = csv.writer(nf, quoting=csv.QUOTE_ALL)
         wr.writerows(input)
 
-def take(n, iterable):
-    """Return first n items of the iterable as a list"""
-    return list(itertools.islice(iterable, n))
-
 def csv2list(file: str, directory: str, n_start=None, n_end=None):
     if not os.path.isdir(directory):
         os.mkdir(directory)
@@ -83,6 +88,10 @@ def csv2list(file: str, directory: str, n_start=None, n_end=None):
             for line in take(n_end, csv_reader)
         ]
     return my_list[n_start:n_end]
+
+def take(n, iterable):
+    """Return first n items of the iterable as a list"""
+    return list(itertools.islice(iterable, n))
 
 def marginalize(joint_dist:dict,side="left"):
     print(f"Marginalizing to the {side}")

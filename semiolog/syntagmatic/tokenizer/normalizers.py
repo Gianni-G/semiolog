@@ -37,6 +37,22 @@ class Sequence(Normalizer):
         return output
 
 
+class NFKC(Normalizer):
+    """
+    NFKC Normalizer using unicodedata module
+
+    Args:
+        Normalizer ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def normalize(self, input_string: str):
+        return unicodedata.normalize("NFKC", input_string)
+
 class NFKD(Normalizer):
     """
     NFKD Normalizer using unicodedata module
