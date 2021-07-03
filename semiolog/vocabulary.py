@@ -136,5 +136,6 @@ def build(
     vocabulary = Counter(chain.split()).most_common()
         
     if special_tokens != None:
-        vocabulary = [(token,0) for token in special_tokens].append(vocabulary)
+        vocabulary = vocabulary + [(token,0) for token in special_tokens]
+        
     return (vocabulary,merges)
