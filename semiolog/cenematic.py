@@ -1,4 +1,3 @@
-from thinc.api import Config
 import os
 
 from .paths import Paths
@@ -12,28 +11,29 @@ from .config import Config
 
 class Cenematic:
     
-    def __init__(self,name) -> None:
+    def __init__(self,name,empty=False) -> None:
 
         self.name = name
         self.paths = Paths(self.name)
+        self.config = Config(self)
+        # self.vocab = Vocabulary()
+        # self.ng2 = nGram()
 
-        if not os.path.isdir(self.paths.semiotic):
-            self.config = Config(self)
-            # self.vocab = Vocabulary()
-            # self.ng2 = nGram()
+        # self.syntagmatic = Syntagmatic(self)
+        # self.paradigmatic = Paradigmatic(self)
+        # self.typing = Typing(self)
+
+        if os.path.isdir(self.paths.semiotic) and empty == False:
+            self.config.from_file(self.paths.semiotic)
+            pass
+            # self.config = Config.from_file(self.paths)
+            
+            # self.vocab = Vocabulary(paths.examples / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
+            # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 
             # self.syntagmatic = Syntagmatic(self)
             # self.paradigmatic = Paradigmatic(self)
             # self.typing = Typing(self)
-
-        else:
-            self.config = Config().from_disk(paths.examples / name / "config.cfg")
-            self.vocab = Vocabulary(paths.examples / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
-            self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
-
-            self.syntagmatic = Syntagmatic(self)
-            self.paradigmatic = Paradigmatic(self)
-            self.typing = Typing(self)
         
 
         # # Load universal dependencies (ud) and constituency parsing (cp) models

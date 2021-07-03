@@ -10,7 +10,9 @@ class Paths:
         self.semiotic = self.models / name
         self.corpus = self.models / name / "corpus"
         self.vocabulary = self.models / name / "vocabulary"
-
+        
+    def __repr__(self) -> str:
+        return str(self.__dict__)
 
 
 # # import config

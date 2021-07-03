@@ -53,6 +53,10 @@ def dict2json(input: dict, filename: str, directory: str):
     with open(f"{directory}/{filename}.json", 'w') as json_file:
         json.dump(input, json_file,ensure_ascii=False)
 
+def json2dict(filename, directory):
+    with open(f"{directory}/{filename}.json") as json_file:
+        data = json.load(json_file)
+    return data
 
 def str2txt(input: str, filename: str, directory: str):
     if not os.path.isdir(directory):

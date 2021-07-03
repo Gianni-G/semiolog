@@ -1,4 +1,4 @@
-from .util_g import dict2json
+from .util_g import dict2json, json2dict
 from .paths import Paths
 
 class Config:
@@ -6,8 +6,8 @@ class Config:
     def __init__(self, semiotic) -> None:
         self.general = General(semiotic.name)
         self.vocabulary = Vocabulary()
-        self.chain = Chain()
-        self.paradigm = Paradigm()
+        self.syntagmatic = Syntagmatic()
+        self.paradigmatic = Paradigmatic()
         self.evaluation = Evaluation()
 
         self.paths = Paths(self.general.name)
@@ -23,6 +23,15 @@ class Config:
         config_dict = {k: v.__dict__ for k,v in self.__dict__.items()if k != "paths"}
 
         dict2json(config_dict,"config", self.paths.semiotic)
+    
+    def from_file(self,paths):
+        config_dict = json2dict("config",paths)
+        
+        for section in config_dict:
+            print(section)
+            for key in config_dict[section]:
+                print(f"{key}: {config_dict[section][key]}")
+                setattr(eval(f"self.{section}"), key, config_dict[section][key])
 
 class General:
     def __init__(self,name) -> None:
@@ -38,6 +47,9 @@ class Vocabulary:
         self.vocFileName = None
         self.nGramFileName = None
         self.specialTokens = None
+    
+    def __repr__(self) -> str:
+        return str(self.__dict__)
         
 class Syntagmatic:
     """
