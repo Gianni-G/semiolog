@@ -1,7 +1,6 @@
 from datasets import load_dataset
 import sklearn
 
-from . import paths
 from .syntagmatic import tokenizer
 from .util_g import list2txt
 
@@ -54,19 +53,19 @@ class Corpus:
         self.dev_len = len(self.dev)
         self.test_len = len(self.test)
         
-    def save(self,corpus_name):
-        list2txt(self.train,"train", paths.corpora / corpus_name)
-        list2txt(self.dev,"dev", paths.corpora / corpus_name)
-        list2txt(self.test,"test", paths.corpora / corpus_name)
-            
+    def save(self,corpus_name, path):
+        list2txt(self.train,"train", path)
+        list2txt(self.dev,"dev", path)
+        list2txt(self.test,"test", path)
+
             
 
-def load_corpus(corpus_name: str,path=paths.corpora):
+def load_corpus(corpus_name: str,path):
     
     dataset = load_dataset('text', data_files={
-        'train': str(path / corpus_name / "train.txt"),
-        'test': str(path / corpus_name / "test.txt"),
-        'dev': str(path / corpus_name / "dev.txt"),
+        'train': str(path / "train.txt"),
+        'test': str(path / "test.txt"),
+        'dev': str(path / "dev.txt"),
         })
     
     return Corpus(dataset,length = None, saved_corpus = True)

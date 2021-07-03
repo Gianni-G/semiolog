@@ -4,8 +4,14 @@ from pathlib import Path
 
 # TODO: Create all the directories referred to here
 
-examples = Path("././examples")
-corpora = Path("././corpora")
+class Paths:
+    def __init__(self, name) -> None:
+        self.models = Path("././models")
+        self.semiotic = self.models / name
+        self.corpus = self.models / name / "corpus"
+        self.vocabulary = self.models / name / "vocabulary"
+
+
 
 # # import config
 # import os
