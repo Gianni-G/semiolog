@@ -13,8 +13,8 @@ class Config:
         self.paths = Paths(self.general.name)
 
 
-    # def __repr__(self) -> str:
-    #     return str(self.__dict__)
+    def __repr__(self) -> str:
+        return str(self.__dict__)
 
     def save(self):
         """
@@ -30,35 +30,44 @@ class General:
         # self.paths = Paths(name)
         self.testSentences = None
     
-    # def __repr__(self) -> str:
-    #     return str(self.__dict__)
+    def __repr__(self) -> str:
+        return str(self.__dict__)
 
 class Vocabulary:
     def __init__(self) -> None:
         self.vocFileName = None
-
-    # def __repr__(self) -> str:
-    #     return str(self.__dict__)
-
-class Chain:
-    def __init__(self) -> None:
-        self.segType = None
+        self.nGramFileName = None
+        self.specialTokens = None
+        
+class Syntagmatic:
+    """
+    Possible Normalizers: "NFKD","Lowercase","StripPunctuation","StripWhitespaces"
     
-    # def __repr__(self) -> str:
-    #     return str(self.__dict__)
+    Possible Processors: "SequenceSLG" "TreeSLG", "StripWhitespaces"m
+    """
+    def __init__(self) -> None:
+        self.normalizer = None
+        self.pre_tokenizer = None
+        self.processor = None
+        self.post_processor = None
 
-class Paradigm:
+    def __repr__(self) -> str:
+        return str(self.__dict__)
+
+class Paradigmatic:
     def __init__(self) -> None:
         self.model = None
         self.top_k = None
+        self.exclude_punctuation = None
+        self.cumulative_sum_threshold = None
     
-    # def __repr__(self) -> str:
-    #     return str(self.__dict__)
+    def __repr__(self) -> str:
+        return str(self.__dict__)
 
 class Evaluation:
     def __init__(self) -> None:
         self.ud_model = None
         self.cp_model = None
     
-    # def __repr__(self) -> str:
-    #     return str(self.__dict__)
+    def __repr__(self) -> str:
+        return str(self.__dict__)
