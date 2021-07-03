@@ -8,4 +8,5 @@ lsf.*
 **/.DS_Store
 
 examples/*
+corpora/*
 !examples/en_bnc
