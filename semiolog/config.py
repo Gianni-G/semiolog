@@ -28,9 +28,7 @@ class Config:
         config_dict = json2dict("config",paths)
         
         for section in config_dict:
-            print(section)
             for key in config_dict[section]:
-                print(f"{key}: {config_dict[section][key]}")
                 setattr(eval(f"self.{section}"), key, config_dict[section][key])
 
 class General:
