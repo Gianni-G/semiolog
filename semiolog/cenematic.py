@@ -22,7 +22,6 @@ class Cenematic:
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
-        # self.syntagmatic = Syntagmatic(self)
 
 
         # self.ng2 = nGram()
@@ -34,6 +33,7 @@ class Cenematic:
             self.config.from_file()
             self.corpus.from_file()
             self.vocab.from_file()
+            self.syntagmatic = Syntagmatic(self)
 
             # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 

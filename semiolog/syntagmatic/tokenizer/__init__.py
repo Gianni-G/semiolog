@@ -8,15 +8,18 @@ class Tokenizer:
     """
 
     def __init__(self,semiotic) -> None:
-        config = semiotic.config["syntagmatic"]
-        if isinstance(config['normalizer'],list):
-            self.normalizer = normalizers.Sequence(config['normalizer'])
+
+        self.config = semiotic.config.syntagmatic
+        
+        if isinstance(self.config.normalizer,list):
+            self.normalizer = normalizers.Sequence(self.config.normalizer)
         else:
-            self.normalizer = eval(f"normalizers.{config['normalizer']}()")
-        self.pre_tokenizer = eval(f"pre_tokenizers.{config['pre_tokenizer']}()")
+            self.normalizer = eval(f"normalizers.{self.config.normalizer}()")
+        
+        self.pre_tokenizer = eval(f"pre_tokenizers.{self.config.pre_tokenizer}()")
         self.is_pretokenized = False if self.pre_tokenizer == pre_tokenizers.PreTokenizer else True
-        self.processor = eval(f"processors.{config['processor']}()")
-        self.post_processor = eval(f"post_processors.{config['post_processor']}()")
+        self.processor = eval(f"processors.{self.config.processor}()")
+        self.post_processor = eval(f"post_processors.{self.config.post_processor}()")
 
     def encoder(self,input_string):
         pass

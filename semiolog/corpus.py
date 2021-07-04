@@ -1,6 +1,7 @@
 from datasets import load_dataset
 import sklearn
 from os.path import isfile
+from tqdm.notebook import tqdm
 
 from .syntagmatic import tokenizer
 from .util_g import list2txt, txt2list
@@ -29,25 +30,27 @@ class Corpus:
             self.test_len = None
         
 
-    def from_file(self, path = None):
+    def from_file(self, path = None, test_only = False):
 
         if path == None:
             path = self.path
         
-        splits = ["train","dev","test"]
+        splits = ["train","dev","test"] if test_only == False else ["dev","test"]
         filenames = [(path / f"{fn}.txt") for fn in splits]
         
         for filename in filenames:
             if not isfile(filename):
                 return print(f"Warning: {filename} does not exist.\nCorpus will not be loaded from file.\n")
 
-        self.train = txt2list("train", self.path)
         self.test = txt2list("test", self.path)
         self.dev = txt2list("dev", self.path)
 
-        self.train_len = len(self.train)
         self.dev_len = len(self.dev)
         self.test_len = len(self.test)
+
+        if not test_only:
+            self.train = txt2list("train", self.path)
+            self.train_len = len(self.train)
 
     def load_dataset(self,dataset = None):
         if dataset == None:
@@ -63,6 +66,7 @@ class Corpus:
         dataset_name = None,
         length = None,
         save = False,
+        progress_bar = True,
         ):
         
         if dataset_name == None:
@@ -89,7 +93,7 @@ class Corpus:
             
             # TODO: the following could be parallelized but so far no efficiency gain
             sentences = []
-            for document in input:
+            for document in tqdm(input, disable = not progress_bar):
                 normal = tokenizer.normalizers.NFKC.normalize(None,document)
                 pre_token = tokenizer.pre_tokenizers.Layout.pre_tokenize(None,normal)
                 process = tokenizer.processors.SentencesNLTK.process(None,pre_token,is_pretokenized=True)

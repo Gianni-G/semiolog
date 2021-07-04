@@ -1,7 +1,7 @@
 from collections import Counter
 import csv
 from typing import Union, Iterable, Dict, Any
-from tqdm.notebook import trange
+from tqdm.notebook import trange, tqdm
 import regex as re
 from os.path import isfile
 
@@ -44,7 +44,7 @@ class Vocabulary:
             if not isfile(filename):
                 return print(f"Warning: {filename} does not exist.\nVocabulary will not be loaded from file.\n")
         
-        self.merges = util_g.txt2list("merges",path)
+        self.merges = util_g.txt2list("merges",path)[1:] # The first line needs to be stripped
         self.encode = util_g.json2dict("vocab",path)
         self.freq = util_g.json2dict("freq",path)
 
@@ -65,10 +65,10 @@ class Vocabulary:
          return self.prob[item]
 
     def head(self,size=10):
-        return self.freq.items()[:size]
+        return list(self.freq.items())[:size]
     
     def tail(self,size=10):
-        return self.freq.items()[-size:]
+        return list(self.freq.items())[-size:]
 
     def alphabetic(self):
         pass
@@ -79,15 +79,19 @@ class Vocabulary:
     def values(self):
         pass
     
-    #TODO: Add possibility of enlarging existing training starting from merges
-    
     def build(
         self,
         corpus = None,
         vocab_size = None,
         special_tokens = None,
-        save = False
+        save = False,
+        progress_bar = True,
+        resume_merges = False,
         ):
+        """
+        Build vocabulary from a Corpus.
+        Vocabularies can be extended by providing an existing merging list. If resume_merges = True, the current merges in self.merges will be used. Otherwise one can provide a list of merges as value of resume_merges.
+        """
         
         if corpus == None:
             corpus = self.name
@@ -117,14 +121,25 @@ class Vocabulary:
         
         chain = " ".join(chain)
         
+        if resume_merges != False:
+            if resume_merges == True:
+                merges = self.merges
+            elif isinstance(resume_merges,list):
+                merges = resume_merges
+            
+            for pair in tqdm(merges, desc = "Resuming Existing Vocabulary",disable = not progress_bar):
+                chain = agglutinate_chain(tuple(pair.split()),chain)
+        else:
+            merges = []
+        
         vocabulary = Counter(chain.split()).most_common()
         
         special_tokens_len = 0 if special_tokens == None else len(special_tokens)
         voc_len = len(vocabulary) + special_tokens_len
         pair = vocabulary[0][0]
         
-        merges = []
-        t = trange(vocab_size - voc_len, leave=True)
+        
+        t = trange(vocab_size - voc_len, disable = not progress_bar)
         for i in t:
             t.set_description(f"Pair: {pair})\t")
             t.refresh()
