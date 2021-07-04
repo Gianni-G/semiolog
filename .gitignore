@@ -7,6 +7,6 @@ lsf.*
 .vscode/
 **/.DS_Store
 
+models/*
 examples/*
-corpora/*
 !examples/en_bnc
