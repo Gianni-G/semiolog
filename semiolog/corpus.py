@@ -3,7 +3,7 @@ import sklearn
 from os.path import isfile
 
 from .syntagmatic import tokenizer
-from .util_g import list2txt
+from .util_g import list2txt, txt2list
 
 
 class Corpus:
@@ -41,13 +41,9 @@ class Corpus:
             if not isfile(filename):
                 return print(f"Warning: {filename} does not exist.\nCorpus will not be loaded from file.\n")
 
-        dataset = load_dataset('text', data_files={
-            k:str(fn) for k,fn in zip(splits,filenames)
-            })
-        
-        self.train = dataset["train"]["text"]
-        self.test = dataset["test"]["text"]
-        self.dev = dataset["dev"]["text"]
+        self.train = txt2list("train", self.path)
+        self.test = txt2list("test", self.path)
+        self.dev = txt2list("dev", self.path)
 
         self.train_len = len(self.train)
         self.dev_len = len(self.dev)
