@@ -3,6 +3,7 @@ import csv
 from typing import Union, Iterable, Dict, Any
 from tqdm.notebook import trange
 import regex as re
+from os.path import isfile
 
 from . import util_g
 from .syntagmatic import tokenizer
@@ -14,8 +15,12 @@ class Vocabulary:
     
     def __init__(self,semiotic):
         
+        #TODO: Is there another way than loading the corpus (or the semiotic) here?
+        self.corpus = semiotic.corpus
+        
         self.name = semiotic.name
         self.path = semiotic.paths.vocabulary
+        self.config = semiotic.config.vocabulary
         
         self.merges = None
         self.encode = None
@@ -31,7 +36,14 @@ class Vocabulary:
     def from_file(self,path = None):
         if path == None:
             path = self.path
-            
+
+
+        filenames = [(path / fn) for fn in ["merges.txt","vocab.json","freq.json"]]
+        
+        for filename in filenames:
+            if not isfile(filename):
+                return print(f"Warning: {filename} does not exist.\nVocabulary will not be loaded from file.\n")
+        
         self.merges = util_g.txt2list("merges",path)
         self.encode = util_g.json2dict("vocab",path)
         self.freq = util_g.json2dict("freq",path)
@@ -69,18 +81,22 @@ class Vocabulary:
     
     #TODO: Add possibility of enlarging existing training starting from merges
     
-    def train(
+    def build(
         self,
-        corpus,
-        vocab_size,
-        special_tokens = [
-            "[PAD]",
-            "[UNK]",
-            "[CLS]",
-            "[SEP]",
-            "[MASK]"
-            ],
+        corpus = None,
+        vocab_size = None,
+        special_tokens = None,
+        save = False
         ):
+        
+        if corpus == None:
+            corpus = self.name
+        
+        if vocab_size == None:
+            vocab_size = self.config.size
+        
+        if special_tokens == None:
+            special_tokens = self.config.special_tokens
         
         #TODO: find_best_pair must be parallelizable, but no gain of efficiency so far
         def find_best_pair(chain_spaced):
@@ -97,7 +113,7 @@ class Vocabulary:
         
         normalizer = tokenizer.normalizers.Sequence(["Lowercase","StripPunctuation","StripWhitespaces"])
         
-        chain = normalizer.normalize("".join(corpus.train))
+        chain = normalizer.normalize("".join(self.corpus.train))
         
         chain = " ".join(chain)
         
@@ -132,11 +148,15 @@ class Vocabulary:
         self.freq_mass = sum(self.freq.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
 
-        return "Vocabulary trained."
+        print("Vocabulary built")
+        
+        if save == True:
+            self.save()
+            print(f"Vocabulary saved to {self.path}")
     
     def save(self):
 
-        version_stamp = f"#version: {slg_version} - Trained by `semiolog`"
+        version_stamp = f"#version: {slg_version} - Built by `semiolog`"
         
         util_g.list2txt([version_stamp]+self.merges,"merges",self.path)
         util_g.dict2json(self.encode,"vocab",self.path)

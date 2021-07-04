@@ -4,4 +4,7 @@ from .tree import Tree
 
 class Syntagmatic:
     def __init__(self,semiotic) -> None:
-        self.tokenizer = Tokenizer(semiotic)
+        
+        self.semiotic = semiotic
+        self.tokenizer = Tokenizer(self.semiotic)
+        

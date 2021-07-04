@@ -1,5 +1,6 @@
 import inspect
 import sys
+from os.path import isfile
 
 from .util_g import dict2json, json2dict
 
@@ -36,6 +37,11 @@ class Config:
     def from_file(self,path = None):
         if path == None:
             path = self.path
+        
+        filename = str(path / "config.json")
+        if not isfile(filename):
+            return print(f"Warning: {filename} does not exist.\Config will not be loaded from file.\n")
+            
         config_dict = json2dict("config",path)
         
         for section in config_dict:
@@ -62,16 +68,30 @@ class General(Section):
     
     def __init__(self, semiotic) -> None:
         self.name = semiotic.name
-        # self.paths = Paths(semiotic.name)
         self.dataset = None
 
 
+class Corpus(Section):
+    
+    def __init__(self, semiotic) -> None:
+        self.dataset = None
+        self.length = None
+        
 class Vocabulary(Section):
     
     def __init__(self, semiotic) -> None:
-        self.vocFileName = None
-        self.nGramFileName = None
-        self.specialTokens = None
+        """
+        By default, the special tokens are:
+        [PAD], [UNK], [CLS], [SEP], [MASK]
+        """
+        self.size = None
+        self.special_tokens = [
+            "[PAD]",
+            "[UNK]",
+            "[CLS]",
+            "[SEP]",
+            "[MASK]"
+            ]
 
         
 class Syntagmatic(Section):
