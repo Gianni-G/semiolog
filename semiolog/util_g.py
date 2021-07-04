@@ -50,8 +50,8 @@ def dict2csv(input: dict, filename: str, path: str):
 def dict2json(input: dict, filename: str, path: str):
     if not os.path.isdir(path):
         os.mkdir(path)
-    with open(f"{path}/{filename}.json", 'w') as json_file:
-        json.dump(input, json_file,ensure_ascii=False)
+    with open(f"{path}/{filename}.json", 'w',encoding='utf-8') as json_file:
+        json.dump(input, json_file,indent=4, ensure_ascii=False)
 
 def json2dict(filename, path):
     with open(f"{path}/{filename}.json") as json_file:

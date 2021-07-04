@@ -8,7 +8,7 @@ from . import util_g
 from .syntagmatic import tokenizer
 
 # TODO: Solve version as global variable
-version = "0.1"
+slg_version = "0.1"
 
 class Vocabulary:
     
@@ -68,6 +68,7 @@ class Vocabulary:
         pass
     
     #TODO: Add possibility of enlarging existing training starting from merges
+    
     def train(
         self,
         corpus,
@@ -135,7 +136,7 @@ class Vocabulary:
     
     def save(self):
 
-        version_stamp = f"#version: {version} - Trained by `semiolog`"
+        version_stamp = f"#version: {slg_version} - Trained by `semiolog`"
         
         util_g.list2txt([version_stamp]+self.merges,"merges",self.path)
         util_g.dict2json(self.encode,"vocab",self.path)

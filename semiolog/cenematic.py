@@ -27,10 +27,7 @@ class Cenematic:
         if os.path.isdir(self.paths.semiotic) and empty == False:
             self.config.from_file()
             self.vocab.from_file()
-            pass
-            # self.config = Config.from_file(self.paths)
-            
-            # self.vocab = Vocabulary(paths.examples / name / "vocabularies" / self.config["vocabulary"]["vocFileName"])
+
             # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 
             # self.syntagmatic = Syntagmatic(self)
