@@ -1,46 +1,46 @@
 from collections import Counter
 import csv
 from typing import Union, Iterable, Dict, Any
-from pathlib import Path
 from tqdm.notebook import trange
 import regex as re
 
 from . import util_g
 from .syntagmatic import tokenizer
 
+# TODO: Solve version as global variable
+version = "0.1"
+
 class Vocabulary:
-    def __init__(self,filename = None,special_tokens = None): # TODO: Handle special tokens
-        if filename != None:
-                
-            with open(filename, "r") as f:
-                csv_reader = csv.reader(f)
-                voc = Counter()
-                for line in csv_reader:
-                    voc[line[0]] = int(line[1])
-                voc = dict(voc.most_common())
+    
+    def __init__(self,semiotic):
+        
+        self.name = semiotic.name
+        self.path = semiotic.paths.vocabulary
+        
+        self.merges = None
+        self.encode = None
+        self.freq = None
+        
+        self.decode = None
+        
+        self.len = None
+        self.freq_mass = None
+        self.prob = None
 
-            self.filename = filename
-            self.len = len(voc)
-            self.freq = voc
-            self.freq_mass = sum(voc.values())
-            self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
 
-            self.encode = {k:i for i,(k,v) in enumerate(voc.items())}
-            self.decode = {i:k for k,i in self.encode.items()}
+    def from_file(self,path = None):
+        if path == None:
+            path = self.path
             
-        else:
-            self.filename = "vocab"
-            
-            self.len = None
-            self.freq = None
-            self.freq_mass = None
-            self.prob = None
+        self.merges = util_g.txt2list("merges",path)
+        self.encode = util_g.json2dict("vocab",path)
+        self.freq = util_g.json2dict("freq",path)
 
-            self.merges = None
-
-            self.encode = None
-            self.decode = None
-
+        self.decode = {i:k for k,i in self.encode.items()}
+        
+        self.len = len(self.encode)
+        self.freq_mass = sum(self.freq.values())
+        self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
 
 
     def __repr__(self) -> str:
@@ -67,6 +67,7 @@ class Vocabulary:
     def values(self):
         pass
     
+    #TODO: Add possibility of enlarging existing training starting from merges
     def train(
         self,
         corpus,
@@ -119,30 +120,26 @@ class Vocabulary:
             
         if special_tokens != None:
             vocabulary = vocabulary + [(token,0) for token in special_tokens]
-        
-        self.len = len(vocabulary)
+
+        self.merges = merges
+        self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
         self.freq = dict(vocabulary)
+
+        self.decode = {i:k for k,i in self.encode.items()}
         
-        
+        self.len = len(vocabulary)     
         self.freq_mass = sum(self.freq.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
 
-        self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
-        self.decode = {i:k for k,i in self.encode.items()}
-        
-        self.merges = merges
-            
         return "Vocabulary trained."
     
-    def save(self,filename = None, directory=None):
-        if filename == None:
-            filename = self.filename
-            
-        slg_version = f"#version: 0.1 - Trained by `semiolog`" #TODO: Establish a general parameter for the package version
+    def save(self):
+
+        version_stamp = f"#version: {version} - Trained by `semiolog`"
         
-        util_g.list2txt([slg_version]+self.merges,filename+"-merges",directory)
-        util_g.dict2json(self.encode,filename+"-vocab",directory)
-        util_g.dict2json(self.freq,filename+"-freq",directory)
+        util_g.list2txt([version_stamp]+self.merges,"merges",self.path)
+        util_g.dict2json(self.encode,"vocab",self.path)
+        util_g.dict2json(self.freq,"freq",self.path)
         
 
 

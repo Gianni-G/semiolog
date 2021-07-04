@@ -1,10 +1,10 @@
 from typing import Union, Iterable, Dict, Any
 from pathlib import Path
+from datasets import load_dataset #needed
 
-from .paths import Paths
+from .cenematic import Cenematic #needed
+from .corpus import Corpus #needed
 
-from .cenematic import Cenematic
-from .corpus import Corpus
 
 def load(
     name: Union[str, Path],

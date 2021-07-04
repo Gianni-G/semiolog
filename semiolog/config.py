@@ -1,16 +1,20 @@
 from .util_g import dict2json, json2dict
 from .paths import Paths
 
+# TODO: Solve version as global variable
+version = "0.1"
+
 class Config:
     
     def __init__(self, semiotic) -> None:
+        self.system = System()
         self.general = General(semiotic.name)
         self.vocabulary = Vocabulary()
         self.syntagmatic = Syntagmatic()
         self.paradigmatic = Paradigmatic()
         self.evaluation = Evaluation()
 
-        self.paths = Paths(self.general.name)
+        self.path = semiotic.paths.semiotic
 
 
     def __repr__(self) -> str:
@@ -20,16 +24,22 @@ class Config:
         """
         Saves the configuration asa JSON file in the root of the current model. Paths are not saved
         """
-        config_dict = {k: v.__dict__ for k,v in self.__dict__.items()if k != "paths"}
+        config_dict = {k: v.__dict__ for k,v in self.__dict__.items() if k != "paths"}
 
-        dict2json(config_dict,"config", self.paths.semiotic)
+        dict2json(config_dict,"config", self.path.semiotic)
     
-    def from_file(self,paths):
-        config_dict = json2dict("config",paths)
+    def from_file(self,path = None):
+        if path == None:
+            path = self.path
+        config_dict = json2dict("config",path)
         
         for section in config_dict:
             for key in config_dict[section]:
                 setattr(eval(f"self.{section}"), key, config_dict[section][key])
+
+class System:
+    def __init__(self) -> None:
+        self.version = version
 
 class General:
     def __init__(self,name) -> None:

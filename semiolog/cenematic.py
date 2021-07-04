@@ -15,8 +15,9 @@ class Cenematic:
 
         self.name = name
         self.paths = Paths(self.name)
+        
         self.config = Config(self)
-        # self.vocab = Vocabulary()
+        self.vocab = Vocabulary(self)
         # self.ng2 = nGram()
 
         # self.syntagmatic = Syntagmatic(self)
@@ -24,7 +25,8 @@ class Cenematic:
         # self.typing = Typing(self)
 
         if os.path.isdir(self.paths.semiotic) and empty == False:
-            self.config.from_file(self.paths.semiotic)
+            self.config.from_file()
+            self.vocab.from_file()
             pass
             # self.config = Config.from_file(self.paths)
             

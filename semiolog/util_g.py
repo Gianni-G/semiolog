@@ -40,36 +40,41 @@ def multithreading(func, args, cores=None):
         result = executor.map(func, args)
     return list(result)
 
-def dict2csv(input: dict, filename: str, directory: str):
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    with open(f"{directory}{filename}.csv", "w") as nf:
+def dict2csv(input: dict, filename: str, path: str):
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    with open(f"{path}{filename}.csv", "w") as nf:
         for key in input.keys():
             nf.write(f"{key},{input[key]}\n")
 
-def dict2json(input: dict, filename: str, directory: str):
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    with open(f"{directory}/{filename}.json", 'w') as json_file:
+def dict2json(input: dict, filename: str, path: str):
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    with open(f"{path}/{filename}.json", 'w') as json_file:
         json.dump(input, json_file,ensure_ascii=False)
 
-def json2dict(filename, directory):
-    with open(f"{directory}/{filename}.json") as json_file:
+def json2dict(filename, path):
+    with open(f"{path}/{filename}.json") as json_file:
         data = json.load(json_file)
     return data
 
-def str2txt(input: str, filename: str, directory: str):
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    with open(f"{directory}{filename}.txt", "w") as nf:
+def str2txt(input: str, filename: str, path: str):
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    with open(f"{path}{filename}.txt", "w") as nf:
         nf.write(input)
 
-def list2txt(input: list, filename: str = "text_list", directory = None):
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    with open(f"{directory}/{filename}.txt", "w") as nf:
+def list2txt(input: list, filename: str = "text_list", path = None):
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    with open(f"{path}/{filename}.txt", "w") as nf:
         for element in input:
             nf.write(element+"\n")
+            
+def txt2list(filename, path):
+    with open(f"{path}/{filename}.txt") as txt_file:
+        txt_list = [line.strip() for line in txt_file]
+    return txt_list
 
 def subsequences(sequence, n: int):
     list_of_tuples = [tuple(sequence[i:i+n]) for i in range(len(sequence)-n+1)]
