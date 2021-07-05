@@ -3,7 +3,8 @@ import csv
 from typing import Union, Iterable, Dict, Any
 from tqdm.auto import trange, tqdm
 import regex as re
-from os.path import isfile
+from os import mkdir
+from os.path import isfile, isdir
 from functools import reduce
 import operator
 from multiprocessing import cpu_count, Pool
@@ -91,6 +92,7 @@ class Vocabulary:
         vocab_size = None,
         special_tokens = None,
         save = False,
+        save_step = None,
         progress_bar = True,
         resume_merges = False,
         parallel = False,
@@ -109,6 +111,15 @@ class Vocabulary:
         
         if special_tokens == None:
             special_tokens = self.config.special_tokens
+        
+        
+        if save == True and save_step != None:
+            saveQ = True
+            
+            if not isdir(self.path):
+                mkdir(self.path)
+                
+            save_steps = {save_step*i for i in range(int(vocab_size/save_step)+1)}
         
         #TODO: find_best_pair must be parallelizable, but no gain of efficiency so far
         def find_best_pair(
@@ -191,7 +202,21 @@ class Vocabulary:
             
             chain = agglutinate_chain(pair[0], chain)
             merges.append(" ".join(pair[0]))
-        
+            
+            if saveQ == True:
+                if voc_len + i + 1 in save_steps:
+                    vocabulary = Counter(chain.split()).most_common()
+                    if special_tokens != None:
+                        vocabulary = vocabulary + [(token,0) for token in special_tokens]
+
+                    self.merges = merges
+                    self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
+                    self.freq = dict(vocabulary)
+                    self.alpha = dict(alphabet)
+                    step_path = self.path / str(voc_len+i+1)
+                    self.save(step_path)
+                    print(f"Intermediate vocabulary saved to {step_path}")
+                    
         vocabulary = Counter(chain.split()).most_common()
             
         if special_tokens != None:
@@ -214,14 +239,17 @@ class Vocabulary:
             self.save()
             print(f"Vocabulary saved to {self.path}")
     
-    def save(self):
-
+    def save(self, path = None):
+        
+        if path == None:
+            path = self.path
+            
         version_stamp = f"#version: {slg_version} - Built by `semiolog`"
         
-        util.list2txt([version_stamp]+self.merges,"merges",self.path)
-        util.dict2json(self.encode,"vocab",self.path)
-        util.dict2json(self.freq,"freq",self.path)
-        util.dict2json(self.alpha,"alpha",self.path)
+        util.list2txt([version_stamp]+self.merges,"merges", path)
+        util.dict2json(self.encode,"vocab", path)
+        util.dict2json(self.freq,"freq", path)
+        util.dict2json(self.alpha,"alpha", path)
         
 
 
