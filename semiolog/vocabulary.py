@@ -25,6 +25,7 @@ class Vocabulary:
         self.merges = None
         self.encode = None
         self.freq = None
+        self.alpha = None
         
         self.decode = None
         
@@ -38,7 +39,7 @@ class Vocabulary:
             path = self.path
 
 
-        filenames = [(path / fn) for fn in ["merges.txt","vocab.json","freq.json"]]
+        filenames = [(path / fn) for fn in ["merges.txt","vocab.json","freq.json","alpha.json"]]
         
         for filename in filenames:
             if not isfile(filename):
@@ -47,6 +48,7 @@ class Vocabulary:
         self.merges = util_g.txt2list("merges",path)[1:] # The first line needs to be stripped
         self.encode = util_g.json2dict("vocab",path)
         self.freq = util_g.json2dict("freq",path)
+        self.alpha = util_g.json2dict("alpha",path)
 
         self.decode = {i:k for k,i in self.encode.items()}
         
@@ -121,6 +123,8 @@ class Vocabulary:
         
         chain = " ".join(chain)
         
+        alphabet = Counter(chain.split()).most_common()
+        
         if resume_merges != False:
             if resume_merges == True:
                 merges = self.merges
@@ -129,10 +133,12 @@ class Vocabulary:
             
             for pair in tqdm(merges, desc = "Resuming Existing Vocabulary",disable = not progress_bar):
                 chain = agglutinate_chain(tuple(pair.split()),chain)
+            vocabulary = Counter(chain.split()).most_common()
+            
         else:
             merges = []
+            vocabulary = alphabet
         
-        vocabulary = Counter(chain.split()).most_common()
         
         special_tokens_len = 0 if special_tokens == None else len(special_tokens)
         voc_len = len(vocabulary) + special_tokens_len
@@ -156,6 +162,7 @@ class Vocabulary:
         self.merges = merges
         self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
         self.freq = dict(vocabulary)
+        self.alpha = dict(alphabet)
 
         self.decode = {i:k for k,i in self.encode.items()}
         
@@ -176,6 +183,7 @@ class Vocabulary:
         util_g.list2txt([version_stamp]+self.merges,"merges",self.path)
         util_g.dict2json(self.encode,"vocab",self.path)
         util_g.dict2json(self.freq,"freq",self.path)
+        util_g.dict2json(self.alpha,"alpha",self.path)
         
 
 
