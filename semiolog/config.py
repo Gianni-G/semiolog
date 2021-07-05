@@ -62,6 +62,7 @@ class System(Section):
     
     def __init__(self, semiotic) -> None:
         self.slg_version = slg_version
+        self.cpu_count = None
 
 
 class General(Section):

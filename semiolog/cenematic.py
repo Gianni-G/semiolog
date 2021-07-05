@@ -1,4 +1,5 @@
 import os
+from multiprocessing import cpu_count
 
 from .paths import Paths
 from .config import Config
@@ -24,6 +25,7 @@ class Cenematic:
         self.paths = Paths(self.name)
         
         self.config = Config(self)
+        self.config.system.cpu_count = cpu_count()
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
@@ -37,6 +39,7 @@ class Cenematic:
 
         if os.path.isdir(self.paths.semiotic) and empty == False:
             self.config.from_file()
+            self.config.system.cpu_count = cpu_count()
             if not config_only:
                 self.corpus.from_file()
                 self.vocab.from_file()
@@ -48,7 +51,8 @@ class Cenematic:
                 # self.paradigmatic = Paradigmatic(self)
                 # self.typing = Typing(self)
         
-
+        
+        
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])
         # self.cp = spacy.load(self.config["evaluation"]["cp_model"])
@@ -59,8 +63,6 @@ class Cenematic:
 
     def __call__(self,input_chain):
         return Text(input_chain,self)
-    
-    
 
 
 

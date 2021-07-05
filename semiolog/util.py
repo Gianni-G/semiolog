@@ -22,6 +22,9 @@ import plotly.graph_objects as go
 
 # Definitions of Functions
 
+def chunk_size(total_n, chunks_n):
+    return math.ceil(total_n / chunks_n)
+
 def partition(lst, n_of_parts):
     """Partitions list in n parts."""
     if not isinstance(lst,list):
@@ -30,14 +33,31 @@ def partition(lst, n_of_parts):
     for i in range(0, len(lst), chunk_size):
         yield lst[i : i + chunk_size]
 
-def multiprocessing(func, args, cores=None):
+# head and chunks taken from https://stackoverflow.com/questions/24527006/split-a-generator-into-chunks-without-pre-walking-it
+
+def head(iterable, max=10):
+    first = next(iterable)      # raise exception when depleted
+    def head_inner():
+        yield first             # yield the extracted first element
+        for cnt, el in enumerate(iterable):
+            yield el
+            if cnt + 1 >= max:  # cnt + 1 to include first
+                break
+    return head_inner()
+
+def chunks(iterable, size=10):
+    iterator = iter(iterable)
+    for first in iterator:
+        yield itertools.chain([first], itertools.islice(iterator, size - 1))
+        
+def multiprocessing(func, args, chunksize=1, cores=None):
     with concurrent.futures.ProcessPoolExecutor(cores) as executor:
-        result = executor.map(func, args)
+        result = executor.map(func, args, chunksize=chunksize)
     return list(result)
 
-def multithreading(func, args, cores=None):
+def multithreading(func, args, chunksize=1,cores=None):
     with concurrent.futures.ThreadPoolExecutor(cores) as executor:
-        result = executor.map(func, args)
+        result = executor.map(func, args, chunksize=chunksize)
     return list(result)
 
 def dict2csv(input: dict, filename: str, path: str):

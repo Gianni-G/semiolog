@@ -1,9 +1,12 @@
 from collections import Counter
 import csv
 from typing import Union, Iterable, Dict, Any
-from tqdm.notebook import trange, tqdm
+from tqdm.auto import trange, tqdm
 import regex as re
 from os.path import isfile
+from functools import reduce
+import operator
+from multiprocessing import cpu_count, Pool
 
 from . import util
 from .syntagmatic import tokenizer
@@ -21,6 +24,7 @@ class Vocabulary:
         self.name = semiotic.name
         self.path = semiotic.paths.vocabulary
         self.config = semiotic.config.vocabulary
+        self.cpu_count = semiotic.config.system.cpu_count
         
         self.merges = None
         self.encode = None
@@ -89,6 +93,8 @@ class Vocabulary:
         save = False,
         progress_bar = True,
         resume_merges = False,
+        parallel = False,
+        parallel_mode = "process"
         ):
         """
         Build vocabulary from a Corpus.
@@ -105,10 +111,37 @@ class Vocabulary:
             special_tokens = self.config.special_tokens
         
         #TODO: find_best_pair must be parallelizable, but no gain of efficiency so far
-        def find_best_pair(chain_spaced):
+        def find_best_pair(
+            chain_spaced,
+            parallel = False,
+            parallel_mode = "process"):
+            
             pre_units = chain_spaced.split()
             pre_units_pairs = zip(pre_units, pre_units[1:])
-            pairs = Counter(pre_units_pairs)
+            
+            if parallel == False:
+                pairs = Counter(pre_units_pairs)
+                
+                return pairs.most_common()[0]
+            else:
+                
+                chunk_size = util.chunk_size(len(pre_units),self.cpu_count)
+                pairs_chunks = util.chunks(pre_units_pairs, chunk_size)
+                
+                if parallel_mode == "thread":
+
+                    # result = util.multithreading(Counter,pre_units_pairs,chunk_size)
+                    
+                    result = util.multithreading(Counter,pairs_chunks)
+                    
+                else:
+                                        
+                    result = util.multiprocessing(Counter,pre_units_pairs,chunk_size) 
+                    
+                    result = util.multiprocessing(Counter,pairs_chunks) 
+                                        
+                pairs = reduce(operator.add, result)
+            
             return pairs.most_common()[0]
 
         def agglutinate_chain(pair, chain_spaced):
@@ -150,7 +183,12 @@ class Vocabulary:
             t.set_description(f"Pair: {pair})\t")
             t.refresh()
 
-            pair = find_best_pair(chain)
+            pair = find_best_pair(
+                chain,
+                parallel = parallel,
+                parallel_mode = parallel_mode
+                )
+            
             chain = agglutinate_chain(pair[0], chain)
             merges.append(" ".join(pair[0]))
         
@@ -218,19 +256,3 @@ class nGram(Vocabulary):
 
     def __getitem__(self, item):
          return self.prob[item]
-    
-
-
-#TODO: This must be parallelizable, but no gain of efficiency so far
-def find_best_pair(chain_spaced):
-    pre_units = chain_spaced.split()
-    pre_units_pairs = zip(pre_units, pre_units[1:])
-    pairs = Counter(pre_units_pairs)
-    return pairs.most_common()[0]
-
-def agglutinate_chain(pair, chain_spaced):
-    bigram = re.escape(" ".join(pair))
-    p = re.compile(r"(?<!\S)" + bigram + r"(?!\S)")
-    new_chain = p.sub("".join(pair), chain_spaced)
-    return new_chain
-
