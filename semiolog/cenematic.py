@@ -13,7 +13,12 @@ from .text import Text
 
 class Cenematic:
     
-    def __init__(self,name,empty=False) -> None:
+    def __init__(
+        self,
+        name,
+        empty=False,
+        config_only = False
+        ) -> None:
 
         self.name = name
         self.paths = Paths(self.name)
@@ -32,15 +37,16 @@ class Cenematic:
 
         if os.path.isdir(self.paths.semiotic) and empty == False:
             self.config.from_file()
-            self.corpus.from_file()
-            self.vocab.from_file()
-            self.syntagmatic = Syntagmatic(self)
+            if not config_only:
+                self.corpus.from_file()
+                self.vocab.from_file()
+                self.syntagmatic = Syntagmatic(self)
 
-            # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
+                # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 
 
-            # self.paradigmatic = Paradigmatic(self)
-            # self.typing = Typing(self)
+                # self.paradigmatic = Paradigmatic(self)
+                # self.typing = Typing(self)
         
 
         # # Load universal dependencies (ud) and constituency parsing (cp) models
