@@ -7,6 +7,8 @@ lsf.*
 .vscode/
 **/.DS_Store
 
+euler_script.py
+
 models/*
 !models/example
 
