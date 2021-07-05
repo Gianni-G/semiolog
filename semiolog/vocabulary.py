@@ -5,7 +5,7 @@ from tqdm.notebook import trange, tqdm
 import regex as re
 from os.path import isfile
 
-from . import util_g
+from . import util
 from .syntagmatic import tokenizer
 
 # TODO: Solve version as global variable
@@ -45,10 +45,10 @@ class Vocabulary:
             if not isfile(filename):
                 return print(f"Warning: {filename} does not exist.\nVocabulary will not be loaded from file.\n")
         
-        self.merges = util_g.txt2list("merges",path)[1:] # The first line needs to be stripped
-        self.encode = util_g.json2dict("vocab",path)
-        self.freq = util_g.json2dict("freq",path)
-        self.alpha = util_g.json2dict("alpha",path)
+        self.merges = util.txt2list("merges",path)[1:] # The first line needs to be stripped
+        self.encode = util.json2dict("vocab",path)
+        self.freq = util.json2dict("freq",path)
+        self.alpha = util.json2dict("alpha",path)
 
         self.decode = {i:k for k,i in self.encode.items()}
         
@@ -180,10 +180,10 @@ class Vocabulary:
 
         version_stamp = f"#version: {slg_version} - Built by `semiolog`"
         
-        util_g.list2txt([version_stamp]+self.merges,"merges",self.path)
-        util_g.dict2json(self.encode,"vocab",self.path)
-        util_g.dict2json(self.freq,"freq",self.path)
-        util_g.dict2json(self.alpha,"alpha",self.path)
+        util.list2txt([version_stamp]+self.merges,"merges",self.path)
+        util.dict2json(self.encode,"vocab",self.path)
+        util.dict2json(self.freq,"freq",self.path)
+        util.dict2json(self.alpha,"alpha",self.path)
         
 
 

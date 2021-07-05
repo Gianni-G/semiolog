@@ -1,4 +1,4 @@
-from ..util_g import flatten
+from ..util import flatten
 import networkx as nx
 import graphviz as gv
 

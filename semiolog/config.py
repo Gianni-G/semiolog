@@ -2,7 +2,7 @@ import inspect
 import sys
 from os.path import isfile
 
-from .util_g import dict2json, json2dict
+from .util import dict2json, json2dict
 
 # TODO: Solve version as global variable
 slg_version = "0.1"

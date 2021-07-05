@@ -4,7 +4,7 @@ from os.path import isfile
 from tqdm.auto import tqdm
 
 from .syntagmatic import tokenizer
-from .util_g import list2txt, txt2list
+from .util import list2txt, txt2list
 
 
 class Corpus:

@@ -5,7 +5,7 @@ from ..syntagmatic.tokenizer import normalizers
 from collections import Counter, defaultdict
 from math import log
 
-from ..util_g import df as slg_df
+from ..util import df as slg_df
 
 def tolerance_principle(n):
     return n/log(n)

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import argrelmin, argrelextrema
 
-from ..util_g import subsequences, plot_scatter_line
+from ..util import subsequences, plot_scatter_line
 
 class PType:
 

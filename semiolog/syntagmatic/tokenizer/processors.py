@@ -1,4 +1,4 @@
-from ...util_g import subsequences
+from ...util import subsequences
 from ...functive import Functive
 from math import log
 
