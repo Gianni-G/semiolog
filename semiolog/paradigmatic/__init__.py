@@ -1,4 +1,4 @@
-from transformers import pipeline
+# from transformers import pipeline
 from .paradigm import Paradigmatizer, ParadigmChain
 
 class Paradigmatic:
