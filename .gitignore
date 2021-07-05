@@ -8,5 +8,7 @@ lsf.*
 **/.DS_Store
 
 models/*
+!models/example
+
 examples/*
 !examples/en_bnc
