@@ -7,19 +7,26 @@ class Tokenizer:
     """
     """
 
-    def __init__(self,semiotic) -> None:
+    def __init__(self,config) -> None:
 
-        self.config = semiotic.config.syntagmatic
+        # self.config = {k:v if v!= None else "disable" for k,v in config.__dict__.items()}
+        self.config = config
+        
+        def if_none_disable(x):
+            if x == None:
+                x = "disable"
+            return x
+        # TODO: There should be a better way to convert config "None" into "disable"
         
         if isinstance(self.config.normalizer,list):
             self.normalizer = normalizers.Sequence(self.config.normalizer)
         else:
-            self.normalizer = eval(f"normalizers.{self.config.normalizer}()")
+            self.normalizer = eval(f"normalizers.{if_none_disable(self.config.normalizer)}()")
         
-        self.pre_tokenizer = eval(f"pre_tokenizers.{self.config.pre_tokenizer}()")
+        self.pre_tokenizer = eval(f"pre_tokenizers.{if_none_disable(self.config.pre_tokenizer)}()")
         self.is_pretokenized = False if self.pre_tokenizer == pre_tokenizers.PreTokenizer else True
-        self.processor = eval(f"processors.{self.config.processor}()")
-        self.post_processor = eval(f"post_processors.{self.config.post_processor}()")
+        self.processor = eval(f"processors.{if_none_disable(self.config.processor)}()")
+        self.post_processor = eval(f"post_processors.{if_none_disable(self.config.post_processor)}()")
 
     def encoder(self,input_string):
         pass

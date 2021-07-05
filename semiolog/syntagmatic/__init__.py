@@ -5,6 +5,6 @@ from .tree import Tree
 class Syntagmatic:
     def __init__(self,semiotic) -> None:
         
-        self.semiotic = semiotic
-        self.tokenizer = Tokenizer(self.semiotic)
+        self.config = semiotic.config.syntagmatic
+        self.tokenizer = Tokenizer(self.config)
         
