@@ -1,7 +1,7 @@
 from datasets import load_dataset
 import sklearn
 from os.path import isfile
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .syntagmatic import tokenizer
 from .util_g import list2txt, txt2list

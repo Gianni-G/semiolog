@@ -14,7 +14,7 @@ from collections import Counter
 import numpy as np
 from scipy.sparse import csr_matrix
 import time
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
