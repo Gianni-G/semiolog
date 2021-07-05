@@ -18,6 +18,7 @@ from tqdm.notebook import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+from pyinstrument import Profiler
 
 
 # Definitions of Functions
@@ -307,3 +308,17 @@ def scatter_plot(data:list,labels=None,legends=None,size=(15,10)):
     ax.set_title("Title")  # Add a title to the axes.
     ax.legend(range(1,len(data)+1) if legends==None else legends)  # Add a legend.
     return ax
+
+def profiler(process):
+        profile = Profiler()
+
+        profile.start()
+        
+        try:
+            exec(process,{})
+        except:
+            print(f"{sys.exc_info()[0]}")
+
+        profile.stop()
+
+        return print(profile.output_text(unicode=True, color=True))

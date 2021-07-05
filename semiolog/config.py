@@ -75,6 +75,7 @@ class Corpus(Section):
     
     def __init__(self, semiotic) -> None:
         self.dataset = None
+        self.split_rate = (.9,.05,.05)
         self.length = None
         
 class Vocabulary(Section):
