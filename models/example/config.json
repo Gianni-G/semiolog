@@ -1,0 +1,39 @@
+{
+    "corpus": {
+        "dataset": null,
+        "length": null
+    },
+    "evaluation": {
+        "ud_model": null,
+        "cp_model": null
+    },
+    "general": {
+        "name": "example",
+        "dataset": null
+    },
+    "paradigmatic": {
+        "model": null,
+        "top_k": null,
+        "exclude_punctuation": null,
+        "cumulative_sum_threshold": null
+    },
+    "syntagmatic": {
+        "normalizer": null,
+        "pre_tokenizer": null,
+        "processor": null,
+        "post_processor": null
+    },
+    "system": {
+        "slg_version": "0.1"
+    },
+    "vocabulary": {
+        "size": null,
+        "special_tokens": [
+            "[PAD]",
+            "[UNK]",
+            "[CLS]",
+            "[SEP]",
+            "[MASK]"
+        ]
+    }
+}
