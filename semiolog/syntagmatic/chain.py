@@ -21,6 +21,7 @@ class Chain:
         self.semiotic = semiotic
         self.input = input_chain
         self.split = input_chain.split()
+        self.split_norm = [self.semiotic.syntagmatic.tokenizer.normalizer.normalize(s) for s in self.split]
 
         self.norm = None
         self.pre_tokens = None
@@ -30,6 +31,25 @@ class Chain:
         self.len = None
         self.labels = None
 
+        # self.segmented = " ".join(self.labels)
+
+    @property
+    def nodes_split(self):
+        nodes_list = []
+        for i in range(len(self.split)):
+            start_i = len("".join(self.split_norm[:i]))
+            end_i = start_i + len(self.split_norm[i])
+            nodes_list.append((
+                self.split_norm[i],
+                (start_i, end_i)
+                ))
+            
+        return set(nodes_list)
+    
+    @property
+    def nodes(self):
+        return [(token.label, token.span) for token in self.tokens]
+        
     def mask(self,n):
         """
         Outputs a new list with the nth token(s) of the chain replaced with the "[MASK]" token. n can be an integer or a list of integers.
@@ -44,15 +64,7 @@ class Chain:
 
 
 
-        # self.segmented = " ".join(self.labels)
 
-        # self.nodes_list = []
-        # for i in range(len(self.split)):
-        #     start_i = len("".join(self.split[:i]))
-        #     end_i = start_i + len(self.split[i])
-        #     self.nodes_list.append((self.split[i], (start_i, end_i)))
-            
-        # self.nodes = set(self.nodes_list)
         
 
     def __repr__(self) -> str:
