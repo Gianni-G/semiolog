@@ -118,6 +118,13 @@ def csv2list(file: str, directory: str, n_start=None, n_end=None):
         ]
     return my_list[n_start:n_end]
 
+# TODO: Really needed here?
+def if_none_disable(x):
+    if x == None:
+        x = "disable"
+    return x
+
+
 def take(n, iterable):
     """Return first n items of the iterable as a list"""
     return list(itertools.islice(iterable, n))

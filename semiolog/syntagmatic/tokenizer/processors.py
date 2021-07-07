@@ -213,13 +213,7 @@ class TreeSLG(SequenceSLG):
         return tree_tokens
 
 
-
-
-
-
-
-
-class StripWhitespaces(Processor):
+class SplitWhitespaces(Processor):
     def __init__(self) -> None:
         super().__init__()
     

@@ -71,13 +71,16 @@ class General(Section):
         self.name = semiotic.name
         self.dataset = None
 
-
 class Corpus(Section):
     
     def __init__(self, semiotic) -> None:
         self.dataset = None
         self.split_rate = (.9,.05,.05)
         self.length = None
+        self.normalizer = None
+        self.pre_tokenizer = None
+        self.processor = None
+        self.post_processor = None
         
 class Vocabulary(Section):
     

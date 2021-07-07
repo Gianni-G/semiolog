@@ -1,7 +1,16 @@
+
 from . import normalizers
 from . import pre_tokenizers
 from . import processors
 from . import post_processors
+
+# from ...util import if_none_disable
+
+# TODO: unable to import this from ...util
+def if_none_disable(x):
+    if x == None:
+        x = "disable"
+    return x
 
 class Tokenizer:
     """
@@ -12,10 +21,7 @@ class Tokenizer:
         # self.config = {k:v if v!= None else "disable" for k,v in config.__dict__.items()}
         self.config = config
         
-        def if_none_disable(x):
-            if x == None:
-                x = "disable"
-            return x
+
         # TODO: There should be a better way to convert config "None" into "disable"
         
         if isinstance(self.config.normalizer,list):

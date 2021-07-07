@@ -4,7 +4,7 @@ from os.path import isfile
 from tqdm.auto import tqdm
 
 from .syntagmatic import tokenizer
-from .util import list2txt, txt2list
+from .util import list2txt, txt2list, if_none_disable
 
 
 class Corpus:
@@ -63,10 +63,29 @@ class Corpus:
         return data
 
     def pre_process_document(self, document):
-        normal = tokenizer.normalizers.NFKC.normalize(None,document)
-        pre_token = tokenizer.pre_tokenizers.Layout.pre_tokenize(None,normal)
-        process = tokenizer.processors.SentencesNLTK.process(None,pre_token,is_pretokenized=True)
-        doc_sentences = tokenizer.post_processors.WikiFR.post_process(None,process)
+
+        if isinstance(self.config.normalizer,list):
+            
+            normal = eval(
+                f"tokenizer.normalizers.Sequence({self.config.normalizer}).normalize(None,document)"
+                )
+        else:
+            normal = eval(
+                f"tokenizer.normalizers.{if_none_disable(self.config.normalizer)}.normalize(None,document)"
+                )
+        
+        pre_token = eval(
+            f"tokenizer.pre_tokenizers.{if_none_disable(self.config.pre_tokenizer)}.pre_tokenize(None,normal)"
+            )
+                
+        process = eval(
+            f"tokenizer.processors.{if_none_disable(self.config.processor)}.process(None,pre_token,is_pretokenized=(False if '{self.config.pre_tokenizer}' == 'None' else True))"
+        )
+        
+        doc_sentences = eval(
+            f"tokenizer.post_processors.{if_none_disable(self.config.post_processor)}.post_process(None,process)"
+        )
+            
         return doc_sentences
     
     
@@ -151,7 +170,6 @@ class Corpus:
             self.save()
             print(f"Corpus saved to {self.path}")
         
-
         
     def save(self, path = None):
         
@@ -161,6 +179,3 @@ class Corpus:
         list2txt(self.train,"train", path)
         list2txt(self.dev,"dev", path)
         list2txt(self.test,"test", path)
-    
-
-        

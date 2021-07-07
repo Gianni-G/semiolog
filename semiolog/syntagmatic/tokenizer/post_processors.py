@@ -42,3 +42,26 @@ class WikiFR(PostProcessor):
                 "─o" not in sent,
                 ])
         })
+
+class WikiEN(PostProcessor):
+    """
+    Rules for cleaning the wikipedia corpus. Among others, only one occurrence of each sentence is kept, to avoid the statistical bias of titles and categories used by Wikipedia 
+
+    Args:
+        PostProcessor ([type]): [description]
+    """
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def post_process(self, sentences):
+
+        return list({sent for sent in set(sentences)
+                if
+                all([
+                not sent.startswith(("Category:")),
+                " " in sent,
+                "│" not in sent,
+                "|" not in sent,
+                "─o" not in sent,
+                ])
+        })
