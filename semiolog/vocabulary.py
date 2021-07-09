@@ -3,7 +3,7 @@ import csv
 from typing import Union, Iterable, Dict, Any
 from tqdm.auto import trange, tqdm
 import regex as re
-from os import mkdir
+from os import makedirs
 from os.path import isfile, isdir
 from functools import reduce
 import operator
@@ -117,7 +117,7 @@ class Vocabulary:
             saveQ = True
             
             if not isdir(self.path):
-                mkdir(self.path)
+                makedirs(self.path)
                 
             save_steps = {save_step*i for i in range(int(vocab_size/save_step)+1)}
         else:
@@ -149,7 +149,7 @@ class Vocabulary:
                     
                 else:
                                         
-                    result = util.multiprocessing(Counter,pre_units_pairs,chunk_size) 
+                    # result = util.multiprocessing(Counter,pre_units_pairs,chunk_size) 
                     
                     result = util.multiprocessing(Counter,pairs_chunks) 
                                         

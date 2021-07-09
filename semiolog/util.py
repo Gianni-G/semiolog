@@ -62,14 +62,14 @@ def multithreading(func, args, chunksize=1,cores=None):
 
 def dict2csv(input: dict, filename: str, path: str):
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.makedirs(path)
     with open(f"{path}{filename}.csv", "w") as nf:
         for key in input.keys():
             nf.write(f"{key},{input[key]}\n")
 
 def dict2json(input: dict, filename: str, path: str):
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.makedirs(path)
     with open(f"{path}/{filename}.json", 'w',encoding='utf-8') as json_file:
         json.dump(input, json_file,indent=4, ensure_ascii=False)
 
@@ -80,13 +80,13 @@ def json2dict(filename, path):
 
 def str2txt(input: str, filename: str, path: str):
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.makedirs(path)
     with open(f"{path}{filename}.txt", "w") as nf:
         nf.write(input)
 
 def list2txt(input: list, filename: str = "text_list", path = None):
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.makedirs(path)
     with open(f"{path}/{filename}.txt", "w") as nf:
         for element in input:
             nf.write(element+"\n")
@@ -102,14 +102,14 @@ def subsequences(sequence, n: int):
 
 def list2csv(input: list, filename: str, directory: str):
     if not os.path.isdir(directory):
-        os.mkdir(directory)
+        os.makedirs(directory)
     with open(f"/{directory}{filename}.csv", "w", newline="") as nf:
         wr = csv.writer(nf, quoting=csv.QUOTE_ALL)
         wr.writerows(input)
 
 def csv2list(file: str, directory: str, n_start=None, n_end=None):
     if not os.path.isdir(directory):
-        os.mkdir(directory)
+        os.makedirs(directory)
     with open(f"{directory}{file}.csv", "r") as f:
         csv_reader = csv.reader(f)
         my_list = [
@@ -273,7 +273,7 @@ def df(list_of_list, keys = None):
 
 # def csv2list_raw(file: str, directory: str, n_start=None, n_end=None):
 #     if not os.path.isdir(directory):
-#         os.mkdir(directory)
+#         os.makedirs(directory)
 #     with open(f"{directory}{file}.csv", "r") as f:
 #         csv_reader = csv.reader(f)
 #         my_list = [
@@ -284,7 +284,7 @@ def df(list_of_list, keys = None):
 
 def csv2list_raw(file: str, directory: str, n_start=None, n_end=None,progress=False):
     if not os.path.isdir(directory):
-        os.mkdir(directory)
+        os.makedirs(directory)
     with open(f"{directory}{file}.csv", "r") as f:
         csv_reader = csv.reader(f)
         my_list = []

@@ -458,7 +458,7 @@
 
 # def save_orthogonals(orthogonals, filename, freq_min = 0):
 #     if not os.path.isdir(paths.orthogonals):
-#         os.mkdir(paths.orthogonals)
+#         os.makedirs(paths.orthogonals)
 #     with open(f"{paths.orthogonals}{filename}_{freq_min}.csv", "w") as nf:
 #         for key, value in orthogonals.items():
 #             if value >= freq_min:
