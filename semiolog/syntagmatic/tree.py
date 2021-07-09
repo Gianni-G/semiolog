@@ -1,6 +1,8 @@
 from ..util import flatten
 import networkx as nx
 import graphviz as gv
+from ipywidgets import interactive, interact
+from IPython.display import display
 
 class Tree:
     def __init__(self, tokens):
@@ -18,6 +20,7 @@ class Tree:
 
         return seg_tree
 
+    
     def plot(self, red=None, grey=None, fname=f"seg_graph"):
 
         seg_tree = self.graph()
@@ -53,5 +56,9 @@ class Tree:
                     seg_tree_graph.node(
                         *node, color="red", fontsize="20", fontname="RobotoMono-Thin"
                     )
+        
+        @interact
+        def inter():
+            return seg_tree_graph
 
-        return seg_tree_graph
+        return inter

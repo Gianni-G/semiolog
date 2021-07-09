@@ -120,6 +120,8 @@ class Vocabulary:
                 mkdir(self.path)
                 
             save_steps = {save_step*i for i in range(int(vocab_size/save_step)+1)}
+        else:
+            saveQ = False
         
         #TODO: find_best_pair must be parallelizable, but no gain of efficiency so far
         def find_best_pair(
@@ -160,11 +162,19 @@ class Vocabulary:
             p = re.compile(r"(?<!\S)" + bigram + r"(?!\S)")
             new_chain = p.sub("".join(pair), chain_spaced)
             return new_chain
+
         
-        normalizer = tokenizer.normalizers.Sequence(["Lowercase","StripPunctuation","StripWhitespaces"])
-        
-        chain = normalizer.normalize("".join(self.corpus.train))
-        
+        if isinstance(self.config.normalizer,list):
+            normalizer = eval(
+                f"tokenizer.normalizers.Sequence({self.config.normalizer})"
+                )
+        else:
+            normalizer = eval(
+                f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
+            )
+            
+        chain = normalizer.normalize(None,"".join(self.corpus.train))
+
         chain = " ".join(chain)
         
         alphabet = Counter(chain.split()).most_common()

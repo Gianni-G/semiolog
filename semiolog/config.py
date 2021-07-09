@@ -90,6 +90,7 @@ class Vocabulary(Section):
         [PAD], [UNK], [CLS], [SEP], [MASK]
         """
         self.size = None
+        self.normalizer = None
         self.special_tokens = [
             "[PAD]",
             "[UNK]",

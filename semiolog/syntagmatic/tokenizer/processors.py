@@ -198,7 +198,7 @@ class TreeSLG(SequenceSLG):
         tree_data = self.chain2tree(sequence,semiotic.vocab.freq)
 
         seq_tokens = sorted([child for head,child in tree_data if head[0] not in semiotic.vocab.freq and child[0] in semiotic.vocab.freq],key=lambda x:x[-1])
-
+        
         tree_tokens = []
         for head,child in tree_data:
             child_token = Functive(child[0],child[1],None,semiotic)
@@ -206,9 +206,6 @@ class TreeSLG(SequenceSLG):
                 child_token.position = seq_tokens.index(child)
             child_token.head = Functive(head[0],head[1],None,semiotic)
             tree_tokens.append(child_token)
-
-
-
 
         return tree_tokens
 
