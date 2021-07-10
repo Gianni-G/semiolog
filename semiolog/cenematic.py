@@ -11,7 +11,6 @@ from .typing import Typing
 from .text import Text
 
 
-
 class Cenematic:
     
     def __init__(
@@ -29,15 +28,18 @@ class Cenematic:
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
-        # self.syntagmatic = Syntagmatic(self)
-
+        
+        self.syntagmatic = Syntagmatic(self)
 
         # self.ng2 = nGram()
         
-        # self.paradigmatic = Paradigmatic(self)
-        # self.typing = Typing(self)
+        self.paradigmatic = Paradigmatic(self)
+        self.typing = Typing(self)
 
-        if os.path.isdir(self.paths.semiotic) and empty == False:
+        # TODO: configure online repository for models, with automatic download
+        
+        if empty == False and os.path.isdir(self.paths.semiotic):
+                
             self.config.from_file()
             self.config.system.cpu_count = cpu_count()
             if not config_only:
@@ -47,11 +49,8 @@ class Cenematic:
 
                 # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 
-
                 self.paradigmatic = Paradigmatic(self)
                 self.typing = Typing(self)
-        
-        
         
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])
