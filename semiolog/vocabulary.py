@@ -1,13 +1,15 @@
 from collections import Counter
 import csv
 from typing import Union, Iterable, Dict, Any
-from tqdm.auto import trange, tqdm
+from tqdm.notebook import trange, tqdm #tqdm.auto
 import regex as re
 from os import makedirs
 from os.path import isfile, isdir
 from functools import reduce
 import operator
 from multiprocessing import cpu_count, Pool
+
+# import psutil
 
 from . import util
 from .syntagmatic import tokenizer
@@ -112,7 +114,6 @@ class Vocabulary:
         if special_tokens == None:
             special_tokens = self.config.special_tokens
         
-        
         if save == True and save_step != None:
             saveQ = True
             
@@ -123,8 +124,9 @@ class Vocabulary:
         else:
             saveQ = False
         
+        
         #TODO: find_best_pair must be parallelizable, but no gain of efficiency so far
-        def find_best_pair(
+        def find_best_pair_original(
             chain_spaced,
             parallel = False,
             parallel_mode = "process"):
@@ -156,13 +158,62 @@ class Vocabulary:
                 pairs = reduce(operator.add, result)
             
             return pairs.most_common()[0]
+        
+        def find_best_pair(
+            chain_list,
+            parallel = False,
+            parallel_mode = "process"):
+            
+            if parallel:
+                chunk_size = util.chunk_size(len(chain_list),self.cpu_count)
+                
+            # chain_list = zip(chain_list, chain_list[1:])
+            
+            if parallel == False:
+                pair_count = Counter()
+                for pair in tqdm(list(zip(chain_list, chain_list[1:])),desc="Find Best Pair:", leave = False,disable= not progress_bar):
+                # for pair in list(zip(chain_list, chain_list[1:])):
+                    pair_count[pair] += 1
+                
+                return pair_count.most_common()[0]
+            
+            #TODO: rewrite parallelize to reflect changes from chain to chain list
+            else:
+                
+                chain_list = util.chunks(chain_list, chunk_size)
+                
+                if parallel_mode == "thread":
 
-        def agglutinate_chain(pair, chain_spaced):
+                    # result = util.multithreading(Counter,pairs,chunk_size)
+                    
+                    result = util.multithreading(Counter,chain_list)
+                    
+                else:
+                                        
+                    # result = util.multiprocessing(Counter,pairs,chunk_size) 
+                    
+                    result = util.multiprocessing(Counter,chain_list) 
+                                        
+                chain_list = reduce(operator.add, result)
+            
+            return chain_list.most_common()[0]
+        
+        def agglutinate_chain(pair, chain_list):
+            chain_list = " ".join(chain_list) 
             bigram = re.escape(" ".join(pair))
             p = re.compile(r"(?<!\S)" + bigram + r"(?!\S)")
-            new_chain = p.sub("".join(pair), chain_spaced)
-            return new_chain
+            chain_list = p.sub("".join(pair), chain_list)
+            chain_list = chain_list.split()
+            return chain_list
 
+        def agglutinate_chain_new(pair, chain_list):
+            pair = list(pair)
+            for i in trange(len(chain_list)):
+                if chain_list[i:i+2] == pair:
+                    chain_list[i] = "".join(pair)
+                    del chain_list[i+1]
+            
+            return chain_list
         
         if isinstance(self.config.normalizer,list):
             normalizer = eval(
@@ -172,12 +223,30 @@ class Vocabulary:
             normalizer = eval(
                 f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
             )
-            
-        chain = normalizer.normalize(None,"".join(self.corpus.train))
 
-        chain = " ".join(chain)
         
-        alphabet = Counter(chain.split()).most_common()
+        # chain = ""
+        # for sent in tqdm(self.corpus.train):
+        #     sent = normalizer.normalize(None,sent)
+        #     sent = " ".join(sent)
+        #     if sent !="":
+        #         chain += " " + sent
+        # # chain = chain.strip()
+        
+        chain_list = []
+        alphabet = Counter()
+        for sent in tqdm(self.corpus.train, desc="Chain List & Alphabet:", disable = not progress_bar):
+            sent = normalizer.normalize(sent)
+            sent = list(sent)
+            if sent !=[]:
+                chain_list += sent
+                alphabet.update(Counter(sent))
+        
+        
+            
+        # alphabet = Counter()
+        # for char in tqdm(chain):
+        #     alphabet[char] += 1
         
         if resume_merges != False:
             if resume_merges == True:
@@ -186,8 +255,10 @@ class Vocabulary:
                 merges = resume_merges
             
             for pair in tqdm(merges, desc = "Resuming Existing Vocabulary",disable = not progress_bar):
-                chain = agglutinate_chain(tuple(pair.split()),chain)
-            vocabulary = Counter(chain.split()).most_common()
+                chain_list = agglutinate_chain(tuple(pair.split()),chain_list)
+            vocabulary = Counter()
+            for term in tqdm(chain_list,desc="Building Resumed Vocabulary", disable = not progress_bar):
+                vocabulary[term] += 1
             
         else:
             merges = []
@@ -196,26 +267,27 @@ class Vocabulary:
         
         special_tokens_len = 0 if special_tokens == None else len(special_tokens)
         voc_len = len(vocabulary) + special_tokens_len
-        pair = vocabulary[0][0]
+        pair = None
         
         
         t = trange(vocab_size - voc_len, disable = not progress_bar)
         for i in t:
-            t.set_description(f"Pair: {pair})\t")
+            t.set_description(f"Pair: {pair})\n")
             t.refresh()
-
+            
             pair = find_best_pair(
-                chain,
+                chain_list,
                 parallel = parallel,
                 parallel_mode = parallel_mode
                 )
             
-            chain = agglutinate_chain(pair[0], chain)
+            chain_list = agglutinate_chain(pair[0], chain_list)
+            
             merges.append(" ".join(pair[0]))
             
             if saveQ == True:
                 if voc_len + i + 1 in save_steps:
-                    vocabulary = Counter(chain.split()).most_common()
+                    vocabulary = Counter(chain_list).most_common()
                     if special_tokens != None:
                         vocabulary = vocabulary + [(token,0) for token in special_tokens]
 
@@ -226,16 +298,19 @@ class Vocabulary:
                     step_path = self.path / str(voc_len+i+1)
                     self.save(step_path)
                     print(f"Intermediate vocabulary saved to {step_path}")
-                    
-        vocabulary = Counter(chain.split()).most_common()
-            
+        
+        vocabulary = Counter()            
+        for term in tqdm(chain_list,desc="Building Final Vocabulary", disable = not progress_bar):
+            vocabulary[term] += 1
+        vocabulary = vocabulary.most_common()
+        
         if special_tokens != None:
             vocabulary = vocabulary + [(token,0) for token in special_tokens]
 
         self.merges = merges
         self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
         self.freq = dict(vocabulary)
-        self.alpha = dict(alphabet)
+        self.alpha = dict(alphabet.most_common())
 
         self.decode = {i:k for k,i in self.encode.items()}
         
