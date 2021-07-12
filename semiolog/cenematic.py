@@ -41,7 +41,7 @@ class Cenematic:
         if empty == False and os.path.isdir(self.paths.semiotic):
                 
             self.config.from_file()
-            self.config.system.cpu_count = cpu_count()
+            self.config.system.cpu_count = cpu_count(logical = False)
             if not config_only:
                 self.corpus.from_file()
                 self.vocab.from_file()

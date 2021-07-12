@@ -7,9 +7,6 @@ from os import makedirs
 from os.path import isfile, isdir
 from functools import reduce
 import operator
-from multiprocessing import cpu_count, Pool
-
-# import psutil
 
 from . import util
 from .syntagmatic import tokenizer
