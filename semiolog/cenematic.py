@@ -1,5 +1,5 @@
 import os
-from multiprocessing import cpu_count
+from psutil import cpu_count
 
 from .paths import Paths
 from .config import Config
@@ -24,7 +24,7 @@ class Cenematic:
         self.paths = Paths(self.name)
         
         self.config = Config(self)
-        self.config.system.cpu_count = cpu_count()
+        self.config.system.cpu_count = cpu_count(logical = False)
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)

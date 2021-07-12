@@ -87,7 +87,28 @@ class Vocabulary:
 
     def values(self):
         pass
+
+    # def find_best_pair(
+    #     self,
+    #     chain_list,
+    #     progress_bar = False
+    #     ):
+        
+    #     pair_count = Counter()
+    #     for pair in tqdm(list(zip(chain_list, chain_list[1:])),desc="Find Best Pair", leave = False,disable= not progress_bar):
+    #         pair_count[pair] += 1
+        
+    #     return pair_count
     
+    def find_best_pair(self,chain_list):
+
+        pair_count = Counter()
+        for pair in list(zip(chain_list, chain_list[1:])):
+            pair_count[pair] += 1
+        
+        return pair_count
+        
+        
     def build(
         self,
         corpus = None,
@@ -159,44 +180,23 @@ class Vocabulary:
             
             return pairs.most_common()[0]
         
-        def find_best_pair(
-            chain_list,
-            parallel = False,
-            parallel_mode = "process"):
-            
-            if parallel:
-                chunk_size = util.chunk_size(len(chain_list),self.cpu_count)
-                
-            # chain_list = zip(chain_list, chain_list[1:])
-            
-            if parallel == False:
-                pair_count = Counter()
-                for pair in tqdm(list(zip(chain_list, chain_list[1:])),desc="Find Best Pair:", leave = False,disable= not progress_bar):
-                # for pair in list(zip(chain_list, chain_list[1:])):
-                    pair_count[pair] += 1
-                
-                return pair_count.most_common()[0]
-            
-            #TODO: rewrite parallelize to reflect changes from chain to chain list
-            else:
-                
-                chain_list = util.chunks(chain_list, chunk_size)
-                
-                if parallel_mode == "thread":
+        def parallel_chain(chain, n_of_parts):
+            """
+            Breaks the chain in n chunks to compute best pair of terms. Chunks are overlapping by one term, so as no pair of terms is lost due to the break.
+            """
+            if not isinstance(chain,list):
+                chain = list(chain)
+            chunk_size = int(len(chain) / n_of_parts)+1
+            for i in range(0, len(chain), chunk_size):
+                yield chain[i : i + chunk_size +1]
 
-                    # result = util.multithreading(Counter,pairs,chunk_size)
-                    
-                    result = util.multithreading(Counter,chain_list)
-                    
-                else:
-                                        
-                    # result = util.multiprocessing(Counter,pairs,chunk_size) 
-                    
-                    result = util.multiprocessing(Counter,chain_list) 
-                                        
-                chain_list = reduce(operator.add, result)
+        # def find_best_pair(chain_list):
+
+        #     pair_count = Counter()
+        #     for pair in list(zip(chain_list, chain_list[1:])):
+        #         pair_count[pair] += 1
             
-            return chain_list.most_common()[0]
+        #     return pair_count
         
         def agglutinate_chain(pair, chain_list):
             chain_list = " ".join(chain_list) 
@@ -206,14 +206,14 @@ class Vocabulary:
             chain_list = chain_list.split()
             return chain_list
 
-        def agglutinate_chain_new(pair, chain_list):
-            pair = list(pair)
-            for i in trange(len(chain_list)):
-                if chain_list[i:i+2] == pair:
-                    chain_list[i] = "".join(pair)
-                    del chain_list[i+1]
+        # def agglutinate_chain_new(pair, chain_list):
+        #     pair = list(pair)
+        #     for i in trange(len(chain_list)):
+        #         if chain_list[i:i+2] == pair:
+        #             chain_list[i] = "".join(pair)
+        #             del chain_list[i+1]
             
-            return chain_list
+        #     return chain_list
         
         if isinstance(self.config.normalizer,list):
             normalizer = eval(
@@ -223,30 +223,15 @@ class Vocabulary:
             normalizer = eval(
                 f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
             )
-
-        
-        # chain = ""
-        # for sent in tqdm(self.corpus.train):
-        #     sent = normalizer.normalize(None,sent)
-        #     sent = " ".join(sent)
-        #     if sent !="":
-        #         chain += " " + sent
-        # # chain = chain.strip()
         
         chain_list = []
         alphabet = Counter()
-        for sent in tqdm(self.corpus.train, desc="Chain List & Alphabet:", disable = not progress_bar):
+        for sent in tqdm(self.corpus.train, desc="Chain List & Alphabet", disable = not progress_bar):
             sent = normalizer.normalize(sent)
             sent = list(sent)
             if sent !=[]:
                 chain_list += sent
                 alphabet.update(Counter(sent))
-        
-        
-            
-        # alphabet = Counter()
-        # for char in tqdm(chain):
-        #     alphabet[char] += 1
         
         if resume_merges != False:
             if resume_merges == True:
@@ -267,19 +252,29 @@ class Vocabulary:
         
         special_tokens_len = 0 if special_tokens == None else len(special_tokens)
         voc_len = len(vocabulary) + special_tokens_len
-        pair = None
-        
+        pair = ("[init]","[init]")
         
         t = trange(vocab_size - voc_len, disable = not progress_bar)
+        
         for i in t:
-            t.set_description(f"Pair: {pair})\n")
+            t.set_description(f"Pair: {pair[0]}, {pair[1]}\n")
             t.refresh()
             
-            pair = find_best_pair(
-                chain_list,
-                parallel = parallel,
-                parallel_mode = parallel_mode
-                )
+            if parallel:
+                
+                par_chain = parallel_chain(chain_list, self.cpu_count)
+                
+                if parallel_mode == "process":
+                    result = util.multiprocessing(self.find_best_pair, par_chain, cores=self.cpu_count)               
+                else:
+                    result = util.multithreading(self.find_best_pair, par_chain, cores=self.cpu_count)      
+                                    
+                best_pairs = reduce(operator.add, result)
+                
+            else:
+                best_pairs = self.find_best_pair(chain_list)
+                
+            pair = best_pairs.most_common(1)[0]
             
             chain_list = agglutinate_chain(pair[0], chain_list)
             

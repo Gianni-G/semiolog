@@ -1,10 +1,20 @@
+from collections import Counter
 from tqdm.notebook import tqdm
 
-def chain_corpus(corpus_sents, normalizer):
-    chain = ""
-    for sent in corpus_sents:
-        sent = normalizer.normalize(sent)
-        sent = " ".join(sent)
-        if sent !="":
-            chain += " " + sent
-    return chain.strip()
+def parallel_chain(chain, n_of_parts):
+    """
+    Breaks the chain in n chunks to compute best pair of terms. Chunks are overlapping by one term, so as no pair of terms is lost due to the break.
+    """
+    if not isinstance(chain,list):
+        chain = list(chain)
+    chunk_size = int(len(chain) / n_of_parts)+1
+    for i in range(0, len(chain), chunk_size):
+        yield chain[i : i + chunk_size +1]
+                
+def find_best_pair(chain_list):
+
+    pair_count = Counter()
+    for pair in list(zip(chain_list, chain_list[1:])):
+        pair_count[pair] += 1
+    
+    return pair_count
