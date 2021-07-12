@@ -1,7 +1,7 @@
 from collections import Counter
 import csv
 from typing import Union, Iterable, Dict, Any
-from tqdm.notebook import trange, tqdm #tqdm.auto
+from tqdm.auto import trange, tqdm #tqdm.auto
 import regex as re
 from os import makedirs
 from os.path import isfile, isdir
