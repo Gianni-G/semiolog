@@ -1,8 +1,13 @@
 from datasets import load_dataset
 import sklearn
 from os.path import isfile
-from tqdm.auto import tqdm
 
+import socket
+if "Gianni" in socket.gethostname():
+    from tqdm.notebook import tqdm
+else:
+    from tqdm.auto import tqdm
+    
 from .syntagmatic import tokenizer
 from .util import list2txt, txt2list, if_none_disable
 

@@ -1,11 +1,14 @@
 import semiolog as slg
 
-semiotic = slg.Cenematic("fr_wiki", config_only=True)
+semiotic = slg.Cenematic("fr_wiki")
 
 print(f"Numbers of cores: {semiotic.config.system.cpu_count}")
 
-semiotic.config.corpus.length = 40000
+print("\nSequential")
+semiotic.vocab.build(vocab_size = 1627)
 
-semiotic.corpus.build(save=True)
+print("\nParallel Process")
+semiotic.vocab.build(vocab_size = 1627, parallel=True, parallel_mode="process")
 
-semiotic.vocab.build(save=True)
+print("\nParallel Thread")
+semiotic.vocab.build(vocab_size = 1627, parallel=True, parallel_mode="thread")
