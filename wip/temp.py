@@ -4,7 +4,7 @@ import socket
 if "Gianni" in socket.gethostname():
     from tqdm.notebook import tqdm
 else:
-    from tqdm.auto import tqdm
+    from tqdm import tqdm
 
 def parallel_chain(chain, n_of_parts):
     """
