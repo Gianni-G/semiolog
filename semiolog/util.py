@@ -18,11 +18,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
-import socket
-if "Gianni" in socket.gethostname():
-    from tqdm.notebook import tqdm
-else:
-    from tqdm import tqdm
+# import socket
+# if "Gianni" in socket.gethostname():
+#     from tqdm.notebook import tqdm
+# else:
+from tqdm import tqdm
 
 # Definitions of Functions
 
