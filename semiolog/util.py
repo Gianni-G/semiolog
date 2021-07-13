@@ -18,11 +18,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
-# import socket
-# if "Gianni" in socket.gethostname():
-#     from tqdm.notebook import tqdm
-# else:
-from tqdm import tqdm
+import socket
+socket_name = socket.gethostname()
+if any(name in socket_name for name in {"Gianni","vpn"}):
+    from tqdm.notebook import tqdm
+else:
+    from tqdm.auto import tqdm
 
 # Definitions of Functions
 
@@ -63,6 +64,55 @@ def multithreading(func, args, chunksize=1,cores=None):
     with concurrent.futures.ThreadPoolExecutor(cores) as executor:
         result = executor.map(func, args, chunksize=chunksize)
     return list(result)
+
+
+# Adapted Dans Shiebler: from http://danshiebler.com/2016-09-14-parallel-progress-bar/
+
+def multiprocessing_tqdm(function, array, cores=None):
+    """
+        A parallel version of the map function with a progress bar. 
+
+        Args:
+            array (array-like): An array to iterate over.
+            function (function): A python function to apply to the elements of array
+            n_jobs (int, default=16): The number of cores to use
+            use_kwargs (boolean, default=False): Whether to consider the elements of array as dictionaries of 
+                keyword arguments to function 
+            front_num (int, default=3): The number of iterations to run serially before kicking off the parallel job. 
+                Useful for catching bugs
+        Returns:
+            [function(array[0]), function(array[1]), ...]
+    """
+    #We run the first few iterations serially to catch bugs
+    # if front_num > 0:
+    #     front = [function(**a) if use_kwargs else function(a) for a in array[:front_num]]
+    # #If we set n_jobs to 1, just run a list comprehension. This is useful for benchmarking and debugging.
+    # if n_jobs==1:
+    #     return front + [function(**a) if use_kwargs else function(a) for a in tqdm(array[front_num:])]
+    #Assemble the workers
+    with concurrent.futures.ProcessPoolExecutor(max_workers=cores) as pool:
+        #Pass the elements of array into function
+
+        futures = [pool.submit(function, a) for a in array]
+        kwargs = {
+            'total': len(futures),
+            'unit': 'it',
+            'unit_scale': True,
+            'leave': True
+        }
+        #Print out the progress as tasks complete
+        for f in tqdm(concurrent.futures.as_completed(futures), **kwargs):
+            pass
+    out = []
+    #Get the results from the futures. 
+    for i, future in tqdm(enumerate(futures)):
+        try:
+            out.append(future.result())
+        except Exception as e:
+            out.append(e)
+    return out
+
+
 
 def dict2csv(input: dict, filename: str, path: str):
     if not os.path.isdir(path):

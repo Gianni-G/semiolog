@@ -1,5 +1,6 @@
 import string
 import unicodedata
+import re
 
 punctuation = "...—•…–’"
 
@@ -97,21 +98,18 @@ class StripWhitespaces(Normalizer):
     def normalize(self, input_string: str):
         return input_string.translate(str.maketrans('', '', string.whitespace))
 
-
-
-
-
-# # Constructors
-# def build_tokenizer_component(config):
-#     if config == "None":
-#         component = lambda x:x
-#     elif isinstance(config,list):
-#         def component(input):
-#             output = input
-#             for func_str in config:
-#                 func = eval(func_str)
-#                 output = func(output)
-#             return output
-#     else:
-#         component = eval(config)
-#     return component
+class Foreign(Normalizer):
+    """
+    Replace Chinese, Japanese, Korean, Arabic, Cyrillic, Armenian, Hebrew, Syriac, Devanagari, Bengali characters
+    """
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def normalize(self, input_string: str):
+        
+        chars = re.compile(
+            r"[\uac00-\ud7a3]|[\u4e00-\u9FFF]|[\u3040-\u30ff]|[\u0400-\u04FF]|[\u0500-\u052F]|[\u0530-\u058F]|[\u0590-\u05FF]|[\u0600-\u06FF]|[\u0700-\u074F]|[\u0750-\u077F]|[\u0980-\u09FF]|[\u0900-\u097F]"
+            )
+        
+        
+        return chars.sub("□", input_string)

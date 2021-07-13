@@ -2,11 +2,12 @@ from datasets import load_dataset
 import sklearn
 from os.path import isfile
 
-# import socket
-# if "Gianni" in socket.gethostname():
-#     from tqdm.notebook import tqdm
-# else:
-from tqdm import tqdm
+import socket
+socket_name = socket.gethostname()
+if any(name in socket_name for name in {"Gianni","vpn"}):
+    from tqdm.notebook import tqdm
+else:
+    from tqdm.auto import tqdm
     
 from .syntagmatic import tokenizer
 from .util import list2txt, txt2list, if_none_disable

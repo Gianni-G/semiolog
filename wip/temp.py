@@ -23,3 +23,17 @@ def find_best_pair(chain_list):
         pair_count[pair] += 1
     
     return pair_count
+
+def chain_list_i(normalizer, sent):
+    sent = normalizer.normalize(sent)
+    sent = list(sent)
+    return sent
+
+def chain_list(normalizer, corpus_sents):
+    chain_list = []
+    for sent in corpus_sents:
+        sent = normalizer.normalize(sent)
+        sent = list(sent)
+        if sent !=[]:
+            chain_list += sent
+    return chain_list

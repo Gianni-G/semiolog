@@ -10,21 +10,21 @@ from .paradigmatic import Paradigmatic
 from .typing import Typing
 from .text import Text
 
-
 class Cenematic:
     
     def __init__(
         self,
         name,
         empty=False,
-        config_only = False
+        config_only = False,
+        requested_cpu = None
         ) -> None:
 
         self.name = name
         self.paths = Paths(self.name)
         
         self.config = Config(self)
-        self.config.system.cpu_count = cpu_count(logical = False)
+        self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
@@ -41,7 +41,7 @@ class Cenematic:
         if empty == False and os.path.isdir(self.paths.semiotic):
                 
             self.config.from_file()
-            self.config.system.cpu_count = cpu_count(logical = False)
+            self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
             if not config_only:
                 self.corpus.from_file()
                 self.vocab.from_file()

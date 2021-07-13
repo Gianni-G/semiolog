@@ -1,11 +1,18 @@
 from collections import Counter
 import csv
 from typing import Union, Iterable, Dict, Any
-from tqdm.auto import trange, tqdm #tqdm.auto
+
+import socket
+socket_name = socket.gethostname()
+if any(name in socket_name for name in {"Gianni","vpn"}):
+    from tqdm.notebook import tqdm, trange
+else:
+    from tqdm.auto import tqdm, trange
+    
 import regex as re
 from os import makedirs
 from os.path import isfile, isdir
-from functools import reduce
+from functools import reduce, partial
 import operator
 
 from . import util
@@ -84,18 +91,27 @@ class Vocabulary:
 
     def values(self):
         pass
-
-    # def find_best_pair(
-    #     self,
-    #     chain_list,
-    #     progress_bar = False
-    #     ):
+    
+    def chain_list_alpha(self, normalizer, corpus_sents, progress_bar = False):
+        chain_list = []
+        alphabet = Counter()
         
-    #     pair_count = Counter()
-    #     for pair in tqdm(list(zip(chain_list, chain_list[1:])),desc="Find Best Pair", leave = False,disable= not progress_bar):
-    #         pair_count[pair] += 1
-        
-    #     return pair_count
+        if progress_bar:
+            for sent in tqdm(corpus_sents):
+                sent = normalizer.normalize(sent)
+                sent = list(sent)
+                if sent !=[]:
+                    chain_list += sent
+                    alphabet.update(Counter(sent))
+        else:
+            for sent in corpus_sents:
+                sent = normalizer.normalize(sent)
+                sent = list(sent)
+                if sent !=[]:
+                    chain_list += sent
+                    alphabet.update(Counter(sent))
+                    
+        return chain_list, alphabet
     
     def find_best_pair(self,chain_list):
 
@@ -221,14 +237,34 @@ class Vocabulary:
                 f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
             )
         
-        chain_list = []
-        alphabet = Counter()
-        for sent in tqdm(self.corpus.train, desc="Chain List & Alphabet", disable = not progress_bar):
-            sent = normalizer.normalize(sent)
-            sent = list(sent)
-            if sent !=[]:
-                chain_list += sent
-                alphabet.update(Counter(sent))
+        
+        # chain_list = []
+        # alphabet = Counter()
+        # for sent in tqdm(self.corpus.train, desc="Chain List & Alphabet", disable = not progress_bar):
+        #     sent = normalizer.normalize(sent)
+        #     sent = list(sent)
+        #     if sent !=[]:
+        #         chain_list += sent
+        #         alphabet.update(Counter(sent))
+        
+        if parallel:
+            
+            par_corpus = parallel_chain(self.corpus.train, self.cpu_count)
+            
+            if parallel_mode == "process":
+                result = util.multiprocessing_tqdm(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count)               
+            else:
+                result = util.multithreading(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count)
+            
+            chain_list = []
+            alphabet = Counter()
+            for chain_l,alpha in result:
+                chain_list += chain_l
+                alphabet += alpha
+            
+                
+        else:
+            chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train, progress_bar=True)
         
         if resume_merges != False:
             if resume_merges == True:
@@ -251,10 +287,12 @@ class Vocabulary:
         voc_len = len(vocabulary) + special_tokens_len
         pair = ("[init]","[init]")
         
+        print(f"Alphabet Size: {voc_len}")
+        
         t = trange(vocab_size - voc_len, disable = not progress_bar)
         
         for i in t:
-            t.set_description(f"Pair: {pair[0]}, {pair[1]}\n")
+            t.set_description(f"Pair: {pair[0]}, {pair[1]}")
             t.refresh()
             
             if parallel:
