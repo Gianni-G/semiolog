@@ -93,6 +93,14 @@ class Vocabulary:
         pass
     
     def chain_list_alpha(self, normalizer, corpus_sents, progress_bar = False):
+        """
+        # corpus_sent can be a list of sentences or a pair (index, list of sentences) in case of parallel processing, to reconstruct the order after parallelization
+        """
+        # if isinstance(corpus_sents,tuple):
+        #     corpus_sents = corpus_sents[1]
+        #     corpus_i = corpus_sents[0]
+        # else:
+        #     corpus_i = 0
         chain_list = []
         alphabet = Counter()
         
@@ -158,42 +166,7 @@ class Vocabulary:
         else:
             saveQ = False
         
-        
-        #TODO: find_best_pair must be parallelizable, but no gain of efficiency so far
-        def find_best_pair_original(
-            chain_spaced,
-            parallel = False,
-            parallel_mode = "process"):
-            
-            pre_units = chain_spaced.split()
-            pre_units_pairs = zip(pre_units, pre_units[1:])
-            
-            if parallel == False:
-                pairs = Counter(pre_units_pairs)
-                
-                return pairs.most_common()[0]
-            else:
-                
-                chunk_size = util.chunk_size(len(pre_units),self.cpu_count)
-                pairs_chunks = util.chunks(pre_units_pairs, chunk_size)
-                
-                if parallel_mode == "thread":
-
-                    # result = util.multithreading(Counter,pre_units_pairs,chunk_size)
-                    
-                    result = util.multithreading(Counter,pairs_chunks)
-                    
-                else:
-                                        
-                    # result = util.multiprocessing(Counter,pre_units_pairs,chunk_size) 
-                    
-                    result = util.multiprocessing(Counter,pairs_chunks) 
-                                        
-                pairs = reduce(operator.add, result)
-            
-            return pairs.most_common()[0]
-        
-        def parallel_chain(chain, n_of_parts):
+        def parallel_chain(chain, n_of_parts, overlap = 0):
             """
             Breaks the chain in n chunks to compute best pair of terms. Chunks are overlapping by one term, so as no pair of terms is lost due to the break.
             """
@@ -201,15 +174,8 @@ class Vocabulary:
                 chain = list(chain)
             chunk_size = int(len(chain) / n_of_parts)+1
             for i in range(0, len(chain), chunk_size):
-                yield chain[i : i + chunk_size +1]
+                yield chain[i : i + chunk_size + overlap]
 
-        # def find_best_pair(chain_list):
-
-        #     pair_count = Counter()
-        #     for pair in list(zip(chain_list, chain_list[1:])):
-        #         pair_count[pair] += 1
-            
-        #     return pair_count
         
         def agglutinate_chain(pair, chain_list):
             chain_list = " ".join(chain_list) 
@@ -218,15 +184,7 @@ class Vocabulary:
             chain_list = p.sub("".join(pair), chain_list)
             chain_list = chain_list.split()
             return chain_list
-
-        # def agglutinate_chain_new(pair, chain_list):
-        #     pair = list(pair)
-        #     for i in trange(len(chain_list)):
-        #         if chain_list[i:i+2] == pair:
-        #             chain_list[i] = "".join(pair)
-        #             del chain_list[i+1]
-            
-        #     return chain_list
+        
         
         if isinstance(self.config.normalizer,list):
             normalizer = eval(
@@ -237,15 +195,6 @@ class Vocabulary:
                 f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
             )
         
-        
-        # chain_list = []
-        # alphabet = Counter()
-        # for sent in tqdm(self.corpus.train, desc="Chain List & Alphabet", disable = not progress_bar):
-        #     sent = normalizer.normalize(sent)
-        #     sent = list(sent)
-        #     if sent !=[]:
-        #         chain_list += sent
-        #         alphabet.update(Counter(sent))
         
         if parallel:
             
@@ -258,13 +207,15 @@ class Vocabulary:
             
             chain_list = []
             alphabet = Counter()
-            for chain_l,alpha in result:
+            for chain_l, alpha in result:
                 chain_list += chain_l
                 alphabet += alpha
-            
                 
         else:
             chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train, progress_bar=True)
+        
+        # ERASE. Needed to evaluate if sequential and parallel are equal.
+        self.chain_list = chain_list
         
         if resume_merges != False:
             if resume_merges == True:
@@ -297,7 +248,7 @@ class Vocabulary:
             
             if parallel:
                 
-                par_chain = parallel_chain(chain_list, self.cpu_count)
+                par_chain = parallel_chain(chain_list, self.cpu_count, overlap=1)
                 
                 if parallel_mode == "process":
                     result = util.multiprocessing(self.find_best_pair, par_chain, cores=self.cpu_count)               

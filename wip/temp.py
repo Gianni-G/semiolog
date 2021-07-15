@@ -37,3 +37,10 @@ def chain_list(normalizer, corpus_sents):
         if sent !=[]:
             chain_list += sent
     return chain_list
+
+
+def bla2(listtup):
+    if isinstance(listtup,tuple):
+        i = listtup[0]
+        l = listtup[1]
+    return i,l,l
