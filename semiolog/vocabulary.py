@@ -93,19 +93,12 @@ class Vocabulary:
         pass
     
     def chain_list_alpha(self, normalizer, corpus_sents, progress_bar = False):
-        """
-        # corpus_sent can be a list of sentences or a pair (index, list of sentences) in case of parallel processing, to reconstruct the order after parallelization
-        """
-        # if isinstance(corpus_sents,tuple):
-        #     corpus_sents = corpus_sents[1]
-        #     corpus_i = corpus_sents[0]
-        # else:
-        #     corpus_i = 0
+
         chain_list = []
         alphabet = Counter()
         
         if progress_bar:
-            for sent in tqdm(corpus_sents):
+            for sent in tqdm(corpus_sents, desc="Normalize & Alphabet"):
                 sent = normalizer.normalize(sent)
                 sent = list(sent)
                 if sent !=[]:
@@ -121,12 +114,19 @@ class Vocabulary:
                     
         return chain_list, alphabet
     
-    def find_best_pair(self,chain_list):
+    def find_best_pair(self,chain_list, top_pairs = 100):
 
         pair_count = Counter()
         for pair in list(zip(chain_list, chain_list[1:])):
             pair_count[pair] += 1
         
+        if top_pairs != None:
+            
+            top_counter = Counter() 
+            for k,v in pair_count.most_common(top_pairs):
+                top_counter[k] = v
+            return top_counter
+            
         return pair_count
         
         
@@ -201,7 +201,7 @@ class Vocabulary:
             par_corpus = parallel_chain(self.corpus.train, self.cpu_count)
             
             if parallel_mode == "process":
-                result = util.multiprocessing_tqdm(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count)               
+                result = util.multiprocessing_tqdm(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count, desc="Normalize & Alphabet")               
             else:
                 result = util.multithreading(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count)
             
@@ -213,9 +213,7 @@ class Vocabulary:
                 
         else:
             chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train, progress_bar=True)
-        
-        # ERASE. Needed to evaluate if sequential and parallel are equal.
-        self.chain_list = chain_list
+
         
         if resume_merges != False:
             if resume_merges == True:
@@ -281,9 +279,10 @@ class Vocabulary:
                     print(f"Intermediate vocabulary saved to {step_path}")
         
         vocabulary = Counter()            
-        for term in tqdm(chain_list,desc="Building Final Vocabulary", disable = not progress_bar):
+        for term in tqdm(chain_list, desc="Building Final Vocabulary", disable = not progress_bar):
             vocabulary[term] += 1
         vocabulary = vocabulary.most_common()
+        
         
         if special_tokens != None:
             vocabulary = vocabulary + [(token,0) for token in special_tokens]

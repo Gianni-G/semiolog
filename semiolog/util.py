@@ -68,7 +68,7 @@ def multithreading(func, args, chunksize=1,cores=None):
 
 # Adapted Dans Shiebler: from http://danshiebler.com/2016-09-14-parallel-progress-bar/
 
-def multiprocessing_tqdm(function, array, cores=None):
+def multiprocessing_tqdm(function, array, cores=None, desc = None):
     """
         A parallel version of the map function with a progress bar. 
 
@@ -101,11 +101,11 @@ def multiprocessing_tqdm(function, array, cores=None):
             'leave': True
         }
         #Print out the progress as tasks complete
-        for f in tqdm(concurrent.futures.as_completed(futures), **kwargs):
+        for f in tqdm(concurrent.futures.as_completed(futures), **kwargs, desc = desc):
             pass
     out = []
     #Get the results from the futures. 
-    for i, future in tqdm(enumerate(futures)):
+    for future in futures:
         try:
             out.append(future.result())
         except Exception as e:
