@@ -146,6 +146,8 @@ class Vocabulary:
         """
         Build vocabulary from a Corpus.
         Vocabularies can be extended by providing an existing merging list. If resume_merges = True, the current merges in self.merges will be used. Otherwise one can provide a list of merges as value of resume_merges.
+        
+        If vocab_size is negative, the value is taken, not as the target size of the voc, but as the number of new terms to compute beyond the size of the initial alphabet
         """
         
         if corpus == None:
@@ -163,7 +165,7 @@ class Vocabulary:
             if not isdir(self.path):
                 makedirs(self.path)
                 
-            save_steps = {save_step*i for i in range(int(vocab_size/save_step)+1)}
+            save_steps = {save_step*i for i in range(int(abs(vocab_size)/save_step)+1)}
         else:
             saveQ = False
         
@@ -239,7 +241,13 @@ class Vocabulary:
         
         print(f"Alphabet Size: {voc_len}")
         
-        t = trange(vocab_size - voc_len, disable = not progress_bar)
+        if vocab_size<0:
+            delta_voc = abs(vocab_size)
+        else:
+            delta_voc = vocab_size - voc_len
+        
+        
+        t = trange(delta_voc, disable = not progress_bar)
         
         for i in t:
             t.set_description(f"Pair: {pair[0]}, {pair[1]}")
