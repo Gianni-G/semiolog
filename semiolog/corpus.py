@@ -55,7 +55,7 @@ class Corpus:
         self.test_len = len(self.test)
 
         if not test_only:
-            self.train = txt2list("train", self.path)
+            self.train = txt2list("train", self.path)            
             self.train_len = len(self.train)
 
 

@@ -140,7 +140,8 @@ class Vocabulary:
         progress_bar = True,
         resume_merges = False,
         parallel = False,
-        parallel_mode = "process"
+        parallel_mode = "process",
+        corpus_length = None
         ):
         """
         Build vocabulary from a Corpus.
@@ -198,7 +199,7 @@ class Vocabulary:
         
         if parallel:
             
-            par_corpus = parallel_chain(self.corpus.train, self.cpu_count)
+            par_corpus = parallel_chain(self.corpus.train[:corpus_length], self.cpu_count)
             
             if parallel_mode == "process":
                 result = util.multiprocessing_tqdm(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count, desc="Normalize & Alphabet")               
@@ -212,7 +213,7 @@ class Vocabulary:
                 alphabet += alpha
                 
         else:
-            chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train, progress_bar=True)
+            chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train[:corpus_length], progress_bar=True)
 
         
         if resume_merges != False:
