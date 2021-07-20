@@ -1,46 +1,13 @@
+import regex as re
 from collections import Counter
 
-# import socket
-# if "Gianni" in socket.gethostname():
-#     from tqdm.notebook import tqdm
-# else:
-from tqdm import tqdm
+def findall_contexts(chain,best_pair_string,re_voc_l,re_voc_r):
+    contexts = re.findall(re_voc_l+best_pair_string+re_voc_r, chain, overlapped=True)
+    return contexts
 
-def parallel_chain(chain, n_of_parts):
-    """
-    Breaks the chain in n chunks to compute best pair of terms. Chunks are overlapping by one term, so as no pair of terms is lost due to the break.
-    """
-    if not isinstance(chain,list):
-        chain = list(chain)
-    chunk_size = int(len(chain) / n_of_parts)+1
-    for i in range(0, len(chain), chunk_size):
-        yield chain[i : i + chunk_size +1]
-                
+
 def find_best_pair(chain_list):
-
     pair_count = Counter()
     for pair in list(zip(chain_list, chain_list[1:])):
         pair_count[pair] += 1
-    
     return pair_count
-
-def chain_list_i(normalizer, sent):
-    sent = normalizer.normalize(sent)
-    sent = list(sent)
-    return sent
-
-def chain_list(normalizer, corpus_sents):
-    chain_list = []
-    for sent in corpus_sents:
-        sent = normalizer.normalize(sent)
-        sent = list(sent)
-        if sent !=[]:
-            chain_list += sent
-    return chain_list
-
-
-def bla2(listtup):
-    if isinstance(listtup,tuple):
-        i = listtup[0]
-        l = listtup[1]
-    return i,l,l

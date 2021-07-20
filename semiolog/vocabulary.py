@@ -1,6 +1,7 @@
 from collections import Counter
 import csv
-from typing import Union, Iterable, Dict, Any
+import numpy as np
+from scipy.sparse import coo_matrix
 
 import socket
 socket_name = socket.gethostname()
@@ -114,23 +115,17 @@ class Vocabulary:
                     
         return chain_list, alphabet
     
-    def find_best_pair(self,chain_list, top_pairs = 100):
-
+    def find_best_pair(self,chain_list):
         pair_count = Counter()
         for pair in list(zip(chain_list, chain_list[1:])):
-            pair_count[pair] += 1
-        
-        if top_pairs != None:
-            
-            top_counter = Counter() 
-            for k,v in pair_count.most_common(top_pairs):
-                top_counter[k] = v
-            return top_counter
-            
+            pair_count[pair] += 1            
         return pair_count
+    
+    def findall_contexts(self,chain,best_pair_string,re_voc_l,re_voc_r):
+        contexts = re.findall(re_voc_l+best_pair_string+re_voc_r, chain, overlapped=True)
+        return contexts
         
-        
-    def build(
+    def build_new(
         self,
         corpus = None,
         vocab_size = None,
@@ -139,10 +134,308 @@ class Vocabulary:
         save_step = None,
         progress_bar = True,
         resume_merges = False,
-        parallel = False,
-        parallel_mode = "process",
+        parallel = True,
+        sparse = True,
+        sparse_mode = "csr",
         corpus_length = None
         ):
+        """
+        Build vocabulary from a Corpus.
+        Vocabularies can be extended by providing an existing merging list. If resume_merges = True, the current merges in self.merges will be used. Otherwise one can provide a list of merges as value of resume_merges.
+        
+        If vocab_size is negative, the value is taken, not as the target size of the voc, but as the number of new terms to compute beyond the size of the initial alphabet
+        """
+        
+        if corpus == None:
+            corpus = self.name
+        
+        if vocab_size == None:
+            vocab_size = self.config.size
+        
+        if special_tokens == None:
+            special_tokens = self.config.special_tokens
+        
+        if save == True and save_step != None:
+            saveQ = True
+            
+            if not isdir(self.path):
+                makedirs(self.path)
+                
+            save_steps = {save_step*i for i in range(int(abs(vocab_size)/save_step)+1)}
+        else:
+            saveQ = False
+
+        def parallel_chain(chain, n_of_parts, overlap = 0):
+            """
+            Breaks the chain in n chunks to compute best pair of terms. Chunks are overlapping by one term, so as no pair of terms is lost due to the break.
+            """
+            if not isinstance(chain,list):
+                chain = list(chain)
+            chunk_size = int(len(chain) / n_of_parts)+1
+            for i in range(0, len(chain), chunk_size):
+                yield chain[i : i + chunk_size + overlap]
+                
+        def extract_drc(pairs, encoder: dict):
+            data = []
+            rows = []
+            columns = []
+            for (r,c),d in pairs:
+                data.append(d)
+                rows.append(encoder[r])
+                columns.append(encoder[c])
+            return data, rows, columns
+
+        def separate_chain(chain, n_of_parts, best_pair: list):
+            """
+            Separate a chain (in list form) for parallel processing of regex findall of pair, taking care that the cuts of the chunks don't fall in the neiborhood of the pair, affecting the final counts
+            """
+            chunk_size = int(len(chain) / n_of_parts)+1
+            b = 0
+            n = chunk_size
+            chain_len = len(chain)
+            for i in range(n_of_parts):
+                n = (i+1)*chunk_size
+                if chain_len > n:
+                    while chain[n-2:n] == best_pair or chain[n-1:n+1] == best_pair:
+                        n = n+1
+                yield ("[SEP_i] " if i!=0 else "") + " ".join(chain[b:n]) + (" [SEP_i]" if i!=n_of_parts-1 else "")
+                b = n-1
+
+        def agglutinate_chain(pair, cl_chain):
+            bigram = re.escape(" ".join(pair))
+            p = re.compile(r"(?<!\S)" + bigram + r"(?!\S)")
+            cl_chain = p.sub("".join(pair), cl_chain)
+            return cl_chain
+        
+        if isinstance(self.config.normalizer,list):
+            normalizer = eval(
+                f"tokenizer.normalizers.Sequence({self.config.normalizer})"
+                )
+        else:
+            normalizer = eval(
+                f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
+            )
+        
+        if parallel:
+            
+            par_corpus = parallel_chain(self.corpus.train[:corpus_length], self.cpu_count)
+
+            result = util.multiprocessing_tqdm(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count, desc="Normalize & Alphabet")
+            
+            chain_list = []
+            alphabet = Counter()
+            for chain_l, alpha in result:
+                chain_list += chain_l
+                alphabet += alpha
+                
+        else:
+            chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train[:corpus_length], progress_bar=True)
+        
+
+        # TODO: Add resume feature        
+        if resume_merges != False and False:
+            if resume_merges == True:
+                merges = self.merges
+            elif isinstance(resume_merges,list):
+                merges = resume_merges
+            
+            for pair in tqdm(merges, desc = "Resuming Existing Vocabulary",disable = not progress_bar):
+                chain_list = agglutinate_chain(tuple(pair.split()),chain_list)
+            vocabulary = Counter()
+            for term in tqdm(chain_list,desc="Building Resumed Vocabulary", disable = not progress_bar):
+                vocabulary[term] += 1
+            
+        else:
+            merges = []
+            vocabulary = alphabet
+
+        if parallel:
+            
+            par_chain = parallel_chain(chain_list, self.cpu_count, overlap=1)
+            
+            result = util.multiprocessing(self.find_best_pair, par_chain, cores=self.cpu_count) 
+                                
+            pairs = reduce(operator.add, result)
+            pairs = pairs.most_common()
+            
+        else:
+            pairs = self.find_best_pair(chain_list).most_common()
+
+
+        cl_chain = "[SEP] "+" ".join(chain_list)+" [SEP]"
+        encode = {k:i for i,(k,v) in enumerate(alphabet.most_common())}
+        decode = {i:k for k,i in encode.items()}
+        
+        voc_len = len(encode)
+        special_tokens_len = 0 if special_tokens == None else len(special_tokens)
+        
+        print(f"Alphabet Size: {voc_len}")
+        
+        if vocab_size<0:
+            voc_final_length = voc_len + abs(vocab_size)
+        else:
+            voc_final_length = vocab_size - special_tokens_len
+            
+        if sparse:
+            data, rows, columns = extract_drc(pairs,encode)
+            voc_matrix = coo_matrix((np.array(data), (np.array(rows),np.array(columns))), shape=(voc_final_length, voc_final_length), dtype=int)
+
+        else:
+            voc_matrix = np.zeros((voc_final_length, voc_final_length), dtype=int)
+            for (row,column),value in pairs:
+                voc_matrix[encode[row], encode[column]] = value
+        
+        delta_voc = voc_final_length - voc_len
+        best_pair = "init"
+        pair_count = "---"
+        new_i = voc_len
+
+        t = trange(delta_voc, disable = not progress_bar)
+
+        for i in t:
+            t.set_description(f"Pair: {best_pair}, {pair_count}")
+            t.refresh()
+
+            if sparse:
+                max_i = voc_matrix.data.argmax()
+                pair_row = voc_matrix.row[max_i]
+                pair_col = voc_matrix.col[max_i]
+                pair_count = voc_matrix.data[max_i]
+            else:
+                pair_row,pair_col = np.unravel_index(np.argmax(voc_matrix, axis=None), voc_matrix.shape)
+                pair_count = voc_matrix[pair_row,pair_col]
+            
+            if pair_count == 0:
+                break
+
+            best_pair = (decode[pair_row], decode[pair_col])
+            best_pair_string = " ".join(best_pair)
+            merges.append(best_pair_string)
+            best_pair_string_voc = "".join(best_pair)
+            re_voc_l = "("+"|".join([" "+k+" " for k in encode.keys()]+["\[SEP\] ","\[SEP_i\] "])+")"
+            re_voc_r = "("+"|".join([" "+k+" " for k in encode.keys()]+[" \[SEP\]"," \[SEP_i\]"])+")"
+            if parallel:
+                result = util.multiprocessing(
+                    partial(self.findall_contexts,best_pair_string=best_pair_string,re_voc_l=re_voc_l,re_voc_r=re_voc_r),
+                    separate_chain(cl_chain.split(), self.cpu_count, list(best_pair)),
+                    cores = self.cpu_count
+                    )
+                merge_context = reduce(operator.add, result)
+            else:
+                merge_context = re.findall(re_voc_l+best_pair_string+re_voc_r, cl_chain, overlapped=True)
+            merge_context_count_l = Counter()
+            merge_context_count_r = Counter()
+            for l,r in merge_context:
+                if "[SEP]" not in l:
+                    merge_context_count_l[encode[l.strip()]] += 1
+                if "[SEP]" not in r:
+                    merge_context_count_r[encode[r.strip()]] += 1
+            
+            if sparse:
+                # Convert matrix to CSR or LIL, for item attribution and arithmetic 
+                if sparse_mode == "csr":
+                    voc_matrix = voc_matrix.tocsr()
+                else:
+                    voc_matrix = voc_matrix.tolil()
+            
+            for row,key in merge_context_count_l.items():
+                voc_matrix[row,new_i] = key
+                
+            for column,key in merge_context_count_r.items():
+                voc_matrix[new_i,column] = key
+
+            # Correct previous counts
+            
+            # compute #(l,r)-(l,r)
+            pair_pair_count = len(re.findall(" "+best_pair_string+" "+best_pair_string+" ", cl_chain, overlapped=False))
+            # remove #(l,r)-(l,r) from (l,r)-l
+            voc_matrix[new_i,pair_row] -= pair_pair_count
+            # remove #(l,r)-(l,r) from r-(l,r)
+            voc_matrix[pair_col,new_i] -= pair_pair_count
+            # remove #(l,r)-(l,r) from r-l
+            voc_matrix[pair_col,pair_row] -= pair_pair_count
+            # substract (l,r)- from r-
+            voc_matrix[pair_col,:new_i] -= voc_matrix[new_i,:new_i]
+            # substract -(l,r)- from -l
+            voc_matrix[:new_i,pair_row] -= voc_matrix[:new_i,new_i]
+            
+            # set l-r to 0
+            voc_matrix[pair_row,pair_col] = 0
+            # register #(l,r)-(l,r)
+            voc_matrix[new_i,new_i] = pair_pair_count
+            
+            if sparse:
+                # Convert matrix back to COO, to restart the loop
+                voc_matrix = voc_matrix.tocoo()
+            
+            best_pair_string_voc = "".join(best_pair)
+            encode[best_pair_string_voc] = new_i
+            decode[new_i] = best_pair_string_voc
+            new_i += 1
+            cl_chain = agglutinate_chain(best_pair_string.split(),cl_chain)
+
+            if saveQ == True:
+                if voc_len + special_tokens_len + i + 1 in save_steps:
+                    
+                    if sparse:
+                        freq_values = voc_matrix.sum(axis=1).T.tolist()[0]
+                    else:
+                        freq_values = voc_matrix.sum(axis=1).T.tolist()
+                    vocabulary = {decode[i]:v for i,v in enumerate(freq_values) if v>0} # Make sure dimension of matrix and size of voc coincide
+                    vocabulary = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)
+                    
+                    if special_tokens != None:
+                        vocabulary = vocabulary + [(token,0) for token in special_tokens]
+
+                    self.merges = merges
+                    self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
+                    self.freq = dict(vocabulary)
+                    self.alpha = dict(alphabet)
+                    step_path = self.path / str(voc_len+i+1)
+                    self.save(step_path)
+                    print(f"Intermediate vocabulary saved to {step_path}")
+
+        if sparse:
+            freq_values = voc_matrix.sum(axis=1).T.tolist()[0]
+        else:
+            freq_values = voc_matrix.sum(axis=1).T.tolist()
+        vocabulary = {decode[i]:v for i,v in enumerate(freq_values) if v>0} # Make sure dimension of matrix and size of voc coincide
+        vocabulary = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)
+        
+        if special_tokens != None:
+            vocabulary = vocabulary + [(token,0) for token in special_tokens]
+
+        self.merges = merges
+        self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
+        self.freq = dict(vocabulary)
+        self.alpha = dict(alphabet.most_common())
+
+        self.decode = {i:k for k,i in self.encode.items()}
+        
+        self.len = len(vocabulary)     
+        self.freq_mass = sum(self.freq.values())
+        self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
+
+        print("Vocabulary built")
+        
+        if save == True:
+            self.save()
+            print(f"Vocabulary saved to {self.path}")
+    
+    
+    def build_old(
+    self,
+    corpus = None,
+    vocab_size = None,
+    special_tokens = None,
+    save = False,
+    save_step = None,
+    progress_bar = True,
+    resume_merges = False,
+    parallel = False,
+    parallel_mode = "process",
+    corpus_length = None
+    ):
         """
         Build vocabulary from a Corpus.
         Vocabularies can be extended by providing an existing merging list. If resume_merges = True, the current merges in self.merges will be used. Otherwise one can provide a list of merges as value of resume_merges.
