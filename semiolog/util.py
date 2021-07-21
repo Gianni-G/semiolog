@@ -413,12 +413,17 @@ def profiler(process):
 ####### TEST BUILD VOC, EFFACER #######
 
 import regex as re
-import numpy as np
-from collections import Counter
 from scipy.sparse import csr_matrix, lil_matrix, coo_matrix
-from functools import partial
-from functools import reduce
+from functools import partial, reduce
 import operator
+# import numpy as np
+# from collections import Counter
+# import socket
+# socket_name = socket.gethostname()
+# if any(name in socket_name for name in {"Gianni","vpn"}):
+#     from tqdm.notebook import tqdm, trange
+# else:
+#     from tqdm.auto import tqdm, trange
 
 def findall_contexts(chain,best_pair_string,re_voc_l,re_voc_r):
     contexts = re.findall(re_voc_l+best_pair_string+re_voc_r, chain, overlapped=True)
