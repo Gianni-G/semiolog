@@ -21,9 +21,9 @@ import plotly.graph_objects as go
 import socket
 socket_name = socket.gethostname()
 if any(name in socket_name for name in {"Gianni","vpn"}):
-    from tqdm.notebook import tqdm
+    from tqdm.notebook import tqdm, trange
 else:
-    from tqdm.auto import tqdm
+    from tqdm.auto import tqdm, trange
 
 # Definitions of Functions
 
@@ -416,7 +416,6 @@ import regex as re
 import numpy as np
 from collections import Counter
 from scipy.sparse import csr_matrix, lil_matrix, coo_matrix
-from tqdm.notebook import tqdm, trange
 from functools import partial
 from functools import reduce
 import operator
