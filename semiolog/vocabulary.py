@@ -3,12 +3,14 @@ import csv
 import numpy as np
 from scipy.sparse import coo_matrix
 
-import socket
-socket_name = socket.gethostname()
-if any(name in socket_name for name in {"Gianni","vpn"}):
-    from tqdm.notebook import tqdm, trange
-else:
-    from tqdm.auto import tqdm, trange
+# import socket
+# socket_name = socket.gethostname()
+# if any(name in socket_name for name in {"Gianni","vpn"}):
+#     from tqdm.notebook import tqdm, trange
+# else:
+#     from tqdm.auto import tqdm, trange
+    
+from tqdm.auto import tqdm, trange
     
 import regex as re
 from os import makedirs
@@ -375,7 +377,8 @@ class Vocabulary:
             cl_chain = agglutinate_chain(best_pair_string.split(),cl_chain)
 
             if saveQ == True:
-                if voc_len + special_tokens_len + i + 1 in save_steps:
+                voc_partial_len = voc_len + special_tokens_len + i + 1
+                if voc_partial_len % save_step == 0:
                     
                     if sparse:
                         freq_values = voc_matrix.sum(axis=1).T.tolist()[0]
@@ -391,7 +394,7 @@ class Vocabulary:
                     self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
                     self.freq = dict(vocabulary)
                     self.alpha = dict(alphabet)
-                    step_path = self.path / str(voc_len+i+1)
+                    step_path = self.path / str(voc_partial_len)
                     self.save(step_path)
                     print(f"Intermediate vocabulary saved to {step_path}")
 
@@ -458,7 +461,6 @@ class Vocabulary:
             if not isdir(self.path):
                 makedirs(self.path)
                 
-            save_steps = {save_step*i for i in range(int(abs(vocab_size)/save_step)+1)}
         else:
             saveQ = False
         
@@ -567,7 +569,8 @@ class Vocabulary:
             merges.append(" ".join(pair[0]))
             
             if saveQ == True:
-                if voc_len + i + 1 in save_steps:
+                voc_partial_len = voc_len + i + 1
+                if voc_partial_len % save_step == 0:
                     vocabulary = Counter(chain_list).most_common()
                     if special_tokens != None:
                         vocabulary = vocabulary + [(token,0) for token in special_tokens]
@@ -576,7 +579,7 @@ class Vocabulary:
                     self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
                     self.freq = dict(vocabulary)
                     self.alpha = dict(alphabet)
-                    step_path = self.path / str(voc_len+i+1)
+                    step_path = self.path / str(voc_partial_len)
                     self.save(step_path)
                     print(f"Intermediate vocabulary saved to {step_path}")
         
