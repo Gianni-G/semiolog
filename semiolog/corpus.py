@@ -101,7 +101,12 @@ class Corpus:
         sentences = []
         for document in tqdm(input, disable = not progress_bar):
             doc_sentences = self.pre_process_document(document)
-            sentences.extend(doc_sentences)
+            if isinstance(doc_sentences,list):
+                sentences.extend(doc_sentences)
+            elif isinstance(doc_sentences,str):
+                sentences.append(doc_sentences)
+            else:
+                raise TypeError('Pre-processed corpus type other than list or string.')
         return sentences   
 
 
