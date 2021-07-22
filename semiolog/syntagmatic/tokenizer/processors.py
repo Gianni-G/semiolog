@@ -25,7 +25,7 @@ class disable:
     def __init__(self) -> None:
         pass
 
-    def process(self, sequence: str, semiotic,is_pretokenized=False):
+    def process(self, sequence: str, semiotic = None,is_pretokenized=False):
         return sequence #TODO: This should maybe return a list of Functives to preserve the flow of types in the tokenizer pipeline
 
 class SequenceSLG(Processor):
