@@ -3,20 +3,19 @@ import csv
 import numpy as np
 from scipy.sparse import coo_matrix
 
-# import socket
-# socket_name = socket.gethostname()
-# if any(name in socket_name for name in {"Gianni","vpn"}):
-#     from tqdm.notebook import tqdm, trange
-# else:
-#     from tqdm.auto import tqdm, trange
-    
-from tqdm.auto import tqdm, trange
+import socket
+socket_name = socket.gethostname()
+if any(name in socket_name for name in {"Gianni","vpn"}):
+    from tqdm.notebook import tqdm, trange
+else:
+    from tqdm.auto import tqdm, trange
     
 import regex as re
 from os import makedirs
 from os.path import isfile, isdir
 from functools import reduce, partial
 import operator
+from datetime import datetime
 
 from . import util
 from .syntagmatic import tokenizer
@@ -117,16 +116,24 @@ class Vocabulary:
                     
         return chain_list, alphabet
     
-    def find_best_pair(self,chain_list):
+    def find_best_pair(self, chain_list, progress_bar = False):
+        
         pair_count = Counter()
-        for pair in list(zip(chain_list, chain_list[1:])):
-            pair_count[pair] += 1            
+        if progress_bar:
+            for pair in tqdm(list(zip(chain_list, chain_list[1:])), desc="Finding Best Pair"):
+                pair_count[pair] += 1            
+        
+        else:
+            for pair in list(zip(chain_list, chain_list[1:])):
+                pair_count[pair] += 1            
+        
         return pair_count
+        
     
     def findall_contexts(self,chain,best_pair_string,re_voc_l,re_voc_r):
         contexts = re.findall(re_voc_l+best_pair_string+re_voc_r, chain, overlapped=True)
         return contexts
-        
+    
     def build_new(
         self,
         corpus = None,
@@ -163,7 +170,7 @@ class Vocabulary:
             if not isdir(self.path):
                 makedirs(self.path)
                 
-            save_steps = {save_step*i for i in range(int(abs(vocab_size)/save_step)+1)}
+            # save_steps = {save_step*i for i in range(int(abs(vocab_size)/save_step)+1)}
         else:
             saveQ = False
 
@@ -252,6 +259,8 @@ class Vocabulary:
             vocabulary = alphabet
 
         if parallel:
+            print("Computing matrix values in parallel...")
+            start = datetime.now()
             
             par_chain = parallel_chain(chain_list, self.cpu_count, overlap=1)
             
@@ -259,9 +268,11 @@ class Vocabulary:
                                 
             pairs = reduce(operator.add, result)
             pairs = pairs.most_common()
+            print(f"Matrix values computed in {datetime.now()-start}")
             
         else:
-            pairs = self.find_best_pair(chain_list).most_common()
+            pairs = self.find_best_pair(chain_list, progress_bar = True)
+            pairs = pairs.most_common()
 
 
         cl_chain = "[SEP] "+" ".join(chain_list)+" [SEP]"
@@ -277,7 +288,8 @@ class Vocabulary:
             voc_final_length = voc_len + abs(vocab_size)
         else:
             voc_final_length = vocab_size - special_tokens_len
-            
+        
+        # TODO: this can yield an error if vocab_size is smaller than alphabet. Fix to make vocab_size = max(vocab_size, len(alphabet)), and don't launch matrix construction in that case.
         if sparse:
             data, rows, columns = extract_drc(pairs,encode)
             voc_matrix = coo_matrix((np.array(data), (np.array(rows),np.array(columns))), shape=(voc_final_length, voc_final_length), dtype=int)
