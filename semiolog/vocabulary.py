@@ -1,3 +1,5 @@
+import warnings
+
 from collections import Counter
 import csv
 import numpy as np
@@ -303,6 +305,8 @@ class Vocabulary:
         best_pair = "init"
         pair_count = "---"
         new_i = voc_len
+
+        # TODO: remove SparseEfficiencyWarning
 
         t = trange(delta_voc, disable = not progress_bar)
 
