@@ -6,6 +6,7 @@
 import os,sys
 import math
 import concurrent.futures
+from joblib import Parallel, delayed
 import csv
 import json
 import itertools
@@ -55,10 +56,16 @@ def chunks(iterable, size=10):
     for first in iterator:
         yield itertools.chain([first], itertools.islice(iterator, size - 1))
         
-def multiprocessing(func, args, chunksize=1, cores=None):
-    with concurrent.futures.ProcessPoolExecutor(cores) as executor:
-        result = executor.map(func, args, chunksize=chunksize)
-    return list(result)
+def multiprocessing(func, args, cores=None):
+    if cores == None:
+        cores = os.cpu_count()
+
+    result = Parallel(n_jobs=cores)(delayed(func)(i) for i in args)
+    return result
+    
+    # with concurrent.futures.ProcessPoolExecutor(cores) as executor:
+    #     result = executor.map(func, args, chunksize=chunksize)
+    # return list(result)
 
 def multithreading(func, args, chunksize=1,cores=None):
     with concurrent.futures.ThreadPoolExecutor(cores) as executor:

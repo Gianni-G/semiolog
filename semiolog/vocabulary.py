@@ -24,7 +24,7 @@ from .syntagmatic import tokenizer
 
 # TODO: Solve version as global variable
 slg_version = "0.1"
-
+    
 class Vocabulary:
     
     def __init__(self,semiotic):
@@ -135,7 +135,7 @@ class Vocabulary:
     def findall_contexts(self,chain,best_pair_string,re_voc_l,re_voc_r):
         contexts = re.findall(re_voc_l+best_pair_string+re_voc_r, chain, overlapped=True)
         return contexts
-    
+            
     def build_new(
         self,
         corpus = None,
@@ -231,13 +231,16 @@ class Vocabulary:
             
             par_corpus = parallel_chain(self.corpus.train[:corpus_length], self.cpu_count)
 
-            result = util.multiprocessing_tqdm(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count, desc="Normalize & Alphabet")
+            print("Normalize & Alphabet in parallel...")
+            start = datetime.now()
+            result = util.multiprocessing(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count) #, desc="Normalize & Alphabet")
             
             chain_list = []
             alphabet = Counter()
             for chain_l, alpha in result:
                 chain_list += chain_l
                 alphabet += alpha
+            print(f"Normalize & Alphabet computed in {datetime.now()-start}")
                 
         else:
             chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train[:corpus_length], progress_bar=True)
@@ -333,11 +336,13 @@ class Vocabulary:
             re_voc_l = "("+"|".join([" "+k+" " for k in encode.keys()]+["\[SEP\] ","\[SEP_i\] "])+")"
             re_voc_r = "("+"|".join([" "+k+" " for k in encode.keys()]+[" \[SEP\]"," \[SEP_i\]"])+")"
             if parallel:
+                
                 result = util.multiprocessing(
                     partial(self.findall_contexts,best_pair_string=best_pair_string,re_voc_l=re_voc_l,re_voc_r=re_voc_r),
                     separate_chain(cl_chain.split(), self.cpu_count, list(best_pair)),
                     cores = self.cpu_count
                     )
+                
                 merge_context = reduce(operator.add, result)
             else:
                 merge_context = re.findall(re_voc_l+best_pair_string+re_voc_r, cl_chain, overlapped=True)
@@ -423,7 +428,7 @@ class Vocabulary:
         
         if special_tokens != None:
             vocabulary = vocabulary + [(token,0) for token in special_tokens]
-
+        
         self.merges = merges
         self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
         self.freq = dict(vocabulary)
@@ -515,7 +520,7 @@ class Vocabulary:
             par_corpus = parallel_chain(self.corpus.train[:corpus_length], self.cpu_count)
             
             if parallel_mode == "process":
-                result = util.multiprocessing_tqdm(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count, desc="Normalize & Alphabet")               
+                result = util.multiprocessing(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count) # , desc="Normalize & Alphabet")               
             else:
                 result = util.multithreading(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count)
             
