@@ -1,4 +1,6 @@
 import warnings
+from pyinstrument import Profiler
+import sys
 
 from collections import Counter
 import csv
@@ -313,6 +315,10 @@ class Vocabulary:
 
         t = trange(delta_voc, disable = not progress_bar)
 
+
+        profile = Profiler()
+        profile.start()
+        
         for i in t:
             t.set_description(f"Pair: {best_pair}, {pair_count}")
             t.refresh()
@@ -336,10 +342,10 @@ class Vocabulary:
             re_voc_l = "("+"|".join([" "+k+" " for k in encode.keys()]+["\[SEP\] ","\[SEP_i\] "])+")"
             re_voc_r = "("+"|".join([" "+k+" " for k in encode.keys()]+[" \[SEP\]"," \[SEP_i\]"])+")"
             if parallel:
-                
+                chain_chunks = list(
+                    separate_chain(cl_chain.split(), self.cpu_count, list(best_pair)))
                 result = util.multiprocessing(
-                    partial(self.findall_contexts,best_pair_string=best_pair_string,re_voc_l=re_voc_l,re_voc_r=re_voc_r),
-                    separate_chain(cl_chain.split(), self.cpu_count, list(best_pair)),
+                    partial(self.findall_contexts,best_pair_string=best_pair_string,re_voc_l=re_voc_l,re_voc_r=re_voc_r),chain_chunks,
                     cores = self.cpu_count
                     )
                 
@@ -418,6 +424,9 @@ class Vocabulary:
                     step_path = self.path / str(voc_partial_len)
                     self.save(step_path)
                     print(f"Intermediate vocabulary saved to {step_path}")
+
+        profile.stop()
+        print(profile.output_text(unicode=True, color=True))
 
         if sparse:
             freq_values = voc_matrix.sum(axis=1).T.tolist()[0]
