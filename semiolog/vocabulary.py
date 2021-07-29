@@ -638,6 +638,7 @@ class Vocabulary:
         if save == True:
             self.save()
             print(f"Vocabulary saved to {self.path}")
+
     
     def save(self, path = None):
         
