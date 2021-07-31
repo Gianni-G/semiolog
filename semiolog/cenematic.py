@@ -24,6 +24,8 @@ class Cenematic:
         self.paths = Paths(self.name)
         
         self.config = Config(self)
+        if empty == False and os.path.isdir(self.paths.semiotic):
+            self.config.from_file()            
         self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
 
         self.corpus = Corpus(self)
@@ -38,10 +40,10 @@ class Cenematic:
 
         # TODO: configure online repository for models, with automatic download
         
+        # TODO: Take a look at the loading order, since I moved the config from file up
         if empty == False and os.path.isdir(self.paths.semiotic):
-                
-            self.config.from_file()
-            self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
+            # self.config.from_file()
+            # self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
             if not config_only:
                 self.corpus.from_file()
                 self.vocab.from_file()
