@@ -1215,20 +1215,55 @@ class Vocabulary:
             freq = Counter(freq)
             return freq
         
+
         # TODO: Include feature computing delta voc as difference from vocab_size and alphabet
         delta_voc = vocab_size
 
-        chunksize = int(corpus_length/self.cpu_count)
+        if parallel:
+            chunksize = int(corpus_length/self.cpu_count)
 
-        corpus_chunks = ["".join(self.corpus.train[i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
+            corpus_chunks = ["".join(self.corpus.train[i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
 
 
-        with Parallel(n_jobs=self.cpu_count) as parallel_pool:
+            with Parallel(n_jobs=self.cpu_count, require='sharedmem') as parallel_pool:
+                print("Computing in parallel")
+                print("Normalize and jobs data...")
+                start = time.time()
+                jobs_data = parallel_pool(delayed(pre_process)(chunk,self.normalizer.normalize) for chunk in corpus_chunks)
+
+                pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+                best_pair = pair_len_global.most_common(1)[0][0]
+                
+                merges = [best_pair]
+                print(f"... computed in {time.time()-start} secs.\n")
+
+                print("Enter loop")
+                for _ in range(delta_voc):
+
+                    print(f"{_+1}/{delta_voc}: {best_pair}...")
+                    start = time.time()
+                    jobs_data = parallel_pool(delayed(process_best_pair)(job_data, best_pair) for job_data in jobs_data)
+
+                    pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+                    best_pair = pair_len_global.most_common(1)[0][0]
+
+                    merges.append(best_pair)
+                    print(f"... computed in {time.time()-start} secs.\n")
+                
+                print("Compute freq...")
+                start = time.time()
+                freqs = parallel_pool(delayed(compute_freq)(job_data[0]) for job_data in jobs_data)
+                freq = reduce(operator.add, freqs)
+                print(f"... computed in {time.time()-start} secs.\n")
+        
+        else:
+            print("Computing sequentially")
             print("Normalize and jobs data...")
             start = time.time()
-            jobs_data = parallel_pool(delayed(pre_process)(chunk,self.normalizer.normalize) for chunk in corpus_chunks)
+            corpus_chain = "".join(self.corpus.train[:corpus_length])
+            job_data = pre_process(corpus_chain,self.normalizer.normalize)
 
-            pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+            pair_len_global = job_data[-1]
             best_pair = pair_len_global.most_common(1)[0][0]
             
             merges = [best_pair]
@@ -1239,9 +1274,9 @@ class Vocabulary:
 
                 print(f"{_+1}/{delta_voc}: {best_pair}...")
                 start = time.time()
-                jobs_data = parallel_pool(delayed(process_best_pair)(job_data, best_pair) for job_data in jobs_data)
+                job_data = process_best_pair(job_data, best_pair)
 
-                pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+                pair_len_global = job_data[-1]
                 best_pair = pair_len_global.most_common(1)[0][0]
 
                 merges.append(best_pair)
@@ -1249,10 +1284,8 @@ class Vocabulary:
             
             print("Compute freq...")
             start = time.time()
-            freqs = parallel_pool(delayed(compute_freq)(job_data[0]) for job_data in jobs_data)
-            freq = reduce(operator.add, freqs)
+            freq = compute_freq(job_data[0])
             print(f"... computed in {time.time()-start} secs.\n")
-
 
         vocabulary = freq.most_common()
         
