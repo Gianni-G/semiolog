@@ -2,7 +2,7 @@ import warnings
 from pyinstrument import Profiler
 import sys
 
-from collections import Counter
+from collections import Counter, defaultdict
 import csv
 import numpy as np
 from scipy.sparse import coo_matrix
@@ -21,6 +21,7 @@ from functools import reduce, partial
 import operator
 from datetime import datetime
 from joblib import Parallel, delayed
+import time
 
 from . import util
 from .syntagmatic import tokenizer
@@ -50,6 +51,16 @@ class Vocabulary:
         self.len = None
         self.freq_mass = None
         self.prob = None
+
+        # maybe this can be re-placed in build()
+        if isinstance(self.config.normalizer,list):
+            self.normalizer = eval(
+                f"tokenizer.normalizers.Sequence({self.config.normalizer})"
+                )
+        else:
+            self.normalizer = eval(
+                f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
+            )
 
 
     def from_file(self,path = None):
@@ -100,6 +111,7 @@ class Vocabulary:
         pass
     
     def chain_list_alpha(self, normalizer, corpus_sents, progress_bar = False):
+        # TODO: maybe use the self.normalizer
 
         chain_list = []
         alphabet = Counter()
@@ -221,6 +233,7 @@ class Vocabulary:
             cl_chain = p.sub("".join(pair), cl_chain)
             return cl_chain
         
+        # TODO: maybe use the self.normalizer
         if isinstance(self.config.normalizer,list):
             normalizer = eval(
                 f"tokenizer.normalizers.Sequence({self.config.normalizer})"
@@ -235,6 +248,7 @@ class Vocabulary:
             par_corpus = parallel_chain(self.corpus.train[:corpus_length], self.cpu_count)
 
             print("Normalize & Alphabet in parallel...")
+            # TODO: maybe use the self.normalizer
             start = datetime.now()
             result = util.multiprocessing(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count) #, desc="Normalize & Alphabet")
             
@@ -514,7 +528,7 @@ class Vocabulary:
             chain_list = chain_list.split()
             return chain_list
         
-        
+        # TODO: maybe use the self.normalizer
         if isinstance(self.config.normalizer,list):
             normalizer = eval(
                 f"tokenizer.normalizers.Sequence({self.config.normalizer})"
@@ -529,6 +543,7 @@ class Vocabulary:
             
             par_corpus = parallel_chain(self.corpus.train[:corpus_length], self.cpu_count)
             
+            # TODO: maybe use the self.normalizer
             if parallel_mode == "process":
                 result = util.multiprocessing(partial(self.chain_list_alpha, normalizer), par_corpus, cores=self.cpu_count) # , desc="Normalize & Alphabet")               
             else:
@@ -541,6 +556,7 @@ class Vocabulary:
                 alphabet += alpha
                 
         else:
+            # TODO: maybe use the self.normalizer
             chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train[:corpus_length], progress_bar=True)
 
         
@@ -703,7 +719,7 @@ class Vocabulary:
 
         def separate_chain(chain, n_of_parts, best_pair: list):
             """
-            Separate a chain (in list form) for parallel processing of regex findall of pair, taking care that the cuts of the chunks don't fall in the neiborhood of the pair, affecting the final counts
+            Separate a chain (in list form) for parallel processing of regex findall of pair, taking care that the cuts of the chunks don't fall in the neighborhood of the pair, affecting the final counts
             """
             chunk_size = int(len(chain) / n_of_parts)+1
             b = 0
@@ -723,14 +739,14 @@ class Vocabulary:
             cl_chain = p.sub("".join(pair), cl_chain)
             return cl_chain
         
-        if isinstance(self.config.normalizer,list):
-            normalizer = eval(
-                f"tokenizer.normalizers.Sequence({self.config.normalizer})"
-                )
-        else:
-            normalizer = eval(
-                f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
-            )
+        # if isinstance(self.config.normalizer,list):
+        #     normalizer = eval(
+        #         f"tokenizer.normalizers.Sequence({self.config.normalizer})"
+        #         )
+        # else:
+        #     normalizer = eval(
+        #         f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
+        #     )
         
         if parallel:
             
@@ -742,7 +758,7 @@ class Vocabulary:
                 start = datetime.now()
                 
                 # TODO: check if chain_list_alpha could be done without for loop
-                result = parallel_pool(delayed(self.chain_list_alpha)(normalizer,corpus_chunk) for corpus_chunk in par_corpus)
+                result = parallel_pool(delayed(self.chain_list_alpha)(self.normalizer,corpus_chunk) for corpus_chunk in par_corpus)
                 
                 # TODO: check if the reduce method is not better
                 chain_list = []
@@ -798,7 +814,6 @@ class Vocabulary:
                 new_i = voc_len
 
 
-
                 # TODO: remove SparseEfficiencyWarning
 
                 t = trange(delta_voc, disable = not progress_bar)
@@ -832,15 +847,14 @@ class Vocabulary:
                         separate_chain(cl_chain.split(), self.cpu_count, list(best_pair)))
                     result = parallel_pool(delayed(self.findall_contexts)(chain_chunk,best_pair_string,re_voc_l,re_voc_r) for chain_chunk in chain_chunks)
                     merge_context = reduce(operator.add, result)
-                        
-                    # TODO: Maybe this can be don with a direct Counter
-                    merge_context_count_l = Counter()
-                    merge_context_count_r = Counter()
-                    for l,r in merge_context:
-                        if "[SEP]" not in l:
-                            merge_context_count_l[encode[l.strip()]] += 1
-                        if "[SEP]" not in r:
-                            merge_context_count_r[encode[r.strip()]] += 1
+                            
+                    l_context = [l for l,r in merge_context]
+                    merge_context_count_l = Counter(l_context)
+                    merge_context_count_l = {encode[k.strip()]:v for k,v in merge_context_count_l.most_common() if "[SEP]" not in k}
+                    
+                    r_context = [r for l,r in merge_context]
+                    merge_context_count_r = Counter(r_context)
+                    merge_context_count_r = {encode[k.strip()]:v for k,v in merge_context_count_r.most_common() if "[SEP]" not in k}
                     
                     if sparse:
                         # Convert matrix to CSR or LIL, for item attribution and arithmetic 
@@ -909,7 +923,7 @@ class Vocabulary:
                             
                             
         else:
-            chain_list, alphabet = self.chain_list_alpha(normalizer, self.corpus.train[:corpus_length], progress_bar=True)
+            chain_list, alphabet = self.chain_list_alpha(self.normalizer, self.corpus.train[:corpus_length], progress_bar=True)
         
             merges = []
             vocabulary = alphabet
@@ -1091,7 +1105,185 @@ class Vocabulary:
 
 
 ###########
-    
+    def build_str_par(
+        self,
+        corpus = None,
+        vocab_size = None,
+        special_tokens = None,
+        save = False,
+        save_step = None,
+        progress_bar = True,
+        resume_merges = False,
+        parallel = True,
+        sparse = True,
+        sparse_mode = "csr",
+        corpus_length = None
+        ):
+
+        if corpus == None:
+            corpus = self.name
+        
+        if vocab_size == None:
+            vocab_size = self.config.size
+        
+        if special_tokens == None:
+            special_tokens = self.config.special_tokens
+        
+        if corpus_length == None:
+            corpus_length = self.corpus.train_len
+        
+        if save == True and save_step != None:
+            saveQ = True
+            
+            if not isdir(self.path):
+                makedirs(self.path)
+                
+            # save_steps = {save_step*i for i in range(int(abs(vocab_size)/save_step)+1)}
+        else:
+            saveQ = False
+
+        def pre_process(corpus_chunk, normalizer):
+            # Normalize
+            chain_zip = normalizer(corpus_chunk)
+            # Build list of pairs
+            chain_zip = list(zip(chain_zip,chain_zip[1:]))
+            # Create a lookup table of all the positions where a pair appears in a corpus
+            pair_pos = defaultdict(set)
+            for i,k in list(enumerate(chain_zip)):
+                pair_pos[k].add(i)
+            # From the previous lookup table, create another lookup table of the frequency of each pair (given by the size of the set of its positions)
+            pair_len = Counter()
+            for k,pos in pair_pos.items():
+                pair_len[k] = len(pos)
+            
+            return (chain_zip, pair_pos, pair_len)
+
+
+        def process_best_pair(job_data, best_pair):
+            chain_zip, pair_pos, pair_len = job_data
+            chain_zip_len = len(chain_zip)
+
+            for i in pair_pos[best_pair]:
+                ## merge best pair with left unit
+                left_pair_i = i-1
+                while left_pair_i>=0 and chain_zip[left_pair_i] == None: # if left pair is within chain limits but empty (= None) because already merged previously, shift to the left
+                    left_pair_i -= 1
+                if left_pair_i>-1: # proceed only if a left pair was found on the left
+                    # Remove from left pair positions, the current position (of the pair to be merged)
+                    left_pair = chain_zip[left_pair_i]
+                    left_pair_pos = pair_pos[left_pair]
+                    left_pair_pos.discard(left_pair_i)
+                    new_pair = (left_pair[0],"".join(best_pair)) # construct new left pair
+                    pair_pos[new_pair].add(left_pair_i) # add new pair (if non existing) and its position to the pair_pos lookup table
+                    # update the counts in the pair_len lookuptable
+                    pair_len[left_pair] -= 1
+                    pair_len[new_pair] += 1
+                    # update the list of pairs
+                    chain_zip[left_pair_i] = new_pair
+
+                ## merge best pair with right unit
+                right_pair_i = i+1
+                while right_pair_i<chain_zip_len and chain_zip[right_pair_i] == None: # if right pair is within chain limits but empty (= None) because already merged previously, shift to the right
+                    right_pair_i += 1
+                if right_pair_i<chain_zip_len: # proceed only if a left pair was found on the right
+                    # Remove from right pair positions, the current position (of the pair to be merged)
+                    right_pair = chain_zip[right_pair_i]
+                    right_pair_pos = pair_pos[right_pair]
+                    right_pair_pos.discard(right_pair_i)
+                    new_pair = ("".join(best_pair), right_pair[1]) # construct new right pair
+                    pair_pos[new_pair].add(right_pair_i) # add new pair (if non existing) and its position to the pair_pos lookup table
+                    # update the counts in the pair_len lookuptable
+                    pair_len[right_pair] -= 1
+                    pair_len[new_pair] += 1
+                    # update the list of pairs
+                    chain_zip[right_pair_i] = new_pair
+
+                # Empty best pair position in list of pairs
+                chain_zip[i] = None
+
+            # Remove best pair from lookuptables
+            del pair_pos[best_pair]
+            del pair_len[best_pair]
+
+            return (chain_zip, pair_pos, pair_len)
+
+        def compute_freq(chain_zip):
+            # TODO: add the last unit to the decoupling
+            freq = [pair[0] for pair in chain_zip if pair != None]
+            if chain_zip[-1]!=None: 
+                freq.append(chain_zip[-1][-1])
+            freq = Counter(freq)
+            return freq
+        
+        # TODO: Include feature computing delta voc as difference from vocab_size and alphabet
+        delta_voc = vocab_size
+
+        chunksize = int(corpus_length/self.cpu_count)
+
+        corpus_chunks = ["".join(self.corpus.train[i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
+
+
+        with Parallel(n_jobs=self.cpu_count) as parallel_pool:
+            print("Normalize and jobs data...")
+            start = time.time()
+            jobs_data = parallel_pool(delayed(pre_process)(chunk,self.normalizer.normalize) for chunk in corpus_chunks)
+
+            pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+            best_pair = pair_len_global.most_common(1)[0][0]
+            
+            merges = [best_pair]
+            print(f"... computed in {time.time()-start} secs.\n")
+
+            print("Enter loop")
+            for _ in range(delta_voc):
+
+                print(f"{_+1}/{delta_voc}: {best_pair}...")
+                start = time.time()
+                jobs_data = parallel_pool(delayed(process_best_pair)(job_data, best_pair) for job_data in jobs_data)
+
+                pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+                best_pair = pair_len_global.most_common(1)[0][0]
+
+                merges.append(best_pair)
+                print(f"... computed in {time.time()-start} secs.\n")
+            
+            print("Compute freq...")
+            start = time.time()
+            freqs = parallel_pool(delayed(compute_freq)(job_data[0]) for job_data in jobs_data)
+            freq = reduce(operator.add, freqs)
+            print(f"... computed in {time.time()-start} secs.\n")
+
+
+        vocabulary = freq.most_common()
+        
+        if special_tokens != None:
+            vocabulary = vocabulary + [(token,0) for token in special_tokens]
+        
+        self.merges = merges
+        self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
+        self.freq = dict(vocabulary)
+        #TODO: Compute alphabet
+        # self.alpha = dict(alphabet.most_common())
+
+        self.decode = {i:k for k,i in self.encode.items()}
+        
+        self.len = len(vocabulary)     
+        self.freq_mass = sum(self.freq.values())
+        self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
+
+        print("Vocabulary built")
+        
+        if save == True:
+            self.save()
+            print(f"Vocabulary saved to {self.path}")
+
+        
+
+
+
+
+
+
     def save(self, path = None):
         
         if path == None:
