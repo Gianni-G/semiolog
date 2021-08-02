@@ -1229,7 +1229,6 @@ class Vocabulary:
 
             corpus_chunks = ["".join(self.corpus.train[i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
 
-
             with Parallel(n_jobs=self.cpu_count, require='sharedmem') as parallel_pool:
                 print("Computing in parallel")
                 print("Normalize and jobs data...")
@@ -1239,13 +1238,20 @@ class Vocabulary:
                 pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
                 best_pair, best_pair_len = pair_len_global.most_common(1)[0]
                 
-                merges = [best_pair]
+                merges = [" ".join(best_pair)]
                 print(f"... computed in {time.time()-start} secs.\n")
 
                 print("Build alphabet...")
                 start = time.time()
-                alphabet = {l for l,r in pair_len_global.keys()}
-                alphabet = alphabet.union({r for l,r in pair_len_global.keys()})
+                alphabet = Counter()
+                for (l,r),v in pair_len_global.items():
+                    alphabet[l] += v
+                # In extreme cases, right characters of pairs might not be left characters. If there are such chars, they're added with freq 1
+                left_out_chars = {r for l,r in pair_len_global.keys()}-alphabet.keys()
+                if len(left_out_chars)>0:
+                    print(f"Adding characters: {left_out_chars}")
+                    for char in left_out_chars:
+                        alphabet[char] += 1
                 print(f"... computed in {time.time()-start} secs.\n")
 
                 alpha_len = len(alphabet)
@@ -1274,7 +1280,7 @@ class Vocabulary:
                     pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
                     best_pair, best_pair_len = pair_len_global.most_common(1)[0]
 
-                    merges.append(best_pair)
+                    merges.append(" ".join(best_pair))
                     print(f"... computed in {time.time()-start} secs.\n")
                 
                 print("Compute freq...")
@@ -1293,13 +1299,20 @@ class Vocabulary:
             pair_len_global = job_data[-1]
             best_pair = pair_len_global.most_common(1)[0][0]
             
-            merges = [best_pair]
+            merges = [" ".join(best_pair)]
             print(f"... computed in {time.time()-start} secs.\n")
 
             print("Build alphabet...")
             start = time.time()
-            alphabet = {l for l,r in pair_len_global.keys()}
-            alphabet = alphabet.union({r for l,r in pair_len_global.keys()})
+            alphabet = Counter()
+            for (l,r),v in pair_len_global.items():
+                alphabet[l] =+ v
+            # In extreme cases, right characters of pairs might not be left characters. If there are such chars, they're added with freq 1
+            left_out_chars = {r for l,r in pair_len_global.keys()}-alphabet.keys()
+            if len(left_out_chars)>0:
+                print(f"Adding characters: {left_out_chars}")
+                for char in left_out_chars:
+                    alphabet[char] =+ 1
             print(f"... computed in {time.time()-start} secs.\n")
 
             alpha_len = len(alphabet)
@@ -1327,7 +1340,7 @@ class Vocabulary:
                 pair_len_global = job_data[-1]
                 best_pair = pair_len_global.most_common(1)[0][0]
 
-                merges.append(best_pair)
+                merges.append(" ".join(best_pair))
                 print(f"... computed in {time.time()-start} secs.\n")
             
             print("Compute freq...")
@@ -1343,8 +1356,7 @@ class Vocabulary:
         self.merges = merges
         self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
         self.freq = dict(vocabulary)
-        #TODO: Compute alphabet
-        # self.alpha = dict(alphabet.most_common())
+        self.alpha = dict(alphabet.most_common())
 
         self.decode = {i:k for k,i in self.encode.items()}
         
