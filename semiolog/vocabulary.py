@@ -1163,7 +1163,10 @@ class Vocabulary:
             chain_zip, pair_pos, pair_len = job_data
             chain_zip_len = len(chain_zip)
 
-            for i in pair_pos[best_pair]:
+            for i in pair_pos[best_pair].copy():
+                # Skip iteration if position corresponds to a modified set of positions during the iteration. This can happen if there is overlap of pairs, such as "000", where ("0","0") has itself as right pair.
+                if chain_zip[i]!=best_pair:
+                    continue
                 ## merge best pair with left unit
                 left_pair_i = i-1
                 while left_pair_i>=0 and chain_zip[left_pair_i] == None: # if left pair is within chain limits but empty (= None) because already merged previously, shift to the left
