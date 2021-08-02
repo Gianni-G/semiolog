@@ -1112,6 +1112,7 @@ class Vocabulary:
         special_tokens = None,
         save = False,
         save_step = None,
+        truncate_best_lens = None,
         progress_bar = True,
         resume_merges = False,
         parallel = True,
@@ -1274,8 +1275,12 @@ class Vocabulary:
                     start = time.time()
                     jobs_data = parallel_pool(delayed(process_best_pair)(job_data, best_pair) for job_data in jobs_data)
 
-                    pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+                    if truncate_best_lens==None:
+                        pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
+                    else:
+                        pair_len_global = reduce(operator.add,[Counter(dict(i[-1].most_common(truncate_best_lens))) for i in jobs_data])
                     best_pair, best_pair_len = pair_len_global.most_common(1)[0]
+
 
                     merges.append(" ".join(best_pair))
                     print(f"... computed in {time.time()-start} secs.\n")
