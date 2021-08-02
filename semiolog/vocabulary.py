@@ -1115,8 +1115,6 @@ class Vocabulary:
         progress_bar = True,
         resume_merges = False,
         parallel = True,
-        sparse = True,
-        sparse_mode = "csr",
         corpus_length = None
         ):
 
@@ -1138,7 +1136,6 @@ class Vocabulary:
             if not isdir(self.path):
                 makedirs(self.path)
                 
-            # save_steps = {save_step*i for i in range(int(abs(vocab_size)/save_step)+1)}
         else:
             saveQ = False
 
@@ -1283,6 +1280,29 @@ class Vocabulary:
                     merges.append(" ".join(best_pair))
                     print(f"... computed in {time.time()-start} secs.\n")
                 
+                    if saveQ == True:
+                        voc_partial_len = alpha_len + special_tokens_len + _ + 1
+                        if voc_partial_len % save_step == 0 and voc_partial_len != voc_final_length:
+
+                            print("Saving intermediate results...")
+                            start = time.time()
+                            freqs = parallel_pool(delayed(compute_freq)(job_data[0]) for job_data in jobs_data)
+                            freq = reduce(operator.add, freqs)
+
+                            vocabulary = freq.most_common()
+                            
+                            if special_tokens != None:
+                                vocabulary = vocabulary + [(token,0) for token in special_tokens]
+                            
+                            self.merges = merges
+                            self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
+                            self.freq = dict(vocabulary)
+                            self.alpha = dict(alphabet.most_common())
+                            step_path = self.path / str(voc_partial_len)
+                            self.save(step_path)
+                            print(f"... computed in {time.time()-start} secs.")
+                            print(f"Intermediate vocabulary saved to {step_path}\n")
+
                 print("Compute freq...")
                 start = time.time()
                 freqs = parallel_pool(delayed(compute_freq)(job_data[0]) for job_data in jobs_data)
@@ -1342,6 +1362,28 @@ class Vocabulary:
 
                 merges.append(" ".join(best_pair))
                 print(f"... computed in {time.time()-start} secs.\n")
+
+                if saveQ == True:
+                    voc_partial_len = alpha_len + special_tokens_len + _ + 1
+                    if voc_partial_len % save_step == 0 and voc_partial_len != voc_final_length:
+
+                        print("Saving intermediate results...")
+                        start = time.time()
+                        freq = compute_freq(job_data[0])
+
+                        vocabulary = freq.most_common()
+                        
+                        if special_tokens != None:
+                            vocabulary = vocabulary + [(token,0) for token in special_tokens]
+                        
+                        self.merges = merges
+                        self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
+                        self.freq = dict(vocabulary)
+                        self.alpha = dict(alphabet.most_common())
+                        step_path = self.path / str(voc_partial_len)
+                        self.save(step_path)
+                        print(f"... computed in {time.time()-start} secs.")
+                        print(f"Intermediate vocabulary saved to {step_path}\n")
             
             print("Compute freq...")
             start = time.time()
