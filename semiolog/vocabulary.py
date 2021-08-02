@@ -1163,8 +1163,9 @@ class Vocabulary:
             chain_zip, pair_pos, pair_len = job_data
             chain_zip_len = len(chain_zip)
 
-            for i in pair_pos[best_pair].copy():
-                # Skip iteration if position corresponds to a modified set of positions during the iteration. This can happen if there is overlap of pairs, such as "000", where ("0","0") has itself as right pair.
+            for i in pair_pos[best_pair]:
+                # Skip iteration if position corresponds to a modified set of positions during the iteration. This can happen if there is overlap of pairs, such as "000", where ("0","0") has itself as right pair. Note that, due to unordered implementation of sets, this entails a lack of systematicity in overlapping cases: "000" can be counted randomly as ("00","0") or ("0","00").
+                # TODO: Investigate the cost of ordering sets. In which case, the following "if" condition might only be needed for right pairs.
                 if chain_zip[i]!=best_pair:
                     continue
                 ## merge best pair with left unit
@@ -1174,8 +1175,10 @@ class Vocabulary:
                 if left_pair_i>-1: # proceed only if a left pair was found on the left
                     # Remove from left pair positions, the current position (of the pair to be merged)
                     left_pair = chain_zip[left_pair_i]
-                    left_pair_pos = pair_pos[left_pair]
-                    left_pair_pos.discard(left_pair_i)
+                    # Skip update of left_pair position set if left_pair = best_pair, to avoid modification of iterating set. This can happen if there is overlap of pairs. No consequences on final result (right?) since right after the loop, the key corresponding to the best pair is deleted, and chain_zip is indeed updated so the problematic cases can be captured at the beginning of the loop.
+                    if left_pair != best_pair:
+                        left_pair_pos = pair_pos[left_pair]
+                        left_pair_pos.discard(left_pair_i)
                     new_pair = (left_pair[0],"".join(best_pair)) # construct new left pair
                     pair_pos[new_pair].add(left_pair_i) # add new pair (if non existing) and its position to the pair_pos lookup table
                     # update the counts in the pair_len lookuptable
@@ -1184,21 +1187,20 @@ class Vocabulary:
                     # update the list of pairs
                     chain_zip[left_pair_i] = new_pair
 
-                ## merge best pair with right unit
+                ## merge best pair with right unit.
+                # Code is symmetric to left_pair but on the right. Comments are omitted
                 right_pair_i = i+1
-                while right_pair_i<chain_zip_len and chain_zip[right_pair_i] == None: # if right pair is within chain limits but empty (= None) because already merged previously, shift to the right
+                while right_pair_i<chain_zip_len and chain_zip[right_pair_i] == None:
                     right_pair_i += 1
-                if right_pair_i<chain_zip_len: # proceed only if a left pair was found on the right
-                    # Remove from right pair positions, the current position (of the pair to be merged)
+                if right_pair_i<chain_zip_len:
                     right_pair = chain_zip[right_pair_i]
-                    right_pair_pos = pair_pos[right_pair]
-                    right_pair_pos.discard(right_pair_i)
-                    new_pair = ("".join(best_pair), right_pair[1]) # construct new right pair
-                    pair_pos[new_pair].add(right_pair_i) # add new pair (if non existing) and its position to the pair_pos lookup table
-                    # update the counts in the pair_len lookuptable
+                    if right_pair != best_pair:
+                        right_pair_pos = pair_pos[right_pair]
+                        right_pair_pos.discard(right_pair_i)
+                    new_pair = ("".join(best_pair), right_pair[1])
+                    pair_pos[new_pair].add(right_pair_i)
                     pair_len[right_pair] -= 1
                     pair_len[new_pair] += 1
-                    # update the list of pairs
                     chain_zip[right_pair_i] = new_pair
 
                 # Empty best pair position in list of pairs
@@ -1235,20 +1237,42 @@ class Vocabulary:
                 jobs_data = parallel_pool(delayed(pre_process)(chunk,self.normalizer.normalize) for chunk in corpus_chunks)
 
                 pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
-                best_pair = pair_len_global.most_common(1)[0][0]
+                best_pair, best_pair_len = pair_len_global.most_common(1)[0]
                 
                 merges = [best_pair]
                 print(f"... computed in {time.time()-start} secs.\n")
 
+                print("Build alphabet...")
+                start = time.time()
+                alphabet = {l for l,r in pair_len_global.keys()}
+                alphabet = alphabet.union({r for l,r in pair_len_global.keys()})
+                print(f"... computed in {time.time()-start} secs.\n")
+
+                alpha_len = len(alphabet)
+                special_tokens_len = 0 if special_tokens == None else len(special_tokens)
+                
+                print(f"Alphabet Size: {alpha_len}")
+                print(f"Special Tokens Size: {special_tokens_len}")
+
+                
+                if vocab_size<0:
+                    voc_final_length = alpha_len + abs(vocab_size) + special_tokens_len
+                else:
+                    voc_final_length = vocab_size
+
+                delta_voc = voc_final_length - alpha_len - special_tokens_len
+
+                print(f"Terms to compute: {delta_voc}\n")
+
                 print("Enter loop")
                 for _ in range(delta_voc):
 
-                    print(f"{_+1}/{delta_voc}: {best_pair}...")
+                    print(f"{_+1+alpha_len+special_tokens_len}/{voc_final_length}: {best_pair} {best_pair_len}...")
                     start = time.time()
                     jobs_data = parallel_pool(delayed(process_best_pair)(job_data, best_pair) for job_data in jobs_data)
 
                     pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
-                    best_pair = pair_len_global.most_common(1)[0][0]
+                    best_pair, best_pair_len = pair_len_global.most_common(1)[0]
 
                     merges.append(best_pair)
                     print(f"... computed in {time.time()-start} secs.\n")
@@ -1272,10 +1296,31 @@ class Vocabulary:
             merges = [best_pair]
             print(f"... computed in {time.time()-start} secs.\n")
 
+            print("Build alphabet...")
+            start = time.time()
+            alphabet = {l for l,r in pair_len_global.keys()}
+            alphabet = alphabet.union({r for l,r in pair_len_global.keys()})
+            print(f"... computed in {time.time()-start} secs.\n")
+
+            alpha_len = len(alphabet)
+            special_tokens_len = 0 if special_tokens == None else len(special_tokens)
+            
+            print(f"Alphabet Size: {alpha_len}")
+            print(f"Special Tokens Size: {special_tokens_len}")
+            
+            if vocab_size<0:
+                voc_final_length = alpha_len + abs(vocab_size) + special_tokens_len
+            else:
+                voc_final_length = vocab_size
+
+            delta_voc = voc_final_length - alpha_len - special_tokens_len
+            
+            print(f"Terms to compute: {delta_voc}\n")
+
             print("Enter loop")
             for _ in range(delta_voc):
 
-                print(f"{_+1}/{delta_voc}: {best_pair}...")
+                print(f"{_+1+alpha_len+special_tokens_len}/{voc_final_length}: {best_pair}...")
                 start = time.time()
                 job_data = process_best_pair(job_data, best_pair)
 
