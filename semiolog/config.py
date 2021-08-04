@@ -91,6 +91,7 @@ class Vocabulary(Section):
         """
         self.size = None
         self.normalizer = None
+        self.truncate_best_size = None
         self.special_tokens = [
             "[PAD]",
             "[UNK]",
