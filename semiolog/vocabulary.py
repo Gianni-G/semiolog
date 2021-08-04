@@ -1156,7 +1156,6 @@ class Vocabulary:
             
             return (chain_zip, pair_pos, pair_len)
 
-
         def process_best_pair(job_data, best_pair):
             chain_zip, pair_pos, pair_len = job_data
             chain_zip_len = len(chain_zip)
@@ -1218,9 +1217,6 @@ class Vocabulary:
             freq = Counter(freq)
             return freq
         
-
-        # TODO: Include feature computing delta voc as difference from vocab_size and alphabet
-        delta_voc = vocab_size
 
         if parallel:
             chunksize = int(corpus_length/self.cpu_count)
