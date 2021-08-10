@@ -238,6 +238,7 @@ class Vocabulary:
 
                 pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
 
+                # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
                 best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
 
                 merges = [" ".join(best_pair)]
@@ -288,7 +289,8 @@ class Vocabulary:
                         pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
                     else:
                         pair_len_global = reduce(operator.add,[Counter(dict(i[-1].most_common(truncate_best_size))) for i in jobs_data])
-                    
+
+                    # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
                     best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
 
                     merges.append(" ".join(best_pair))
@@ -331,6 +333,8 @@ class Vocabulary:
             job_data = pre_process(corpus_chain,self.normalizer.normalize)
 
             pair_len_global = job_data[-1]
+
+            # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
             best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
 
             merges = [" ".join(best_pair)]
@@ -377,6 +381,8 @@ class Vocabulary:
                 job_data = process_best_pair(job_data, best_pair)
 
                 pair_len_global = job_data[-1]
+
+                # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
                 best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
 
                 merges.append(" ".join(best_pair))
@@ -557,6 +563,7 @@ class Vocabulary:
 
                 pair_len_global = reduce(operator.add,[i[-1] for i in jobs_data])
 
+                # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
                 best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
                 
                 merges = [" ".join(best_pair)]
@@ -606,6 +613,7 @@ class Vocabulary:
                     # Remove best_pair from pair_len
                     del pair_len_global[best_pair]
 
+                    # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
                     best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
 
                     merges.append(" ".join(best_pair))
@@ -625,6 +633,7 @@ class Vocabulary:
             corpus_chain = "".join(self.corpus.train[:corpus_length])
             chain_zip, pair_pos, pair_len_global = pre_process(corpus_chain,self.normalizer.normalize)
 
+            # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
             best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
             
             merges = [" ".join(best_pair)]
@@ -672,6 +681,8 @@ class Vocabulary:
                 pair_len_global.update(pair_len_delta)
 
                 del pair_len_global[best_pair]
+
+                # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
                 best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
 
                 merges.append(" ".join(best_pair))
