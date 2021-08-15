@@ -39,9 +39,7 @@ class SequenceSLG(Processor):
         voc,
         ):
         # TODO: Zipf factor should (in principle) be computable following Mandelbrot
-        # print('Building ranked vocabulary (voc_rank)')
         voc_rank = {k:(v+1)**self.zipf_factor for v,k in enumerate(voc.keys())}
-        # print('Done!\n')
         return(voc_rank)
 
     def build_graph_data(
