@@ -1,11 +1,5 @@
-import warnings
-from pyinstrument import Profiler
-import sys
-
 from collections import Counter, defaultdict
 import csv
-import numpy as np
-from scipy.sparse import coo_matrix
 
 import socket
 socket_name = socket.gethostname()
@@ -17,17 +11,16 @@ else:
 import regex as re
 from os import makedirs
 from os.path import isfile, isdir
-from functools import reduce, partial
+from functools import reduce
 import operator
-from datetime import datetime
 from joblib import Parallel, delayed
 import time
 
 from . import util
-from .syntagmatic import tokenizer
+from .syntagmatic import tokenizer # needed
 
 # TODO: Solve version as global variable
-slg_version = "0.1"
+slg_version = "0.1.1"
     
 class Vocabulary:
     
@@ -226,7 +219,8 @@ class Vocabulary:
         
 
         if parallel:
-            chunksize = int(corpus_length/self.cpu_count)
+            # TODO: The chunks limits could be improved (in particular, if corpus_length is very small compared to cpu_count, last chunks may be empty. It shouldn't be a problem for large corpus_length)
+            chunksize = int(corpus_length/self.cpu_count)+1
 
             corpus_chunks = ["".join(self.corpus.train[i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
 
@@ -262,7 +256,6 @@ class Vocabulary:
                 
                 print(f"Alphabet Size: {alpha_len}")
                 print(f"Special Tokens Size: {special_tokens_len}")
-
                 
                 if vocab_size<0:
                     voc_final_length = alpha_len + special_tokens_len + abs(vocab_size)
