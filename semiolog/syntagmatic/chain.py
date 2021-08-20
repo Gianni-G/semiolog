@@ -22,6 +22,7 @@ class Chain:
         self.input = input_chain
         self.split = input_chain.split()
         self.split_norm = [self.semiotic.syntagmatic.tokenizer.normalizer.normalize(s) for s in self.split]
+        self.split_norm = [t for t in self.split_norm if t!='']
 
         self.norm = None
         self.pre_tokens = None
@@ -36,7 +37,7 @@ class Chain:
     @property
     def nodes_split(self):
         nodes_list = []
-        for i in range(len(self.split)):
+        for i in range(len(self.split_norm)):
             start_i = len("".join(self.split_norm[:i]))
             end_i = start_i + len(self.split_norm[i])
             nodes_list.append((
@@ -56,7 +57,9 @@ class Chain:
         """
         if isinstance(n,int):
             n = [n]
+
         masked_chain = [token if i not in n else Functive("[MASK]",token.span,token.position,self.semiotic) for i,token in enumerate(self.tokens)]
+        
         return masked_chain   
 
 

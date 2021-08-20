@@ -17,7 +17,8 @@ class Cenematic:
         name,
         empty=False,
         config_only = False,
-        requested_cpu = None
+        requested_cpu = None,
+        vocab = True,
         ) -> None:
 
         self.name = name
@@ -46,7 +47,8 @@ class Cenematic:
             # self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
             if not config_only:
                 self.corpus.from_file()
-                self.vocab.from_file()
+                if vocab:
+                    self.vocab.from_file()
                 self.syntagmatic = Syntagmatic(self)
 
                 # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])

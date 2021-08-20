@@ -103,7 +103,8 @@ class SequenceSLG(Processor):
 
         tokens = [Functive(segment,span,position,semiotic) for position,(segment,span) in enumerate(zip(segments,spans))]
 
-        tree_root = Functive(sequence, (0, len(sequence)), None, semiotic)
+        chain = sequence.replace(" ", "")
+        tree_root = Functive(chain, (0, len(chain)), None, semiotic)
         tree_root.children = tokens
 
         for token in tokens:

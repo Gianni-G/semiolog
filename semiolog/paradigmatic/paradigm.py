@@ -18,9 +18,13 @@ def productive_suffix(parad_keys):
 
     parad_len = len(parad_keys)
 
-    prod_thres = parad_len - tolerance_principle(parad_len) #Tolerance principle (Yang, 2016)
+    # TODO This Threshold is set ad hoc and as a quick fix. Think about a better way to avoid division by 0 in tolerance_principle when parad_len = 1. And also to avoid considering productive parads of len 1 or 0.
+    if parad_len <2:
+        prod_thres = 2
+    else:
+        prod_thres = parad_len - tolerance_principle(parad_len) #Tolerance principle (Yang, 2016)
 
-    l=1
+    # l=1
 
     sub_parad = parad_keys
     sub_parad_collector = {key:key for key in parad_keys}
@@ -41,7 +45,11 @@ def productive_suffix(parad_keys):
                 suffix_freq.append(f)
 
             sub_parad = suffix_dict[suffix[0]]
-            prod_thres = len(sub_parad)-tolerance_principle(len(sub_parad)) # len(sub_parad)/2
+            # TODO This Threshold is set ad hoc and as a quick fix. Think about a better way to avoid division by 0 in tolerance_principle when parad_len = 1. And also to avoid considering productive parads of len 1 or 0.
+            if len(sub_parad) <2:
+                prod_thres = 2
+            else:
+                prod_thres = len(sub_parad)-tolerance_principle(len(sub_parad)) # len(sub_parad)/2
 
             for term in sub_parad:
                 sub_parad_collector[term] = (term[:-suffix_len],suffix[0])
