@@ -64,7 +64,8 @@ def prep_input(input_lines, mask=True):
             labels[masked_pos] = line[masked_pos]
         else:
             pass
-        labels = line[:] + [token_to_id["<pad>"] for _ in range(pad_len)]
+        #labels = line[:] + [token_to_id["<pad>"] for _ in range(pad_len)]
+        labels = line[:] + [-100 for _ in range(pad_len)]
         label_ids.append(labels)
         att_mask = [1 for _ in range(len(line))] + [0 for _ in range(pad_len)]
         att_masks.append(att_mask)
