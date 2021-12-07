@@ -63,9 +63,9 @@ class Corpus:
         if dataset == None:
             dataset = self.config.dataset
         if isinstance(dataset,list):
-            data = load_dataset(*dataset)
+            data = load_dataset("text",*dataset)
         else:
-            data = load_dataset(dataset)
+            data = load_dataset("text", dataset)
         return data
 
     def pre_process_document(self, document):
