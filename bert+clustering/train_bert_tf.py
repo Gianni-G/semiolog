@@ -106,14 +106,14 @@ return_tensors="tf"
 train_set = tokenized_datasets["train"].to_tf_dataset(
     columns=["attention_mask", "input_ids", "labels"],
     shuffle=True,
-    batch_size=8,
+    batch_size=4,
     collate_fn=data_collator,
 )
 
 validation_set = tokenized_datasets["dev"].to_tf_dataset(
     columns=["attention_mask", "input_ids", "labels"],
     shuffle=False,
-    batch_size=8,
+    batch_size=4,
     collate_fn=data_collator,
 )
 
@@ -123,16 +123,16 @@ validation_set = tokenized_datasets["dev"].to_tf_dataset(
 model.fit(train_set, validation_data=validation_set, epochs=2)
 
 
-#TODO: Save the model
-# model.save_pretrained()
+#TODO: define model name?
+model.save_pretrained(save_directory="./")
 
 # Test the model on a masked sentence
 
-sent = dataset[1000]["text"]
-n = 4
-sent_mask = " ".join([t if i!=n else "[MASK]" for i,t in enumerate(sent.split())])
-print(sent_mask)
+# sent = dataset[1000]["text"]
+# n = 4
+# sent_mask = " ".join([t if i!=n else "[MASK]" for i,t in enumerate(sent.split())])
+# print(sent_mask)
 
-outputs = model(tokenizer(sent_mask, return_tensors="tf")["input_ids"])
-print(outputs)
+# outputs = model(tokenizer(sent_mask, return_tensors="tf")["input_ids"])
+# print(outputs)
 
