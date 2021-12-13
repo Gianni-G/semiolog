@@ -42,19 +42,30 @@ class Cenematic:
         # TODO: configure online repository for models, with automatic download
         
         # TODO: Take a look at the loading order, since I moved the config from file up
-        if empty == False and os.path.isdir(self.paths.semiotic):
-            # self.config.from_file()
-            # self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
-            if not config_only:
-                self.corpus.from_file()
-                if vocab:
-                    self.vocab.from_file()
-                self.syntagmatic = Syntagmatic(self)
+        if not empty:
+            
+            if os.path.isdir(self.paths.semiotic):
+                # self.config.from_file()
+                # self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
+                if not config_only:
+                    self.corpus.from_file()
+                    if vocab:
+                        self.vocab.from_file()
+                    self.syntagmatic = Syntagmatic(self)
 
-                # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
+                    # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
 
-                self.paradigmatic = Paradigmatic(self)
-                self.typing = Typing(self)
+                    self.paradigmatic = Paradigmatic(self)
+                    self.typing = Typing(self)
+            
+            else:
+                createQ = input(f"No existing model correspond to the name {self.name}.\n Do you want to create it? (Y/N)")
+                if createQ == "Y":
+                    os.mkdir(self.paths.semiotic)
+                    os.mkdir(self.paths.corpus)
+                    os.mkdir(self.paths.vocabulary)
+                    self.config.save()
+                    print(f"\nFolder for model '{self.name}' created in {self.paths.models.absolute()}")
         
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])
