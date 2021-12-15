@@ -222,7 +222,7 @@ class Vocabulary:
             # TODO: The chunks limits could be improved (in particular, if corpus_length is very small compared to cpu_count, last chunks may be empty. It shouldn't be a problem for large corpus_length)
             chunksize = int(corpus_length/self.cpu_count)+1
 
-            corpus_chunks = ["".join(self.corpus.train[i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
+            corpus_chunks = ["".join(self.corpus.train["text"][i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
 
             with Parallel(n_jobs=self.cpu_count, require='sharedmem') as parallel_pool:
                 print("Computing in parallel")
@@ -407,7 +407,7 @@ class Vocabulary:
         vocabulary = freq.most_common()
         
         if special_tokens != None:
-            vocabulary = vocabulary + [(token,0) for token in special_tokens]
+            vocabulary = [(token,0) for token in special_tokens] + vocabulary
         
         self.merges = merges
         self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}

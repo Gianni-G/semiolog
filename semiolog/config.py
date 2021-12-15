@@ -5,7 +5,7 @@ from os.path import isfile
 from .util import dict2json, json2dict
 
 # TODO: Solve version as global variable
-slg_version = "0.1"
+slg_version = "0.2"
 
 class Config:
     
@@ -98,6 +98,13 @@ class Vocabulary(Section):
             "[SEP]",
             "[MASK]"
             ]
+        self.unk_token="[UNK]"
+        self.pad_token="[PAD]"
+        self.cls_token="[CLS]"
+        self.sep_token="[SEP]"
+        self.mask_token="[MASK]"
+
+
 
         
 class Syntagmatic(Section):
@@ -107,10 +114,12 @@ class Syntagmatic(Section):
     Possible Processors: "SequenceSLG" "TreeSLG", "StripWhitespaces"m
     """
     def __init__(self, semiotic) -> None:
+        self.from_file: False
         self.normalizer = None
         self.pre_tokenizer = None
         self.processor = None
         self.post_processor = None
+        self.model_max_length = None
 
 
 class Paradigmatic(Section):

@@ -52,9 +52,6 @@ class Cenematic:
                     if vocab:
                         self.vocab.from_file()
                     self.syntagmatic = Syntagmatic(self)
-
-                    # self.ng2 = nGram(paths.examples / name / "ngrams" / self.config["vocabulary"]["nGramFileName"])
-
                     self.paradigmatic = Paradigmatic(self)
                     self.typing = Typing(self)
             
