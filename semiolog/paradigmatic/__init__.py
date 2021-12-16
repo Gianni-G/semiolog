@@ -2,6 +2,7 @@
 from transformers import BertConfig, TFBertForMaskedLM, AdamWeightDecay, DataCollatorForLanguageModeling, pipeline
 from .paradigm import Paradigmatizer, ParadigmChain
 
+import tensorflow as tf
 from os import path
 
 class Paradigmatic:
@@ -11,6 +12,7 @@ class Paradigmatic:
         self.max_len = semiotic.config.syntagmatic.model_max_length
         self.tensor_imp = semiotic.config.general.tensor_implementation
         self.cpu_count = semiotic.config.system.cpu_count
+        self.multiple_gpus = semiotic.config.system.multiple_gpus
         self.path = semiotic.paths.paradigms
         self.model_path = self.path / "tf_model.h5"
         self.model_config_path = self.path / "config.json"
@@ -40,10 +42,18 @@ class Paradigmatic:
 
         if self.tensor_imp == "tf":
             if self.config.load_pretrained and path.exists(self.model_path) and path.exists(self.model_config_path):
-                self.model = TFBertForMaskedLM.from_pretrained(
-                    self.model_path,
-                    config = self.model_config_path
-                    )
+                if self.multiple_gpus:
+                    mirrored_strategy = tf.distribute.MirroredStrategy()
+                    with mirrored_strategy.scope():
+                        self.model = TFBertForMaskedLM.from_pretrained(
+                            self.model_path,
+                            config = self.model_config_path
+                            )
+                else:
+                    self.model = TFBertForMaskedLM.from_pretrained(
+                        self.model_path,
+                        config = self.model_config_path
+                        )
             else:
                 self.model = TFBertForMaskedLM(self.bert_config)
 
