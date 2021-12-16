@@ -121,7 +121,7 @@ class Syntagmatic(Section):
         self.from_file = False
         self.normalizer = None
         self.pre_tokenizer = None
-        self.processor = None
+        self.processor = "WordLevel"
         self.post_processor = None
         self.model_max_length = None
 
