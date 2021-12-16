@@ -70,14 +70,14 @@ class Syntagmatic:
             tokenizer_object = self.tokenizer,
             # tokenizer_file=str(semiotic.vocab.path.joinpath("tokenizer.json")), # You can load from the tokenizer file, alternatively
 
+            model_max_length = self.config.model_max_length,
+            model_input_names = ["input_ids","token_type_ids", "attention_mask"],
+
             unk_token= self.config_vocab.unk_token,
             pad_token= self.config_vocab.pad_token,
             cls_token= self.config_vocab.cls_token,
             sep_token= self.config_vocab.sep_token,
             mask_token= self.config_vocab.mask_token,
-
-            model_max_length = self.config.model_max_length,
-
         )
 
     def save_tokenizer(self):

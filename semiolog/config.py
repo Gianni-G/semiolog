@@ -66,10 +66,13 @@ class System(Section):
 
 
 class General(Section):
-    
+    """
+    Possible tensor implementations: 'tf' (TensorFlow), 'pt' (PyTorch), 'np' (numpy)
+    """
     def __init__(self, semiotic) -> None:
         self.name = semiotic.name
         self.dataset = None
+        self.tensor_implementation = "tf"
 
 class Corpus(Section):
     
@@ -123,7 +126,60 @@ class Syntagmatic(Section):
 
 
 class Paradigmatic(Section):
+    """
+    'learning_rate' and 'weight_decay'
+    """
     def __init__(self, semiotic) -> None:
+
+        # The compilation of any of the following dict values into json is not tested
+
+        self.load_pretrained = False,
+
+        self.model_config = {
+            "hidden_size": 768,
+            "num_hidden_layers": 12,
+            "num_attention_heads": 12,
+            "intermediate_size": 3072,
+            "hidden_act": "gelu",
+            "hidden_dropout_prob": 0.1,
+            "attention_probs_dropout_prob": 0.1,
+            "max_position_embeddings": 512,
+            "type_vocab_size": 2,
+            "initializer_range": 0.02,
+            "layer_norm_eps": 1e-12,
+            "pad_token_id": 0,
+            "position_embedding_type": "absolute",
+            "use_cache": True,
+            "classifier_dropout": None,
+
+            "learning_rate": 2e-5,
+            "weight_decay": 0.01
+        }
+        
+        self.optimizer = {
+            "optimizer": "AdamWeightDecay",
+
+            "learning_rate": 2e-5,
+            "weight_decay": 0.01
+        }
+
+        self.mask_probability = 0.15
+
+        self.input_tokenize = {
+            "batched": True,
+            "batch_size": 10000,
+            "remove_columns": ["text"],
+        }
+
+        self.input_sets = {
+            "shuffle": True,
+            "batch_size": 16
+        }
+
+        self.training_epochs = 2
+
+        self.save = True
+
         self.model = None
         self.top_k = None
         self.exclude_punctuation = None

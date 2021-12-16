@@ -1,8 +1,165 @@
-from transformers import pipeline
+# For the moment only AdamWeightDecay is implemented. If other alternatives are considered, then they should be imported here from transformers
+from transformers import BertConfig, TFBertForMaskedLM, AdamWeightDecay, DataCollatorForLanguageModeling, pipeline
 from .paradigm import Paradigmatizer, ParadigmChain
+
+from os import path
 
 class Paradigmatic:
     def __init__(self,semiotic) -> None:
         self.config = semiotic.config.paradigmatic
+        self.model_config = semiotic.config.paradigmatic.model_config
+        self.max_len = semiotic.config.syntagmatic.model_max_length
+        self.tensor_imp = semiotic.config.general.tensor_implementation
+        self.cpu_count = semiotic.config.system.cpu_count
+        self.path = semiotic.paths.paradigms
+        self.model_path = self.path / "tf_model.h5"
+        self.model_config_path = self.path / "config.json"
+
+        self.dataset = semiotic.corpus.dataset
+
+        self.tokenizer = semiotic.syntagmatic.bert_tokenizer
+
+        self.bert_config = BertConfig(
+            vocab_size = self.tokenizer.vocab_size,
+            hidden_size = self.model_config["hidden_size"],
+            num_hidden_layers = self.model_config["num_hidden_layers"],
+            num_attention_heads = self. model_config["num_attention_heads"],
+            intermediate_size = self. model_config["intermediate_size"],
+            hidden_act = self. model_config["hidden_act"],
+            hidden_dropout_prob = self. model_config["hidden_dropout_prob"],
+            attention_probs_dropout_prob = self. model_config["attention_probs_dropout_prob"],
+            max_position_embeddings = self. model_config["max_position_embeddings"],
+            type_vocab_size = self. model_config["type_vocab_size"],
+            initializer_range = self. model_config["initializer_range"],
+            layer_norm_eps = self. model_config["layer_norm_eps"],
+            pad_token_id = self. model_config["pad_token_id"],
+            position_embedding_type = self. model_config["position_embedding_type"],
+            use_cache = self. model_config["use_cache"],
+            classifier_dropout = self. model_config["classifier_dropout"],
+        )
+
+        if self.tensor_imp == "tf":
+            if self.config.load_pretrained and path.exists(self.model_path) and path.exists(self.model_config_path):
+                self.model = TFBertForMaskedLM.from_pretrained(
+                    self.model_path,
+                    config = self.model_config_path
+                    )
+            else:
+                self.model = TFBertForMaskedLM(self.bert_config)
+
+        elif self.tensor_imp == "pt":
+            raise Exception(f"SLG: Models other than TensorFlow are not yet implemented in SemioLog. tensor_implementation is set to {self.tensor_imp}. Please set it to 'tf'")
+        else:
+            raise Exception(f"SLG: Models other than TensorFlow are not yet implemented in SemioLog. tensor_implementation is set to {self.tensor_imp}. Please set it to 'tf'")
+
+        self.optimizer = eval(
+            f"{self.config.optimizer['optimizer']}        (learning_rate={self.config.optimizer['learning_rate']}, weight_decay_rate={self.config.optimizer['weight_decay']})"
+        )
+        
+        self.data_collator = DataCollatorForLanguageModeling(
+            tokenizer = self.tokenizer,
+            mlm_probability = self.config.mask_probability,
+            return_tensors = self.tensor_imp
+        )
+
         self.unmasker = pipeline('fill-mask', model = self.config.model,top_k = self.config.top_k)
         self.paradigmatizer = Paradigmatizer()
+
+    # This looks inelegant. There should be a way to do this in a more intelligent way
+    def bert_tokenizer(
+        self,
+        input,
+        add_special_tokens = True,
+        padding = True,
+        truncation = False,
+        # max_length = self.max_len,
+        stride = 0,
+        is_split_into_words = False,
+        pad_to_multiple_of = None,
+        # return_tensors = self.tensor_imp,
+        return_token_type_ids = True,
+        return_attention_mask = True,
+        return_overflowing_tokens = False,
+        return_special_tokens_mask = False,
+        return_offsets_mapping = False,
+        return_length = False,
+        verbose = True,
+        ):
+        output = self.tokenizer(
+            text = input,
+            add_special_tokens = add_special_tokens,
+            padding = padding,
+            truncation = truncation,
+            max_length = self.max_len,
+            stride = stride,
+            is_split_into_words = is_split_into_words,
+            pad_to_multiple_of = pad_to_multiple_of,
+            return_tensors = self.tensor_imp,
+            return_token_type_ids = return_token_type_ids,
+            return_attention_mask = return_attention_mask,
+            return_overflowing_tokens = return_overflowing_tokens,
+            return_special_tokens_mask = return_special_tokens_mask,
+            return_offsets_mapping = return_offsets_mapping,
+            return_length = return_length,
+            verbose = verbose,
+        )
+        return output
+    
+    def build(self, dataset = None):
+        
+        if dataset == None:
+            dataset = self.dataset
+
+        # Following Huggingface, no loss and metrics are provided
+
+        print("SLG: Compiling model")
+        self.model.compile(
+            optimizer = self.optimizer,
+            # optimizer=tf.keras.optimizers.Adam(learning_rate=5e-5),
+            # loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            # metrics=tf.metrics.SparseCategoricalAccuracy(),
+            )
+
+        def tokenize_function(syntagmas):
+            return self.tokenizer(syntagmas["text"])
+
+        print("SLG: Tokenizing dataset...")
+        tokenized_datasets = dataset.map(
+            tokenize_function,
+            batched = self.config.input_tokenize["batched"],
+            batch_size = self.config.input_tokenize["batch_size"],
+
+            # Using more than 1 proc in iMac with m1 blocks the process
+            num_proc = 1, # self.cpu_count, 
+            remove_columns = self.config.input_tokenize["remove_columns"]
+        )
+        
+        print("SLG: Building train set")
+        train_set = tokenized_datasets["train"].to_tf_dataset(
+            columns = ["attention_mask", "input_ids", "labels"],
+            shuffle = self.config.input_sets["shuffle"],
+            batch_size = self.config.input_sets["batch_size"],
+            collate_fn = self.data_collator,
+        )
+
+        print("SLG: Building validation set")
+        validation_set = tokenized_datasets["dev"].to_tf_dataset(
+            columns = ["attention_mask", "input_ids", "labels"],
+            shuffle = self.config.input_sets["shuffle"],
+            batch_size = self.config.input_sets["batch_size"],
+            collate_fn = self.data_collator,
+        )
+
+        print("SLG: Starting training...\n")  
+        self.history = self.model.fit(
+            train_set,
+            validation_data = validation_set,
+            epochs = self.config.training_epochs
+        )
+        print("SLG: Training finished")
+
+        if self.config.save:
+            self.model.save_pretrained(save_directory = self.path)
+            print("\nSLG: Model saved.")
+
+        return "\nSLG: Model built!\n"
