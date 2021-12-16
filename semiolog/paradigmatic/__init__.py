@@ -1,5 +1,5 @@
 # For the moment only AdamWeightDecay is implemented. If other alternatives are considered, then they should be imported here from transformers
-from transformers import BertConfig, TFBertForMaskedLM, AdamWeightDecay, DataCollatorForLanguageModeling, pipeline
+from transformers import BertConfig, TFBertForMaskedLM, AdamWeightDecay, DataCollatorForLanguageModeling #, pipeline
 from .paradigm import Paradigmatizer, ParadigmChain
 
 import tensorflow as tf
@@ -72,8 +72,8 @@ class Paradigmatic:
             return_tensors = self.tensor_imp
         )
 
-        self.unmasker = pipeline('fill-mask', model = self.config.model,top_k = self.config.top_k)
-        self.paradigmatizer = Paradigmatizer()
+        # self.unmasker = pipeline('fill-mask', model = self.config.model,top_k = self.config.top_k)
+        # self.paradigmatizer = Paradigmatizer()
 
     # This looks inelegant. There should be a way to do this in a more intelligent way
     def bert_tokenizer(
