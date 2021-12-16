@@ -10,7 +10,7 @@ else:
     from tqdm.auto import tqdm
     
 from .syntagmatic import tokenizer
-from .util import list2txt, txt2list, if_none_disable
+from .util import list2txt, txt2list
 
 
 
@@ -99,31 +99,32 @@ class Corpus:
         data = load_dataset(str(self.path), data_files=dataset)
         return data
 
-    def pre_process_document(self, document):
+    # # This might need to disappear
+    # def pre_process_document(self, document):
 
-        if isinstance(self.config.normalizer,list):
+    #     if isinstance(self.config.normalizer,list):
             
-            normal = eval(
-                f"tokenizer.normalizers.Sequence({self.config.normalizer}).normalize(None,document)"
-                )
-        else:
-            normal = eval(
-                f"tokenizer.normalizers.{if_none_disable(self.config.normalizer)}.normalize(None,document)"
-                )
+    #         normal = eval(
+    #             f"tokenizer.normalizers.Sequence({self.config.normalizer}).normalize(None,document)"
+    #             )
+    #     else:
+    #         normal = eval(
+    #             f"tokenizer.normalizers.{self.config.normalizer}.normalize(None,document)"
+    #             )
         
-        pre_token = eval(
-            f"tokenizer.pre_tokenizers.{if_none_disable(self.config.pre_tokenizer)}.pre_tokenize(None,normal)"
-            )
+    #     pre_token = eval(
+    #         f"tokenizer.pre_tokenizers.{self.config.pre_tokenizer}.pre_tokenize(None,normal)"
+    #         )
                 
-        process = eval(
-            f"tokenizer.processors.{if_none_disable(self.config.processor)}.process(None,pre_token,is_pretokenized=(False if '{self.config.pre_tokenizer}' == 'None' else True))"
-        )
+    #     process = eval(
+    #         f"tokenizer.processors.{self.config.processor}.process(None,pre_token,is_pretokenized=(False if '{self.config.pre_tokenizer}' == 'None' else True))"
+    #     )
         
-        doc_sentences = eval(
-            f"tokenizer.post_processors.{if_none_disable(self.config.post_processor)}.post_process(None,process)"
-        )
+    #     doc_sentences = eval(
+    #         f"tokenizer.post_processors.{self.config.post_processor}.post_process(None,process)"
+    #     )
             
-        return doc_sentences
+    #     return doc_sentences
     
     
     # TODO: the following could be parallelized but so far no efficiency gain

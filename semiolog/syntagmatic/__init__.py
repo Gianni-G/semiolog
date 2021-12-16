@@ -13,13 +13,6 @@ from tokenizers import (
 )
 from transformers import PreTrainedTokenizerFast
 
-# from ...util import if_none_disable
-
-# TODO: unable to import this from ...util
-def if_none_disable(x):
-    if x == None:
-        x = "disable"
-    return x
 
 class Syntagmatic:
     def __init__(self,semiotic) -> None:
@@ -35,25 +28,27 @@ class Syntagmatic:
         else:
             self.tokenizer = Tokenizer(
                 eval(
-                    f"models.{self.config.processor}(vocab = {semiotic.vocab.encode},unk_token = '{self.config_vocab.unk_token}')"
+                    f"models.{self.config.processor}(vocab = {semiotic.vocab.encode}, unk_token = '{self.config_vocab.unk_token}')"
                     )
                     )
             
             # Load HF normalizer
-            if isinstance(self.config.normalizer,list):
-                self.tokenizer.normalizer = normalizers.Sequence(
-                    [eval(f"normalizers.{norm}()") for norm in self.config.normalizer]
-                    )
-            else:
-                self.tokenizer.normalizer = eval(f"normalizers.{if_none_disable(self.config.normalizer)}()")
+            if self.config.normalizer != None:
+                if isinstance(self.config.normalizer,list):
+                    self.tokenizer.normalizer = normalizers.Sequence(
+                        [eval(f"normalizers.{norm}()") for norm in self.config.normalizer]
+                        )
+                else:
+                    self.tokenizer.normalizer = eval(f"normalizers.{self.config.normalizer}()")
 
             # Load HF pre-tokenizer
-            if isinstance(self.config.pre_tokenizer,list):
-                self.tokenizer.pre_tokenizer = pre_tokenizers.Sequence(
-                    [eval(f"normalizers.{norm}()") for norm in self.config.pre_tokenizer]
-                    )
-            else:
-                self.tokenizer.pre_tokenizer = eval(f"pre_tokenizers.{if_none_disable(self.config.pre_tokenizer)}()")
+            if self.config.pre_tokenizer != None:
+                if isinstance(self.config.pre_tokenizer,list):
+                    self.tokenizer.pre_tokenizer = pre_tokenizers.Sequence(
+                        [eval(f"normalizers.{norm}()") for norm in self.config.pre_tokenizer]
+                        )
+                else:
+                    self.tokenizer.pre_tokenizer = eval(f"pre_tokenizers.{self.config.pre_tokenizer}()")
             
             # # Possible post_processor in case needed.
 

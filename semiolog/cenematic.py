@@ -61,6 +61,7 @@ class Cenematic:
                     os.mkdir(self.paths.semiotic)
                     os.mkdir(self.paths.corpus)
                     os.mkdir(self.paths.vocabulary)
+                    os.mkdir(self.paths.paradigms)
                     self.config.save()
                     print(f"\nFolder for model '{self.name}' created in {self.paths.models.absolute()}")
         

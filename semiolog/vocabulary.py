@@ -45,6 +45,8 @@ class Vocabulary:
         self.freq_mass = None
         self.prob = None
 
+
+        #TODO: This should replaced by a HF normalizer
         if isinstance(self.config.normalizer,list):
             self.normalizer = eval(
                 f"tokenizer.normalizers.Sequence({self.config.normalizer})"
