@@ -60,6 +60,7 @@ class Cenematic:
                 if createQ == "Y":
                     os.mkdir(self.paths.semiotic)
                     os.mkdir(self.paths.corpus)
+                    os.mkdir(self.paths.corpus / "original")
                     os.mkdir(self.paths.vocabulary)
                     os.mkdir(self.paths.paradigms)
                     self.config.save()

@@ -1,6 +1,7 @@
 from datasets import load_dataset, DatasetDict
 import sklearn
 from os.path import isfile
+from os import listdir
 
 import socket
 socket_name = socket.gethostname()
@@ -49,7 +50,7 @@ class Corpus:
         
         for filename in filenames:
             if not isfile(filename):
-                return print(f"Warning: {filename} does not exist.\nCorpus will not be loaded from file.\n")
+                return print(f"SLG Warning: {filename} does not exist.\nCorpus will not be loaded from file.\n")
 
 
         
@@ -79,24 +80,20 @@ class Corpus:
             # self.train = txt2list("train", self.path)            
             # self.train_len = len(self.train)
 
-        
+    def load_dataset(self, dataset = None, original=False):
 
+        if original:
+            load_path = self.path / 'original'
+        else:
+            load_path = self.path
 
-    # # Deprecated
-    # def load_dataset(self,dataset = None):
-    #     if dataset == None:
-    #         dataset = self.config.dataset
-    #     if isinstance(dataset,list):
-    #         data = load_dataset("text",*dataset)
-    #     else:
-    #         data = load_dataset("text", data_files = dataset)
-    #     return data
-
-    def load_dataset(self, dataset = None):
         if dataset == None:
-            dataset = self.config.dataset
-        
-        data = load_dataset(str(self.path), data_files=dataset)
+            dataset = [fn for fn in listdir(load_path) if fn.endswith(".txt")]
+            if len(dataset) == 1:
+                dataset = dataset[0]
+
+        data = load_dataset(str(load_path), data_files=dataset)
+
         return data
 
     # # This might need to disappear
@@ -153,18 +150,23 @@ class Corpus:
         
         if dataset == None:
             dataset = self.config.dataset
-        
+
+        if dataset == None:
+            dataset = [fn for fn in listdir(self.path / 'original') if fn.endswith(".txt")]
+            if len(dataset) == 1:
+                dataset = dataset[0]
+
         if length == None:
             length = self.config.length
             
         if split_rate == None:
             split_rate = self.config.split_rate
 
-
-        if self.config.dataset == None:
-            return print("Error: No dataset defined")
+        if self.config.dataset == None and self.config.dataset == []:
+            return print("SLG: Error: No dataset defined or no txt files found in the model's folder.")
         
-        self.dataset = self.load_dataset(dataset)
+        self.dataset = self.load_dataset(dataset, original=True)
+        print(f"\nSLG: Dataset loaded from the follwing files: {dataset}.\n")
         
         if "test" in self.dataset:
             if length != None:

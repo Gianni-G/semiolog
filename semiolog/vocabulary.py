@@ -66,7 +66,7 @@ class Vocabulary:
         
         for filename in filenames:
             if not isfile(filename):
-                return print(f"Warning: {filename} does not exist.\nVocabulary will not be loaded from file.\n")
+                return print(f"SLG Warning: {filename} does not exist.\nVocabulary will not be loaded from file.\n")
         
         self.merges = util.txt2list("merges",path)[1:] # The first line needs to be stripped
         self.encode = util.json2dict("vocab",path)
