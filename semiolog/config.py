@@ -118,7 +118,7 @@ class Syntagmatic(Section):
     Possible Processors: "SequenceSLG" "TreeSLG", "StripWhitespaces"m
     """
     def __init__(self, semiotic) -> None:
-        self.from_file: False
+        self.from_file = False
         self.normalizer = None
         self.pre_tokenizer = None
         self.processor = None
