@@ -5,6 +5,8 @@ from .paradigm import Paradigmatizer, ParadigmChain
 import tensorflow as tf
 from os import path
 
+from ..util import dict2json
+
 class Paradigmatic:
     def __init__(self,semiotic) -> None:
         self.config = semiotic.config.paradigmatic
@@ -169,7 +171,11 @@ class Paradigmatic:
         print("SLG: Training finished")
 
         if self.config.save:
+
             self.model.save_pretrained(save_directory = self.path)
             print("\nSLG: Model saved.")
+
+            dict2json(self.history.history, "history", self.path)
+            print("SLG: Training history saved.")
 
         return "\nSLG: Model built!\n"
