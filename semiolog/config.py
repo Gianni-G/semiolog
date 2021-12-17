@@ -168,7 +168,7 @@ class Paradigmatic(Section):
 
         self.input_tokenize = {
             "batched": True,
-            "batch_size": 10000,
+            "batch_size": 512,
             "remove_columns": ["text"],
         }
 

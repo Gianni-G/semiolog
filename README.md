@@ -46,5 +46,14 @@
         parallel = True,
         )
 
+## Paradigmatic
+
+`03_build_vocabulary.py`
+
+    import semiolog as slg
+
+    semiotic = slg.Cenematic("hf_tokenizers")
+
+    semiotic.paradigmatic.build()
 ## Segmentation
 
