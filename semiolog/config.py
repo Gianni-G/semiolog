@@ -132,9 +132,9 @@ class Paradigmatic(Section):
     """
     def __init__(self, semiotic) -> None:
 
-        # The compilation of any of the following dict values into json is not tested
-
         self.load_pretrained = False,
+
+        self.huggingface_pretrained = None,
 
         self.model_config = {
             "hidden_size": 768,

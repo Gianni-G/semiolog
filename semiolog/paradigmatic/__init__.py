@@ -1,5 +1,5 @@
 # For the moment only AdamWeightDecay is implemented. If other alternatives are considered, then they should be imported here from transformers
-from transformers import BertConfig, TFBertForMaskedLM, AdamWeightDecay, DataCollatorForLanguageModeling #, pipeline
+from transformers import BertConfig, TFBertForMaskedLM, BertTokenizer, AdamWeightDecay, DataCollatorForLanguageModeling #, pipeline
 from .paradigm import Paradigmatizer, ParadigmChain
 
 import tensorflow as tf
@@ -17,6 +17,14 @@ class Paradigmatic:
         self.multiple_gpus = semiotic.config.system.multiple_gpus
         self.path = semiotic.paths.paradigms
         self.model_config_path = self.path / "config.json"
+
+        if self.config.huggingface_pretrained == None:
+            self.hf_tokenizer = None
+            self.hf_model = None
+        else:
+            self.hf_tokenizer = BertTokenizer.from_pretrained(self.config.huggingface_pretrained)
+            self.hf_model = TFBertForMaskedLM.from_pretrained(self.config.huggingface_pretrained)
+
 
         self.dataset = semiotic.corpus.dataset
 
