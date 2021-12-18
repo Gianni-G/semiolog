@@ -16,7 +16,6 @@ class Paradigmatic:
         self.cpu_count = semiotic.config.system.cpu_count
         self.multiple_gpus = semiotic.config.system.multiple_gpus
         self.path = semiotic.paths.paradigms
-        self.model_path = self.path / "tf_model.h5"
         self.model_config_path = self.path / "config.json"
 
         self.dataset = semiotic.corpus.dataset
@@ -42,18 +41,18 @@ class Paradigmatic:
             classifier_dropout = self. model_config["classifier_dropout"],
         )
 
+        # If model exists and config.load_pretrain==True, load pretrained model, otherwise load an empty model
         if self.tensor_imp == "tf":
-            if self.config.load_pretrained and path.exists(self.model_path) and path.exists(self.model_config_path):
+            if self.config.load_pretrained and path.exists(self.path / "tf_model.h5") and path.exists(self.model_config_path):
                 if self.multiple_gpus:
                     mirrored_strategy = tf.distribute.MirroredStrategy()
                     with mirrored_strategy.scope():
-                        self.model = TFBertForMaskedLM.from_pretrained(
-                            self.model_path,
+                        self.model = TFBertForMaskedLM.from_pretrained(self.path / "tf_model.h5",
                             config = self.model_config_path
                             )
                 else:
                     self.model = TFBertForMaskedLM.from_pretrained(
-                        self.model_path,
+                        self.path / "tf_model.h5",
                         config = self.model_config_path
                         )
             else:
