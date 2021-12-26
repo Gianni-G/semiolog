@@ -77,7 +77,9 @@ class Paradigmatic:
         
         self.data_collator = DataCollatorForLanguageModeling(
             tokenizer = self.tokenizer,
+            mlm = True,
             mlm_probability = self.config.mask_probability,
+            pad_to_multiple_of = None,
             return_tensors = self.tensor_imp
         )
 
@@ -142,7 +144,7 @@ class Paradigmatic:
             )
 
         def tokenize_function(syntagmas):
-            return self.tokenizer(syntagmas["text"])
+            return self.tokenizer(syntagmas["text"], return_special_tokens_mask = True)
 
         print("SLG: Tokenizing dataset...")
         tokenized_datasets = dataset.map(
