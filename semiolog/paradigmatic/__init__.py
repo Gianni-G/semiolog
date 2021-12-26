@@ -124,10 +124,12 @@ class Paradigmatic:
         )
         return output
     
-    def build(self, dataset = None):
+    def build(self, dataset = None, save = None):
         
         if dataset == None:
             dataset = self.dataset
+        if save == None:
+            save = self.config.save
 
         # Following Huggingface, no loss and metrics are provided
 
