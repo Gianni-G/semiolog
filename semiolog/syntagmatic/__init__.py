@@ -60,7 +60,9 @@ class Syntagmatic:
             #     pair=f"[CLS]:0 $A:0 [SEP]:0 $B:1 [SEP]:1",
             #     special_tokens=[("[CLS]", cls_token_id), ("[SEP]", sep_token_id)],
             # )
-    
+
+
+
         self.bert_tokenizer = PreTrainedTokenizerFast(
             tokenizer_object = self.tokenizer,
             # tokenizer_file=str(semiotic.vocab.path.joinpath("tokenizer.json")), # You can load from the tokenizer file, alternatively
@@ -74,6 +76,16 @@ class Syntagmatic:
             sep_token= self.config_vocab.sep_token,
             mask_token= self.config_vocab.mask_token,
         )
+
+        # The following manual addition is due to a bug in HF PreTrainedTokenizerFast, not taking into account the special tokens in the previous declaration
+        self.special_tokens = {
+            "unk_token": self.config_vocab.unk_token,
+            "pad_token": self.config_vocab.pad_token,
+            "cls_token": self.config_vocab.cls_token,
+            "sep_token": self.config_vocab.sep_token,
+            "mask_token": self.config_vocab.mask_token,
+            }
+        self.bert_tokenizer.add_special_tokens(self.special_tokens)
 
     def save_tokenizer(self):
         self.tokenizer.save(self.tokenizer_path)
