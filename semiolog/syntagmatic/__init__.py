@@ -61,8 +61,6 @@ class Syntagmatic:
             #     special_tokens=[("[CLS]", cls_token_id), ("[SEP]", sep_token_id)],
             # )
 
-
-
         self.bert_tokenizer = PreTrainedTokenizerFast(
             tokenizer_object = self.tokenizer,
             # tokenizer_file=str(semiotic.vocab.path.joinpath("tokenizer.json")), # You can load from the tokenizer file, alternatively
