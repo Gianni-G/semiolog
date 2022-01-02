@@ -36,9 +36,17 @@ class Chain:
 
         self.tokens = sorted([token for token in self.tree_tokens if token.position != None], key= lambda x: x.position)
 
+        chain = "".join(self.split_norm)
+        tree_root = Functive(chain, (0, len(chain)), None, None, semiotic)
+        tree_root.children = self.tokens
+
+        for token in self.tokens:
+            token.head = tree_root
+
         self.len = len(self.tokens)
         self.labels = [token.label for token in self.tokens]
-        
+
+
         # self.segmented = " ".join(self.labels)
 
     @property
@@ -81,7 +89,7 @@ class Chain:
             n = [n]
 
         assert max(n)<self.len, f"SLG: The mask position ({max(n)}) is bigger than the length of the chain ({self.len})."
-        
+
         mask_token = self.semiotic.config.vocabulary.mask_token
         # This id for mask_token depends on the tokenizer being able to include the mask_token, which, due to a HF bug, happens at the end (hence the high id). Double-check when the bug has been dealt with
         mask_token_id = self.semiotic.syntagmatic.tokenizer.token_to_id(mask_token)
