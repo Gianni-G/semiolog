@@ -1,12 +1,13 @@
 
 class Functive:
 
-    def __init__(self,label,span,position,semiotic) -> None:
+    def __init__(self,label,span,position,ids,semiotic) -> None:
         
         self.span = span
         self.label = label  
         self.position = position
-        self.id = semiotic.vocab.encode.get(self.label,None) # this needs ot be fixed by handling UNK!!!
+        # self.id = semiotic.vocab.encode.get(self.label,None) # this needs ot be fixed by handling UNK!!!
+        self.id = ids # Meant to recover ids from HF tokenizer
         self.prob = semiotic.vocab.prob.get(self.label,0)
 
         # self.parad

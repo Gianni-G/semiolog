@@ -7,12 +7,12 @@ class Text:
     def __init__(self,input_chain,semiotic) -> None:
 
         self.chain = Chain(input_chain,semiotic)
-        semiotic.syntagmatic.tokenizer(self.chain)
+        # semiotic.syntagmatic.tokenizer(self.chain)
 
-        self.tree = Tree(self.chain.tree_tokens)
+        # self.tree = Tree(self.chain.tree_tokens)
 
-        semiotic.paradigmatic.paradigmatizer(self.chain)
-        self.parad_chain = ParadigmChain(self.chain)
+        # semiotic.paradigmatic.paradigmatizer(self.chain)
+        # self.parad_chain = ParadigmChain(self.chain)
 
-        semiotic.typing.typer(self.parad_chain)
-        self.type_chain = TypeChain(self.parad_chain)
+        # semiotic.typing.typer(self.parad_chain)
+        # self.type_chain = TypeChain(self.parad_chain)

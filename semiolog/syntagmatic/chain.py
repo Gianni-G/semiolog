@@ -21,17 +21,24 @@ class Chain:
         self.semiotic = semiotic
         self.input = input_chain
         self.split = input_chain.split()
-        self.split_norm = [self.semiotic.syntagmatic.tokenizer.normalizer.normalize(s) for s in self.split]
+        self.split_norm = [self.semiotic.syntagmatic.tokenizer.normalizer.normalize_str(s) for s in self.split]
         self.split_norm = [t for t in self.split_norm if t!='']
 
-        self.norm = None
-        self.pre_tokens = None
-        self.processor = None
-        self.tokens = None
+        # self.norm = None
+        # self.pre_tokens = None
+        # self.processor = None
 
-        self.len = None
-        self.labels = None
+        hf_output = semiotic.syntagmatic.tokenizer.encode(self.input)
 
+        #TODO: Using HF tokenizers, the tokens for trees are yet to be done, and it's not clear yet how tree tokens could work. Also, the "offsets" or "span" for inputs without spaces have to be double checked
+
+        self.tree_tokens = [Functive(segment,span,position,ids,semiotic) for segment,span,position,ids in zip(hf_output.tokens,hf_output.offsets,hf_output.word_ids,hf_output.ids)]
+
+        self.tokens = sorted([token for token in self.tree_tokens if token.position != None], key= lambda x: x.position)
+
+        self.len = len(self.tokens)
+        self.labels = [token.label for token in self.tokens]
+        
         # self.segmented = " ".join(self.labels)
 
     @property
@@ -58,7 +65,11 @@ class Chain:
         if isinstance(n,int):
             n = [n]
 
-        masked_chain = [token if i not in n else Functive("[MASK]",token.span,token.position,self.semiotic) for i,token in enumerate(self.tokens)]
+        mask_token = self.semiotic.config.vocabulary.mask_token
+        # This id for mask_token depends on the tokenizer being able to include the mask_token, which, due to a HF bug, happens at the end (hence the high id). Double-check when the bug has been dealt with
+        mask_token_id = self.semiotic.syntagmatic.tokenizer.token_to_id(mask_token)
+
+        masked_chain = [token if i not in n else Functive(mask_token,token.span,token.position,mask_token_id,self.semiotic) for i,token in enumerate(self.tokens)]
         
         return masked_chain   
 
