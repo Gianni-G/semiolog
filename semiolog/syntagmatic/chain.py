@@ -57,21 +57,38 @@ class Chain:
     @property
     def nodes(self):
         return [(token.label, token.span) for token in self.tokens]
-        
+    
     def mask(self,n):
         """
-        Outputs a new list with the nth token(s) of the chain replaced with the "[MASK]" token. n can be an integer or a list of integers.
+        Outputs a string with the nth label(s) of the chain replaced with the mask token. n can be an integer or a list of integers.
         """
         if isinstance(n,int):
             n = [n]
 
+        assert max(n)<self.len, f"SLG: The mask position ({max(n)}) is bigger than the length of the chain ({self.len})."
+
+        mask_token = self.semiotic.config.vocabulary.mask_token
+
+        masked_chain = " ".join([t if i not in n else mask_token for i,t in enumerate(self.labels)])
+        
+        return masked_chain   
+
+    def mask_tokens(self,n):
+        """
+        Outputs a new list with the nth token(s) of the chain replaced with the mask token. n can be an integer or a list of integers.
+        """
+        if isinstance(n,int):
+            n = [n]
+
+        assert max(n)<self.len, f"SLG: The mask position ({max(n)}) is bigger than the length of the chain ({self.len})."
+        
         mask_token = self.semiotic.config.vocabulary.mask_token
         # This id for mask_token depends on the tokenizer being able to include the mask_token, which, due to a HF bug, happens at the end (hence the high id). Double-check when the bug has been dealt with
         mask_token_id = self.semiotic.syntagmatic.tokenizer.token_to_id(mask_token)
 
         masked_chain = [token if i not in n else Functive(mask_token,token.span,token.position,mask_token_id,self.semiotic) for i,token in enumerate(self.tokens)]
         
-        return masked_chain   
+        return masked_chain
 
 
 
