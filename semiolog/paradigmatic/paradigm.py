@@ -71,7 +71,8 @@ class Paradigm:
         non_zeroes,
         decoder,
         semiotic,
-        cum_thres=.5
+        cum_thres=.5,
+        vocab_thres = 500
         ) -> None:
 
         self.len = non_zeroes.numpy()
@@ -86,20 +87,8 @@ class Paradigm:
         self.mass_entropy = entropy(self.probs)
         # self.cumsum = np.cumsum(self.values)
 
-
-
-        # self.len_truncate = len([i for i in self.cumsum if i <= cum_thres])
-        # self.keys_t = tuple(list(self.keys)[:self.len_truncate])
-        # self.values_t = self.values[:self.len_truncate]
-
-        # parad_log = np.log(self.values)
-        # parad_soft_offset = parad_log+(-np.min(parad_log))
-        # self.soft_dist = parad_soft_offset/sum(parad_soft_offset)
-        # self.cumsum_soft = np.cumsum(self.soft_dist)
-
-        # self.len_truncate_soft = len([i for i in self.cumsum_soft if i <= cum_thres])
-        # self.keys_t_soft = tuple(list(self.keys)[:self.len_truncate_soft])
-        # self.values_t_soft = self.soft_dist[:self.len_truncate_soft]
+        key_thres = set(list(semiotic.vocab.prob.keys())[:vocab_thres])
+        self.top_freq = [key for key in self.keys if key in key_thres]
 
         self.productivity = productive_suffix(self.keys)
 
