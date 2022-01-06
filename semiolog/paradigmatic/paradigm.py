@@ -4,6 +4,7 @@ import tensorflow as tf
 import string
 from ..syntagmatic.tokenizer import normalizers
 from collections import Counter, defaultdict
+from operator import itemgetter
 from math import log
 
 from ..util import df as slg_df
@@ -69,22 +70,27 @@ class Paradigm:
         values,
         non_zeroes,
         decoder,
-        # semiotic,
+        semiotic,
         cum_thres=.5
         ) -> None:
 
         self.len = non_zeroes.numpy()
-        # self.keys = tuple(parad.keys())
         self.ids = ids.numpy()
-        self.keys = tuple(decoder(ids.numpy()[:self.len]).split())
+        self.keys = decoder(ids.numpy()[:self.len]).split()
         self.values = values.numpy()
+        query = itemgetter(*self.keys)
+        self.probs = query(semiotic.vocab.prob)
+        self.mass = sum(self.probs)
 
         self.entropy = entropy(self.values)
-        self.cumsum = np.cumsum(self.values)
+        self.mass_entropy = entropy(self.probs)
+        # self.cumsum = np.cumsum(self.values)
 
-        self.len_truncate = len([i for i in self.cumsum if i <= cum_thres])
-        self.keys_t = tuple(list(self.keys)[:self.len_truncate])
-        self.values_t = self.values[:self.len_truncate]
+
+
+        # self.len_truncate = len([i for i in self.cumsum if i <= cum_thres])
+        # self.keys_t = tuple(list(self.keys)[:self.len_truncate])
+        # self.values_t = self.values[:self.len_truncate]
 
         # parad_log = np.log(self.values)
         # parad_soft_offset = parad_log+(-np.min(parad_log))
@@ -138,9 +144,8 @@ class Paradigmatizer:
 
         parad_data = tf.math.top_k(probs, k = max_non_zeroes, sorted=True)
 
-        parads = [Paradigm(ids,values,nonzeroes,self.decoder) for ids,values,nonzeroes in zip(parad_data.indices,parad_data.values,non_zeroes)]
+        parads = [Paradigm(ids,values,nonzeroes,self.decoder, chain.semiotic) for ids,values,nonzeroes in zip(parad_data.indices,parad_data.values,non_zeroes)]
 
-        chain.paradigms = parads
         for token,parad in zip(chain,parads):
             token.paradigm = parad
 
