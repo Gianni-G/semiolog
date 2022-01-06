@@ -84,7 +84,7 @@ class Paradigmatic:
         )
 
         # self.unmasker = pipeline('fill-mask', model = self.config.model,top_k = self.config.top_k)
-        # self.paradigmatizer = Paradigmatizer()
+        self.paradigmatizer = Paradigmatizer(self.model,self.bert_tokenizer,semiotic.syntagmatic.tokenizer.decode)
 
     # This looks inelegant. There should be a way to do this in a more intelligent way
     def bert_tokenizer(

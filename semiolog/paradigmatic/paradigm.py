@@ -1,5 +1,6 @@
 from scipy.stats import entropy
 import numpy as np
+import tensorflow as tf
 import string
 from ..syntagmatic.tokenizer import normalizers
 from collections import Counter, defaultdict
@@ -62,11 +63,21 @@ def productive_suffix(parad_keys):
         return None
 
 class Paradigm:
-    def __init__(self,parad:dict,semiotic,cum_thres=.5) -> None:
-        self.len = len(parad)
-        self.keys = tuple(parad.keys())
+    def __init__(
+        self,
+        ids,
+        values,
+        non_zeroes,
+        decoder,
+        # semiotic,
+        cum_thres=.5
+        ) -> None:
 
-        self.values = np.array(list(parad.values()))
+        self.len = non_zeroes.numpy()
+        # self.keys = tuple(parad.keys())
+        self.ids = ids.numpy()
+        self.keys = tuple(decoder(ids.numpy()[:self.len]).split())
+        self.values = values.numpy()
 
         self.entropy = entropy(self.values)
         self.cumsum = np.cumsum(self.values)
@@ -75,16 +86,16 @@ class Paradigm:
         self.keys_t = tuple(list(self.keys)[:self.len_truncate])
         self.values_t = self.values[:self.len_truncate]
 
-        parad_log = np.log(self.values)
-        parad_soft_offset = parad_log+(-np.min(parad_log))
-        self.soft_dist = parad_soft_offset/sum(parad_soft_offset)
-        self.cumsum_soft = np.cumsum(self.soft_dist)
+        # parad_log = np.log(self.values)
+        # parad_soft_offset = parad_log+(-np.min(parad_log))
+        # self.soft_dist = parad_soft_offset/sum(parad_soft_offset)
+        # self.cumsum_soft = np.cumsum(self.soft_dist)
 
-        self.len_truncate_soft = len([i for i in self.cumsum_soft if i <= cum_thres])
-        self.keys_t_soft = tuple(list(self.keys)[:self.len_truncate_soft])
-        self.values_t_soft = self.soft_dist[:self.len_truncate_soft]
+        # self.len_truncate_soft = len([i for i in self.cumsum_soft if i <= cum_thres])
+        # self.keys_t_soft = tuple(list(self.keys)[:self.len_truncate_soft])
+        # self.values_t_soft = self.soft_dist[:self.len_truncate_soft]
 
-        self.productivity = productive_suffix(self.keys_t_soft)
+        self.productivity = productive_suffix(self.keys)
 
 
     def __repr__(self) -> str:
@@ -92,9 +103,11 @@ class Paradigm:
 
 class Paradigmatizer:
     
-    def __init__(self) -> None:
-        pass
-
+    def __init__(self, model, bert_tokenizer, decoder) -> None:
+        self.model = model
+        self.bert_tokenizer = bert_tokenizer
+        self.decoder = decoder
+        
     def __call__(self,chain):
         # self.config = chain.semiotic.config.paradigmatic
         # exclude_punctuation = self.config.exclude_punctuation
@@ -107,22 +120,29 @@ class Paradigmatizer:
         # chain.paradigms = parads
         # for token,parad in zip(chain,parads):
         #     token.paradigm = parad
-        pass
+        # pass
 
         # self.config = chain.semiotic.config.paradigmatic
 
-        # sent_len = len(sent.split())
-        # sent_mask = [" ".join([t if i!=n else "[MASK]" for i,t in enumerate(sent.split())]) for n in range(sent_len)]
+        sent_mask = [chain.mask(n) for n in range(chain.len)]
+        input = self.bert_tokenizer(sent_mask)
+        outputs = self.model(input["input_ids"])
+        parad_logits = tf.gather_nd(outputs.logits, indices=[[i,i] for i in range(chain.len)])
+        logits_positif = tf.nn.relu(parad_logits)
+        probs, norms = tf.linalg.normalize(logits_positif, ord=1, axis=1)
         
-        # sent_mask = [" ".join([token.label for token in chain.mask(i)]) for i in range(chain.len)]
-        # parads = []
-        # for sent in sent_mask:
-        #     parad = {i['token_str'].replace("#",""):i['score'] for i in chain.semiotic.paradigmatic.unmasker(sent) if exclude_punctuation and i['token_str'] not in string.punctuation+normalizers.punctuation}
-        #     parads.append(Paradigm(parad,self.config.cumulative_sum_threshold))
+        # Maybe its cheaper to compute top k for k = non_zero, which would differ from row to row, and hence not yeld a tensor. To be tested.
 
-        # chain.paradigms = parads
-        # for token,parad in zip(chain,parads):
-        #     token.paradigm = parad
+        non_zeroes = tf.math.count_nonzero(probs,axis=1)
+        max_non_zeroes = max(non_zeroes).numpy()
+
+        parad_data = tf.math.top_k(probs, k = max_non_zeroes, sorted=True)
+
+        parads = [Paradigm(ids,values,nonzeroes,self.decoder) for ids,values,nonzeroes in zip(parad_data.indices,parad_data.values,non_zeroes)]
+
+        chain.paradigms = parads
+        for token,parad in zip(chain,parads):
+            token.paradigm = parad
 
 
 class ParadigmChain:
