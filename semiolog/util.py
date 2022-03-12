@@ -145,12 +145,32 @@ def str2txt(input: str, filename: str, path: str):
     with open(f"{path}{filename}.txt", "w") as nf:
         nf.write(input)
 
-def list2txt(input: list, filename: str = "text_list", path = None):
+# def list2txt(input: list, filename: str = "text_list", path = None):
+#     if not os.path.isdir(path):
+#         os.makedirs(path)
+#     with open(f"{path}/{filename}.txt", "w") as nf:
+#         for element in input:
+#             nf.write(element+"\n")
+
+
+def list2txt(input: list, filename: str = "text_list", path = None, append = False):
+    
+    
     if not os.path.isdir(path):
         os.makedirs(path)
+    
+    if append:
+        if isinstance()
+
+    
     with open(f"{path}/{filename}.txt", "w") as nf:
         for element in input:
             nf.write(element+"\n")
+
+
+
+
+
             
 def txt2list(filename, path):
     with open(f"{path}/{filename}.txt") as txt_file:
