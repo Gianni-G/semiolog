@@ -2,6 +2,8 @@
 from .chain import Chain
 from .tree import Tree
 
+from .tokenizer import SLG_Tokenizer
+
 from os import path
 from tokenizers import (
     decoders,
@@ -87,3 +89,7 @@ class Syntagmatic:
 
     def save_tokenizer(self):
         self.tokenizer.save(self.tokenizer_path)
+    
+    @property
+    def SLG_tokenizer(self):
+        return SLG_Tokenizer(self.config)

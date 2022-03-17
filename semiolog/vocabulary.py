@@ -139,7 +139,8 @@ class Vocabulary:
 
         def pre_process(corpus_chunk, normalizer):
             # Normalize
-            chain_zip = normalizer(corpus_chunk)
+            #TODO: Warning: I added a "None" because the normalize.normalize() function requires a "self" in tokenizer.normalizers.disable. But this is just a quick hack for a test, and needs to be appropriately addressed as a bug
+            chain_zip = normalizer(None,corpus_chunk)
             # Build list of pairs
             chain_zip = list(zip(chain_zip,chain_zip[1:]))
             # Create a lookup table of all the positions where a pair appears in a corpus

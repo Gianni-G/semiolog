@@ -93,24 +93,24 @@ class SequenceSLG(Processor):
     
     def process(self, sequence: str, semiotic, is_pretokenized=False):
         
-        segments = " ".join(self.chain2seq(sequence, semiotic.vocab.freq)).split()
+        segments = " ".join(self.chain2seq(sequence, semiotic.vocab.freq))#.split()
 
-        spans = []
-        for i in range(len(segments)):
-            start_i = len("".join(segments[:i]))
-            end_i = start_i + len(segments[i])
-            spans.append((start_i, end_i))
+        # spans = []
+        # for i in range(len(segments)):
+        #     start_i = len("".join(segments[:i]))
+        #     end_i = start_i + len(segments[i])
+        #     spans.append((start_i, end_i))
 
-        tokens = [Functive(segment,span,position,semiotic) for position,(segment,span) in enumerate(zip(segments,spans))]
+        # tokens = [Functive(segment,span,position,semiotic) for position,(segment,span) in enumerate(zip(segments,spans))]
 
-        chain = sequence.replace(" ", "")
-        tree_root = Functive(chain, (0, len(chain)), None, semiotic)
-        tree_root.children = tokens
+        # chain = sequence.replace(" ", "")
+        # tree_root = Functive(chain, (0, len(chain)), None, semiotic)
+        # tree_root.children = tokens
 
-        for token in tokens:
-            token.head = tree_root
+        # for token in tokens:
+        #     token.head = tree_root
 
-        return tokens
+        return segments
 
 
 class TreeSLG(SequenceSLG):

@@ -28,7 +28,11 @@ class Chain:
         # self.pre_tokens = None
         # self.processor = None
 
-        hf_output = semiotic.syntagmatic.tokenizer.encode(self.input)
+        if semiotic.config.syntagmatic.SLG_processor != None:
+            self.SLG_input = self.semiotic.syntagmatic.SLG_tokenizer(self.input, self.semiotic)
+        else:
+            self.SLG_input = self.input
+        hf_output = semiotic.syntagmatic.tokenizer.encode(self.SLG_input)
 
         #TODO: Using HF tokenizers, the tokens for trees are yet to be done, and it's not clear yet how tree tokens could work. Also, the "offsets" or "span" for inputs without spaces have to be double checked
 
