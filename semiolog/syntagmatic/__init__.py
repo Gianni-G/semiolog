@@ -2,8 +2,6 @@
 from .chain import Chain
 from .tree import Tree
 
-from .tokenizer import SLG_Tokenizer
-
 from os import path
 from tokenizers import (
     decoders,
@@ -12,7 +10,14 @@ from tokenizers import (
     pre_tokenizers,
     processors,
     Tokenizer,
+
+    Regex,
+    NormalizedString,
+    PreTokenizedString,
 )
+
+from .tokenizer import SequenceSLG, NormalizeSLG
+
 from transformers import PreTrainedTokenizerFast
 
 
@@ -35,20 +40,26 @@ class Syntagmatic:
                     )
             
             # Load HF normalizer
+            # The elif condition on the string SLG is sort of a hack (needed due to non standard declaration of custom normalizer). There should be a more elegant way
             if self.config.normalizer != None:
                 if isinstance(self.config.normalizer,list):
                     self.tokenizer.normalizer = normalizers.Sequence(
                         [eval(f"normalizers.{norm}()") for norm in self.config.normalizer]
                         )
+                elif self.config.normalizer[-3:] == "SLG":
+                    self.tokenizer.normalizer = eval(f"{self.config.normalizer}")
                 else:
                     self.tokenizer.normalizer = eval(f"normalizers.{self.config.normalizer}()")
 
             # Load HF pre-tokenizer
+            # The elif condition on the string SLG is sort of a hack (needed due to non standard declaration of custom pre-tokenizer). There should be a more elegant way
             if self.config.pre_tokenizer != None:
                 if isinstance(self.config.pre_tokenizer,list):
                     self.tokenizer.pre_tokenizer = pre_tokenizers.Sequence(
-                        [eval(f"normalizers.{norm}()") for norm in self.config.pre_tokenizer]
+                        [eval(f"pre_tokenizer.{pretok}()") for pretok in self.config.pre_tokenizer]
                         )
+                elif self.config.pre_tokenizer[-3:] == "SLG":
+                    self.tokenizer.pre_tokenizer = eval(f"pre_tokenizers.PreTokenizer.custom({self.config.pre_tokenizer}(semiotic))")
                 else:
                     self.tokenizer.pre_tokenizer = eval(f"pre_tokenizers.{self.config.pre_tokenizer}()")
             
@@ -90,6 +101,6 @@ class Syntagmatic:
     def save_tokenizer(self):
         self.tokenizer.save(self.tokenizer_path)
     
-    @property
-    def SLG_tokenizer(self):
-        return SLG_Tokenizer(self.config)
+    # @property
+    # def SLG_tokenizer(self):
+    #     return SLG_Tokenizer(self.config)

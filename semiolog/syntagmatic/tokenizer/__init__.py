@@ -1,56 +1,104 @@
 
-from . import normalizers
-from . import pre_tokenizers
-from . import processors
-from . import post_processors
+# from . import normalizers
+# from . import pre_tokenizers
+# from . import processors
+# from . import post_processors
 
-# from ...util import if_none_disable
+from tokenizers.normalizers import NFKC, Lowercase, Replace
 
-# TODO: unable to import this from ...util
-def if_none_disable(x):
-    if x == None:
-        x = "disable"
-    return x
+from tokenizers import (
+    NormalizedString,
+    PreTokenizedString,
+    normalizers,
+    Regex,
+)
 
-class SLG_Tokenizer:
+import networkx as nx
+import string
+from semiolog.util import subsequences
+
+from typing import List
+
+punctuation = "...—•…–’"
+
+NormalizeSLG = normalizers.Sequence([NFKC(), Lowercase(), Replace(Regex(f"{[i for i in string.whitespace]}"),""),Replace(Regex(f"{[i for i in string.punctuation+punctuation]}"),"")])
+
+class SequenceSLG:
+
     """
     """
 
-    def __init__(self,config) -> None:
+    def __init__(self, semiotic) -> None:
+        self.zipf_factor = .135
+        self.semiotic = semiotic
 
-        # self.config = {k:v if v!= None else "disable" for k,v in config.__dict__.items()}
-        self.config = config
+        if self.semiotic.vocab.freq !=None:
+            self.voc = self.semiotic.vocab.freq
+
+            # TODO: Zipf factor should (in principle) be computable following Mandelbrot (or not?)
+            self.voc_rank = {k:(v+1)**self.zipf_factor for v,k in enumerate(self.voc.keys())}
+
+    def build_graph_data(
+        self,
+        string: str,
+        voc: dict
+        )-> List[tuple]:
+
+        edge_data = []
+        for beginning in range(0, len(string)):
+            for end in range(beginning + 1, len(string) + 1):
+                subsequence_label = string[beginning:end]
+                if subsequence_label not in voc or subsequence_label == string:
+                    continue
+                edge_data.append(
+                    (
+                        beginning,
+                        end,
+                        {
+                            "label": subsequence_label,
+                        },
+                    )
+                )
+
+        return edge_data
+
+    def chain2seq(
+        self, string:str
+    ) -> List[tuple]:
+        lSt = len(string)
         
+        # In case of a character in the string not in vocab, add it
+        for c in string:
+            if c not in self.voc:
+                self.voc[c]=1
+                self.voc_rank[c]=(len(self.voc)+1)**self.zipf_factor
 
-        # TODO: There should be a better way to convert config "None" into "disable"
-        
-        if isinstance(self.config.SLG_normalizer,list):
-            self.normalizer = normalizers.Sequence(self.config.SLG_normalizer)
-        else:
-            self.normalizer = eval(f"normalizers.{if_none_disable(self.config.SLG_normalizer)}()")
-        
-        self.pre_tokenizer = eval(f"pre_tokenizers.{if_none_disable(self.config.SLG_pre_tokenizer)}()")
-        self.is_pretokenized = False if self.pre_tokenizer == pre_tokenizers.PreTokenizer else True
-        self.processor = eval(f"processors.{if_none_disable(self.config.SLG_processor)}()")
-        self.post_processor = eval(f"post_processors.{if_none_disable(self.config.SLG_post_processor)}()")
+        graph_data = self.build_graph_data(string, self.voc)
+        seg_graph_full = nx.DiGraph()
+        seg_graph_full.add_edges_from(graph_data)
 
-    def encoder(self,input_string):
-        pass
+        # Construct weights
+        for edge in seg_graph_full.edges:
+            rank = self.voc_rank[seg_graph_full.edges[edge]["label"]]
+            seg_graph_full.edges[edge]["weight"] = rank
 
-    def decoder(self,input_string):
-        pass
+        # Find best segmentation out of shortest path
+        shortest_path = nx.shortest_path(seg_graph_full, 0, lSt, weight="weight")
 
-    def __call__(self,input, semiotic):
-        norm = self.normalizer.normalize(input)
-        pre_tokens = self.pre_tokenizer.pre_tokenize(norm)
-        processor = self.processor.process(pre_tokens, semiotic, is_pretokenized = self.is_pretokenized)
+        seg_offsets = subsequences(shortest_path, 2)
 
-        # chain.tree_tokens = self.post_processor.post_process(chain.processor)
-        # chain.tokens = sorted([token for token in chain.tree_tokens if token.position != None], key= lambda x: x.position)
+        return seg_offsets
 
-        # chain.len = len(chain.tokens)
-        # chain.labels = [token.label for token in chain.tokens]
-        # chain.probs = [token.prob for token in chain.tokens]
-        # pass
+    def SequenceSLG_split(self, i: int, normalized_string: NormalizedString) -> List[NormalizedString]:
 
-        return processor
+        seg_offsets = self.chain2seq(str(normalized_string))
+
+        splits = []
+        for start,end in seg_offsets:
+            splits.append(normalized_string[start:end])
+
+        return splits
+
+    def pre_tokenize(self, pretok: PreTokenizedString):
+
+        pretok.split(self.SequenceSLG_split)

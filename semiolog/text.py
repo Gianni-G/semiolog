@@ -10,8 +10,10 @@ class Text:
         # semiotic.syntagmatic.tokenizer(self.chain)
 
         self.tree = Tree(self.chain.tree_tokens)
+        
+        if semiotic.config.paradigmatic.load_pretrained != False:
+            semiotic.paradigmatic.paradigmatizer(self.chain)
 
-        semiotic.paradigmatic.paradigmatizer(self.chain)
         # self.parad_chain = ParadigmChain(self.chain)
 
         # semiotic.typing.typer(self.parad_chain)

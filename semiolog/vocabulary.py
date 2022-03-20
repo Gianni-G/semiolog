@@ -16,8 +16,11 @@ import operator
 from joblib import Parallel, delayed
 import time
 
+from tokenizers import normalizers
+# from .syntagmatic import NormalizeSLG
+
 from . import util
-from .syntagmatic import tokenizer # needed
+from .syntagmatic import tokenizer, NormalizeSLG # needed
 
 # TODO: Solve version as global variable
 slg_version = "0.1.1"
@@ -46,15 +49,33 @@ class Vocabulary:
         self.prob = None
 
 
-        #TODO: This should replaced by a HF normalizer
-        if isinstance(self.config.normalizer,list):
-            self.normalizer = eval(
-                f"tokenizer.normalizers.Sequence({self.config.normalizer})"
-                )
+        # #TODO: This should replaced by a HF normalizer
+        # if isinstance(self.config.normalizer,list):
+        #     self.normalizer = eval(
+        #         f"tokenizer.normalizers.Sequence({self.config.normalizer})"
+        #         )
+        # else:
+        #     self.normalizer = eval(
+        #         f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
+        #     )
+
+        # Load HF normalizer
+        # The elif condition on the string SLG is sort of a hack (needed due to non standard declaration of custom normalizer). There should be a more elegant way
+        config_normalizer = semiotic.config.syntagmatic.normalizer
+        if config_normalizer != None:
+            if isinstance(config_normalizer,list):
+                normalizer = normalizers.Sequence(
+                    [eval(f"normalizers.{norm}()") for norm in config_normalizer]
+                    )
+            elif config_normalizer[-3:] == "SLG":
+                normalizer = eval(f"{config_normalizer}")
+            else:
+                normalizer = eval(f"normalizers.{config_normalizer}()")
+        
+            self.normalizer = normalizer.normalize_str
+        
         else:
-            self.normalizer = eval(
-                f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
-            )
+            self.normalizer = lambda x: x
 
 
     def from_file(self,path = None):
@@ -139,8 +160,12 @@ class Vocabulary:
 
         def pre_process(corpus_chunk, normalizer):
             # Normalize
-            #TODO: Warning: I added a "None" because the normalize.normalize() function requires a "self" in tokenizer.normalizers.disable. But this is just a quick hack for a test, and needs to be appropriately addressed as a bug
-            chain_zip = normalizer(None,corpus_chunk)
+
+            # #TODO: Warning: I added a "None" because the normalize.normalize() function requires a "self" in tokenizer.normalizers.disable. But this is just a quick hack for a test, and needs to be appropriately addressed as a bug
+            # chain_zip = normalizer(None,corpus_chunk)
+            
+            chain_zip = normalizer(corpus_chunk)
+            
             # Build list of pairs
             chain_zip = list(zip(chain_zip,chain_zip[1:]))
             # Create a lookup table of all the positions where a pair appears in a corpus
@@ -231,7 +256,7 @@ class Vocabulary:
                 print("Computing in parallel")
                 print("Normalize and jobs data...")
                 start = time.time()
-                jobs_data = parallel_pool(delayed(pre_process)(chunk,self.normalizer.normalize) for chunk in corpus_chunks)
+                jobs_data = parallel_pool(delayed(pre_process)(chunk,self.normalizer) for chunk in corpus_chunks)
 
                 pair_len_global = reduce(operator.add,[pair_len for chain_zip, pair_pos, pair_len in jobs_data])
 
@@ -324,7 +349,7 @@ class Vocabulary:
             print("Normalize and jobs data...")
             start = time.time()
             corpus_chain = "".join(self.corpus.train[:corpus_length])
-            chain_zip, pair_pos, pair_len_global = pre_process(corpus_chain,self.normalizer.normalize)
+            chain_zip, pair_pos, pair_len_global = pre_process(corpus_chain,self.normalizer)
 
             # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.
             best_pair, best_pair_len = max(pair_len_global.items(), key=operator.itemgetter(1))
