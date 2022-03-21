@@ -67,7 +67,13 @@ class SequenceSLG:
     ) -> List[tuple]:
         lSt = len(string)
         
-        # In case of a character in the string not in vocab, add it
+        # If sent of len <2r, then return the interval
+        if lSt<2:
+            return [(0,lSt)]
+        elif lSt == 2:
+            return [(0,1),(1,2)]
+
+        # If a character in the string not in vocab, add it
         for c in string:
             if c not in self.voc:
                 self.voc[c]=1
