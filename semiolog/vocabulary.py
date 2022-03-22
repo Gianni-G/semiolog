@@ -20,10 +20,11 @@ from tokenizers import normalizers
 # from .syntagmatic import NormalizeSLG
 
 from . import util
-from .syntagmatic import tokenizer, NormalizeSLG # needed
+from .syntagmatic import Syntagmatic, NormalizeSLG # needed
+from .paradigmatic import Paradigmatic
 
 # TODO: Solve version as global variable
-slg_version = "0.1.1"
+slg_version = "0.2.1"
     
 class Vocabulary:
     
@@ -31,6 +32,7 @@ class Vocabulary:
         
         #TODO: Is there another way than loading the corpus (or the semiotic) here?
         self.corpus = semiotic.corpus
+        self.semiotic = semiotic
         
         self.name = semiotic.name
         self.path = semiotic.paths.vocabulary
@@ -48,26 +50,17 @@ class Vocabulary:
         self.freq_mass = None
         self.prob = None
 
-
-        # #TODO: This should replaced by a HF normalizer
-        # if isinstance(self.config.normalizer,list):
-        #     self.normalizer = eval(
-        #         f"tokenizer.normalizers.Sequence({self.config.normalizer})"
-        #         )
-        # else:
-        #     self.normalizer = eval(
-        #         f"tokenizer.normalizers.{util.if_none_disable(self.config.normalizer)}"
-        #     )
-
         # Load HF normalizer
-        # The elif condition on the string SLG is sort of a hack (needed due to non standard declaration of custom normalizer). There should be a more elegant way
+        
+        # #TODO: The elif condition on the string SLG is sort of a hack (needed due to non standard declaration of custom normalizer). There should be a more elegant way
+
         config_normalizer = semiotic.config.syntagmatic.normalizer
         if config_normalizer != None:
             if isinstance(config_normalizer,list):
                 normalizer = normalizers.Sequence(
                     [eval(f"normalizers.{norm}()") for norm in config_normalizer]
                     )
-            elif config_normalizer[-3:] == "SLG":
+            elif "SLG" in config_normalizer:
                 normalizer = eval(f"{config_normalizer}")
             else:
                 normalizer = eval(f"normalizers.{config_normalizer}()")
@@ -75,7 +68,8 @@ class Vocabulary:
             self.normalizer = normalizer.normalize_str
         
         else:
-            self.normalizer = lambda x: x
+            # self.normalizer = lambda x: x
+            self.normalizer = None
 
 
     def from_file(self,path = None):
@@ -160,11 +154,11 @@ class Vocabulary:
 
         def pre_process(corpus_chunk, normalizer):
             # Normalize
-
-            # #TODO: Warning: I added a "None" because the normalize.normalize() function requires a "self" in tokenizer.normalizers.disable. But this is just a quick hack for a test, and needs to be appropriately addressed as a bug
-            # chain_zip = normalizer(None,corpus_chunk)
             
-            chain_zip = normalizer(corpus_chunk)
+            if normalizer == None:
+                chain_zip = corpus_chunk
+            else:
+                chain_zip = normalizer(corpus_chunk)
             
             # Build list of pairs
             chain_zip = list(zip(chain_zip,chain_zip[1:]))
@@ -453,6 +447,10 @@ class Vocabulary:
         if save == True:
             self.save()
             print(f"Vocabulary saved to {self.path}")
+        
+        self.semiotic.syntagmatic = Syntagmatic(self.semiotic)
+        self.semiotic.paradigmatic = Paradigmatic(self.semiotic)
+        print("Syntagmatic and Paradigmatic updated with the new vocabulary")
 
     def save(self, path = None):
         
@@ -467,34 +465,34 @@ class Vocabulary:
         util.dict2json(self.alpha,"alpha", path)
         
 
-class nGram(Vocabulary):
-    def __init__(self, filename = None, special_tokens = None):
+# class nGram(Vocabulary):
+#     def __init__(self, filename = None, special_tokens = None):
 
-        if filename != None:
+#         if filename != None:
                 
-            with open(filename, "r") as f:
-                csv_reader = csv.reader(f)
-                voc = Counter()
-                for line in csv_reader:
-                    voc[tuple(line[:2])] = int(line[-1])
-                voc = dict(voc.most_common())
+#             with open(filename, "r") as f:
+#                 csv_reader = csv.reader(f)
+#                 voc = Counter()
+#                 for line in csv_reader:
+#                     voc[tuple(line[:2])] = int(line[-1])
+#                 voc = dict(voc.most_common())
 
-            self.filename = filename
-            self.len = len(voc)
-            self.freq = voc
-            self.freq_mass = sum(voc.values())
-            self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
+#             self.filename = filename
+#             self.len = len(voc)
+#             self.freq = voc
+#             self.freq_mass = sum(voc.values())
+#             self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
 
-            self.encode = {k:i for i,(k,v) in enumerate(voc.items())}
-            self.decode = {i:k for k,i in self.encode.items()}
-        else:
-            pass
+#             self.encode = {k:i for i,(k,v) in enumerate(voc.items())}
+#             self.decode = {i:k for k,i in self.encode.items()}
+#         else:
+#             pass
 
-    def __repr__(self) -> str:
-        return f"nGram({self.freq})"
+#     def __repr__(self) -> str:
+#         return f"nGram({self.freq})"
 
-    def __str__(self) -> str:
-        return str(self.freq)
+#     def __str__(self) -> str:
+#         return str(self.freq)
 
-    def __getitem__(self, item):
-         return self.prob[item]
+#     def __getitem__(self, item):
+#          return self.prob[item]
