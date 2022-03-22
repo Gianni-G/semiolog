@@ -106,19 +106,14 @@ class Corpus:
             if length != None:
                 split_lengths = tuple([int(length*r) for r in split_rate])
             print("This feature has not been tested yet. Pleas check")
-            #Check the entire "if"
-            
+
+            #TODO: Check the entire "if"
 
             self.train = self.dataset["train"][:split_lengths[0]]
             
             if "dev" or "validation" in self.dataset:
                 
-                # input = (self.dataset.get("dev",self.dataset["validation"]))[:split_lengths[1]]["text"]
-                # self.dev = self.pre_process_corpus(input, progress_bar = progress_bar)
                 self.dev = self.dataset.get("dev",self.dataset["validation"])[:split_lengths[1]]
-                
-                # input = self.dataset["test"][:split_lengths[2]]["text"] 
-                # self.test = self.pre_process_corpus(input, progress_bar = progress_bar)
                 self.test = self.dataset["test"][:split_lengths[2]]
                 
             else:
