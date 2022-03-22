@@ -5,7 +5,7 @@ from os.path import isfile
 from .util import dict2json, json2dict
 
 # TODO: Solve version as global variable
-slg_version = "0.2"
+slg_version = "0.2.1"
 
 class Config:
     
@@ -81,10 +81,6 @@ class Corpus(Section):
         self.dataset = None
         self.split_rate = (.9,.05,.05)
         self.length = None
-        self.normalizer = None
-        self.pre_tokenizer = None
-        self.processor = None
-        self.post_processor = None
         
 class Vocabulary(Section):
     
@@ -94,7 +90,6 @@ class Vocabulary(Section):
         [PAD], [UNK], [CLS], [SEP], [MASK]
         """
         self.size = None
-        self.normalizer = None
         self.special_tokens = [
             "[PAD]",
             "[UNK]",
@@ -107,9 +102,6 @@ class Vocabulary(Section):
         self.cls_token="[CLS]"
         self.sep_token="[SEP]"
         self.mask_token="[MASK]"
-
-
-
         
 class Syntagmatic(Section):
     """

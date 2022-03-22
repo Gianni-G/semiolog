@@ -11,8 +11,8 @@ class Text:
 
         self.tree = Tree(self.chain.tree_tokens)
         
-        if semiotic.config.paradigmatic.load_pretrained != False:
-            semiotic.paradigmatic.paradigmatizer(self.chain)
+        # if semiotic.config.paradigmatic.load_pretrained != False:
+        semiotic.paradigmatic.paradigmatizer(self.chain)
 
         # self.parad_chain = ParadigmChain(self.chain)
 

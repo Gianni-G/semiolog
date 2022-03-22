@@ -442,15 +442,15 @@ class Vocabulary:
         self.freq_mass = sum(self.freq.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
 
-        print("Vocabulary built")
+        print("Vocabulary built\n")
         
         if save == True:
             self.save()
-            print(f"Vocabulary saved to {self.path}")
+            print(f"Vocabulary saved to {self.path}\n")
         
         self.semiotic.syntagmatic = Syntagmatic(self.semiotic)
         self.semiotic.paradigmatic = Paradigmatic(self.semiotic)
-        print("Syntagmatic and Paradigmatic updated with the new vocabulary")
+        print("Syntagmatic and Paradigmatic updated with the new vocabulary\n")
 
     def save(self, path = None):
         

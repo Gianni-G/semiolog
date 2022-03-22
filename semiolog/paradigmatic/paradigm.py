@@ -104,20 +104,6 @@ class Paradigmatizer:
         self.decoder = decoder
         
     def __call__(self,chain):
-        # self.config = chain.semiotic.config.paradigmatic
-        # exclude_punctuation = self.config.exclude_punctuation
-        # sent_mask = [" ".join([token.label for token in chain.mask(i)]) for i in range(chain.len)]
-        # parads = []
-        # for sent in sent_mask:
-        #     parad = {i['token_str'].replace("#",""):i['score'] for i in chain.semiotic.paradigmatic.unmasker(sent) if exclude_punctuation and i['token_str'] not in string.punctuation+normalizers.punctuation}
-        #     parads.append(Paradigm(parad,self.config.cumulative_sum_threshold))
-
-        # chain.paradigms = parads
-        # for token,parad in zip(chain,parads):
-        #     token.paradigm = parad
-        # pass
-
-        # self.config = chain.semiotic.config.paradigmatic
 
         sent_mask = [chain.mask(n) for n in range(chain.len)]
         input = self.bert_tokenizer(sent_mask)

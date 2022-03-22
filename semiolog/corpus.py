@@ -32,6 +32,8 @@ class Corpus:
 
     def from_file(self, path = None, test_only = False):
 
+        # TODO: loading only part of the dataset (corresponding to config.corpus.length) is not yet implemented
+
         if path == None:
             path = self.path
         
@@ -96,7 +98,7 @@ class Corpus:
         if split_rate == None:
             split_rate = self.config.split_rate
 
-        if self.config.dataset == None or self.config.dataset == []:
+        if self.config.dataset == None and dataset == []:
             return print("SLG: Error: No dataset defined or no txt files found in the model's folder.")
         
         self.dataset = self.load_dataset(dataset, original=True)

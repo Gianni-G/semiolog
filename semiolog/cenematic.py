@@ -31,7 +31,6 @@ class Cenematic:
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
-        
 
         # TODO: configure online repository for models, with automatic download
         
