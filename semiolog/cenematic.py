@@ -4,7 +4,7 @@ from psutil import cpu_count
 from .paths import Paths
 from .config import Config
 from .corpus import Corpus
-from .vocabulary import Vocabulary, nGram
+from .vocabulary import Vocabulary #, nGram
 from .syntagmatic import Syntagmatic
 from .paradigmatic import Paradigmatic
 from .typing import Typing
@@ -26,34 +26,21 @@ class Cenematic:
         
         self.config = Config(self)
         if empty == False and os.path.isdir(self.paths.semiotic):
-            self.config.from_file()            
+            self.config.from_file()
         self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
         
-        self.syntagmatic = Syntagmatic(self)
-
-        # self.ng2 = nGram()
-        
-        self.paradigmatic = Paradigmatic(self)
-        self.typing = Typing(self)
 
         # TODO: configure online repository for models, with automatic download
         
-        # TODO: Take a look at the loading order, since I moved the config from file up
         if not empty:
             
-            if os.path.isdir(self.paths.semiotic):
-                # self.config.from_file()
-                # self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
-                if not config_only:
-                    self.corpus.from_file()
-                    if vocab:
-                        self.vocab.from_file()
-                    self.syntagmatic = Syntagmatic(self)
-                    self.paradigmatic = Paradigmatic(self)
-                    self.typing = Typing(self)
+            if os.path.isdir(self.paths.semiotic) and not config_only:
+                self.corpus.from_file()
+                if vocab:
+                    self.vocab.from_file()
             
             else:
                 createQ = input(f"No existing model correspond to the name {self.name}.\n Do you want to create it? (Y/N)")
@@ -65,6 +52,11 @@ class Cenematic:
                     os.mkdir(self.paths.paradigms)
                     self.config.save()
                     print(f"\nFolder for model '{self.name}' created in {self.paths.models.absolute()}")
+                
+        self.syntagmatic = Syntagmatic(self)
+        # self.ng2 = nGram()
+        self.paradigmatic = Paradigmatic(self)
+        # self.typing = Typing(self)
         
         # # Load universal dependencies (ud) and constituency parsing (cp) models
         # self.ud = spacy.load(self.config["evaluation"]["ud_model"])
@@ -76,16 +68,3 @@ class Cenematic:
 
     def __call__(self,input_chain):
         return Text(input_chain,self)
-
-
-
-    def test_sents(self,filename = None):
-    
-        if filename == None:
-            filename = self.config["general"]["testSentences"]
-
-        with open(paths.examples / self.name / "_sentences_" / f"{filename}.txt", "r") as f:
-            sents = []
-            for line in f.readlines():
-                sents.append(line.rstrip())
-        return sents
