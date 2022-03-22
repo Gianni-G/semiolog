@@ -1,6 +1,6 @@
 import semiolog as slg
 
-semiotic = slg.Cenematic("fr_wiki",requested_cpu = 32)
+semiotic = slg.Cenematic("en_bnc",requested_cpu = 32)
 
 print(f"Numbers of cores: {semiotic.config.system.cpu_count}")
 

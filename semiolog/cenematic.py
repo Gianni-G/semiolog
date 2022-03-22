@@ -42,7 +42,7 @@ class Cenematic:
                     self.vocab.from_file()
             
             else:
-                createQ = input(f"No existing model correspond to the name {self.name}.\n Do you want to create it? (Y/N)")
+                createQ = input(f"No existing model corresponds to the name {self.name}.\n Do you want to create it? (Y/N)")
                 if createQ == "Y":
                     os.mkdir(self.paths.semiotic)
                     os.mkdir(self.paths.corpus)
