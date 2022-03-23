@@ -102,12 +102,12 @@ class Corpus:
             return print("SLG: Error: No dataset defined or no txt files found in the model's folder.")
         
         self.dataset = self.load_dataset(dataset, original=True)
-        print(f"\nSLG: Dataset loaded from the follwing files: {dataset}.\n")
+        print(f"\nSLG: Dataset loaded from the following files: {dataset}.\n")
         
         if "test" in self.dataset:
             if length != None:
                 split_lengths = tuple([int(length*r) for r in split_rate])
-            print("This feature has not been tested yet. Pleas check")
+            print("This feature has not been tested yet. Please check")
 
             #TODO: Check the entire "if"
 
