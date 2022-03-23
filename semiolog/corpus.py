@@ -1,8 +1,16 @@
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, DatasetDict, Dataset
 from os.path import isfile
 from os import listdir
-    
-from .util import list2txt
+from nltk.tokenize import sent_tokenize
+
+import socket
+socket_name = socket.gethostname()
+if any(name in socket_name for name in {"Gianni","vpn"}):
+    from tqdm.notebook import tqdm, trange
+else:
+    from tqdm.auto import tqdm, trange
+
+from .util import list2txt, flatten
 
 
 class Corpus:
@@ -82,6 +90,7 @@ class Corpus:
         length = None,
         save = False,
         split_rate = None,
+        split_sent = False,
         ):
         
         if dataset == None:
@@ -104,6 +113,13 @@ class Corpus:
         self.dataset = self.load_dataset(dataset, original=True)
         print(f"\nSLG: Dataset loaded from the following files: {dataset}.\n")
         
+        if split_sent:
+
+            print("Spliting original text into sentences.")
+
+            for column in self.dataset.column_names:
+                self.dataset[f"{column}"] = self.dataset[f"{column}"].map(lambda batch: {"text": flatten([sent_tokenize(sent) for sent in batch["text"]])}, remove_columns=["text"], batched=True)
+
         if "test" in self.dataset:
             if length != None:
                 split_lengths = tuple([int(length*r) for r in split_rate])
