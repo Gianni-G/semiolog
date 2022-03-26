@@ -17,6 +17,8 @@ from joblib import Parallel, delayed
 import time
 
 from tokenizers import normalizers
+from datasets import Dataset,logging
+logging.set_verbosity_error()
 # from .syntagmatic import NormalizeSLG
 
 from . import util
@@ -129,7 +131,8 @@ class Vocabulary:
         progress_bar = True,
         resume_merges = False,
         parallel = False,
-        corpus_length = None
+        corpus_length = None,
+        keep_in_memory = False, #HF argument in dataset shard and map
         ):
 
         if corpus == None:
@@ -140,10 +143,10 @@ class Vocabulary:
 
         if special_tokens == None:
             special_tokens = self.config.special_tokens
-        
+
         if corpus_length == None:
             corpus_length = self.corpus.train_len
-        
+
         if save == True and save_step != None:
             saveQ = True
             
@@ -152,13 +155,17 @@ class Vocabulary:
         else:
             saveQ = False
 
-        def pre_process(corpus_chunk, normalizer):
+        def pre_process(corpus_chunk:Dataset, normalizer):
+
             # Normalize
             
             if normalizer == None:
                 chain_zip = corpus_chunk
             else:
-                chain_zip = normalizer(corpus_chunk)
+                # chain_zip = normalizer(corpus_chunk)
+                chain_zip = corpus_chunk.map(lambda sent: {"text": normalizer(sent["text"])}, keep_in_memory=keep_in_memory)
+
+            chain_zip = "".join(chain_zip["text"])
             
             # Build list of pairs
             chain_zip = list(zip(chain_zip,chain_zip[1:]))
@@ -242,9 +249,8 @@ class Vocabulary:
 
         if parallel:
             # TODO: The chunks limits could be improved (in particular, if corpus_length is very small compared to cpu_count, last chunks may be empty. It shouldn't be a problem for large corpus_length)
-            chunksize = int(corpus_length/self.cpu_count)+1
 
-            corpus_chunks = ["".join(self.corpus.train["text"][i*chunksize:i*chunksize+chunksize]) for i in range(0,self.cpu_count)]
+            corpus_chunks = [self.corpus.train.shard(self.cpu_count,n, contiguous=True, keep_in_memory = keep_in_memory) for n in range(self.cpu_count)]
 
             with Parallel(n_jobs=self.cpu_count, require='sharedmem') as parallel_pool:
                 print("Computing in parallel")
@@ -342,7 +348,7 @@ class Vocabulary:
             print("Computing sequentially")
             print("Normalize and jobs data...")
             start = time.time()
-            corpus_chain = "".join(self.corpus.train[:corpus_length])
+            corpus_chain = self.corpus.train[:corpus_length]
             chain_zip, pair_pos, pair_len_global = pre_process(corpus_chain,self.normalizer)
 
             # When pair_len_global has more than 1 max, the first encountered is chosen, introducing possible discrepancies between implementations (because each choice modifies global statistics). However, multiple max is less likely to appear in big corpora and relatively small vocabularies, and mostly at the tail of vocabularies (ie. low frequencies), so the impact of this divergence is expected to be marginal.

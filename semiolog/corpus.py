@@ -1,4 +1,7 @@
-from datasets import load_dataset, DatasetDict, Dataset
+from datasets import load_dataset, DatasetDict, Dataset, set_progress_bar_enabled
+# logging.set_verbosity_critical()
+set_progress_bar_enabled(False)
+
 from os.path import isfile
 from os import listdir
 from nltk.tokenize import sent_tokenize
