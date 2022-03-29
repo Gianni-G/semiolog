@@ -1,6 +1,6 @@
 from datasets import load_dataset, DatasetDict, Dataset, set_progress_bar_enabled
 # logging.set_verbosity_critical()
-set_progress_bar_enabled(False)
+set_progress_bar_enabled(True)
 
 from os.path import isfile
 from os import listdir

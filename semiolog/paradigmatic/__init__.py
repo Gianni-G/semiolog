@@ -153,7 +153,7 @@ class Paradigmatic:
             batch_size = self.config.input_tokenize["batch_size"],
 
             # Using more than 1 proc in iMac with m1 blocks the process
-            num_proc = 1, # self.cpu_count, 
+            num_proc = 1, #self.cpu_count, 
             remove_columns = self.config.input_tokenize["remove_columns"]
         )
         
