@@ -1,5 +1,6 @@
 # For the moment only AdamWeightDecay is implemented. If other alternatives are considered, then they should be imported here from transformers
 from transformers import BertConfig, TFBertForMaskedLM, BertTokenizer, AdamWeightDecay, DataCollatorForLanguageModeling #, pipeline
+import datasets
 from .paradigm import Paradigmatizer, ParadigmChain
 
 import tensorflow as tf
@@ -126,10 +127,18 @@ class Paradigmatic:
         )
         return output
     
-    def build(self, dataset = None, save = None):
+    def build(self, dataset = None, load_tokenized = None, save_tokenized = None, save = None):
         
+        # TODO: Add load_tokenized and save_tokenized to config!!!
         if dataset == None:
             dataset = self.dataset
+
+        if load_tokenized == None:
+            load_tokenized = self.config.load_tokenized
+
+        if save_tokenized == None:
+            save_tokenized = self.config.save_tokenized
+
         if save == None:
             save = self.config.save
 
@@ -146,16 +155,22 @@ class Paradigmatic:
         def tokenize_function(syntagmas):
             return self.tokenizer(syntagmas["text"], return_special_tokens_mask = True)
 
-        print("SLG: Tokenizing dataset...")
-        tokenized_datasets = dataset.map(
-            tokenize_function,
-            batched = self.config.input_tokenize["batched"],
-            batch_size = self.config.input_tokenize["batch_size"],
+        if load_tokenized and path.exists(self.path / "tokenized"):
+            tokenized_datasets = datasets.load_from_disk(self.path / "tokenized")
+            print("SLG: Tokenized dataset loaded from disk")
+        else:
+            print("SLG: Tokenizing dataset...")
+            tokenized_datasets = dataset.map(
+                tokenize_function,
+                batched = self.config.input_tokenize["batched"],
+                batch_size = self.config.input_tokenize["batch_size"],
 
-            # Using more than 1 proc in iMac with m1 blocks the process
-            num_proc = 1, #self.cpu_count, 
-            remove_columns = self.config.input_tokenize["remove_columns"]
-        )
+                # Using more than 1 proc in iMac with m1 blocks the process
+                num_proc = 1, #self.cpu_count, 
+                remove_columns = self.config.input_tokenize["remove_columns"]
+            )
+            if save_tokenized:
+                tokenized_datasets.save_to_disk(self.path / "tokenized")
         
         print("SLG: Building train set")
         train_set = tokenized_datasets["train"].to_tf_dataset(
