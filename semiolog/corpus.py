@@ -1,6 +1,6 @@
-from datasets import load_dataset, DatasetDict, Dataset, set_progress_bar_enabled
-# logging.set_verbosity_critical()
-set_progress_bar_enabled(True)
+from datasets import load_dataset, DatasetDict, Dataset
+from datasets.utils import disable_progress_bar
+# disable_progress_bar()
 
 from os.path import isfile
 from os import listdir
