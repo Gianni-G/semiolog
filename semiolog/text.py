@@ -14,7 +14,7 @@ class Text:
         # if semiotic.config.paradigmatic.load_pretrained != False:
         semiotic.paradigmatic.paradigmatizer(self.chain)
 
-        # self.parad_chain = ParadigmChain(self.chain)
+        self.parad_chain = ParadigmChain(self.chain)
 
         # semiotic.typing.typer(self.parad_chain)
         # self.type_chain = TypeChain(self.parad_chain)

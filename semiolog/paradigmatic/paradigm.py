@@ -130,11 +130,11 @@ class ParadigmChain:
     def __init__(self,chain) -> None:
         self.semiotic = chain.semiotic
         self.len = chain.len
-        self.probs = chain.probs
+        # self.probs = chain.probs
         self.paradigms = [token.paradigm for token in chain.tokens]
         self.keys = [token.paradigm.keys for token in chain.tokens]
-        self.keys_t = [token.paradigm.keys_t for token in chain.tokens]
-        self.keys_t_soft = [token.paradigm.keys_t_soft for token in chain.tokens]
+        # self.keys_t = [token.paradigm.keys_t for token in chain.tokens]
+        # self.keys_t_soft = [token.paradigm.keys_t_soft for token in chain.tokens]
 
         self.labels = [token.label for token in chain.tokens]
         self.spans = [token.span for token in chain.tokens]
@@ -143,10 +143,5 @@ class ParadigmChain:
     def __getitem__(self, index:str):
         return self.paradigms[index]
     
-    def df(self,keys=None):
-        if keys == "keys":
-            return slg_df(self.keys, self.indexes)
-        elif keys == "keys_t":
-            return slg_df(self.keys_t, self.indexes)
-        else:
-            return slg_df(self.keys_t_soft, self.indexes)
+    def df(self, size = 20):
+        return slg_df([p[:size] for p in self.keys], self.indexes)

@@ -127,7 +127,13 @@ class Paradigmatic:
         )
         return output
     
-    def build(self, dataset = None, load_tokenized = None, save_tokenized = None, save = None):
+    def build(
+        self,
+        dataset = None,
+        load_tokenized = None,
+        save_tokenized = None,
+        save = None,
+        ):
         
         # TODO: Add load_tokenized and save_tokenized to config!!!
         if dataset == None:
