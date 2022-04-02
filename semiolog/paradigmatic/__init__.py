@@ -179,7 +179,7 @@ class Paradigmatic:
             if n_sents !=None:
                 dataset = datasets.DatasetDict({
                     "train":dataset["train"].select(range(n_sents)),
-                    "dev": dataset["dev"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[1])))
+                    "dev": dataset["dev"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[1]))),
                     "test": dataset["test"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[2])))
                     })
 
