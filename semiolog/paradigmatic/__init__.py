@@ -137,7 +137,7 @@ class Paradigmatic:
         save = None,
         ):
         
-        # TODO: Add load_tokenized and save_tokenized to config!!!
+        # TODO: Add load_tokenized, save_tokenized and n_sents to config!!!
         if dataset == None:
             dataset = self.dataset
 
@@ -146,6 +146,9 @@ class Paradigmatic:
 
         if save_tokenized == None:
             save_tokenized = self.config.save_tokenized
+
+        if n_sents == None:
+            n_sents = self.config.n_sents
 
         if save == None:
             save = self.config.save
