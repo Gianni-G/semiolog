@@ -11,6 +11,7 @@ from ..util import dict2json
 class Paradigmatic:
     def __init__(self,semiotic) -> None:
         self.config = semiotic.config.paradigmatic
+        self.split_rate = semiotic.config.corpus.split_rate
         self.model_config = semiotic.config.paradigmatic.model_config
         self.max_len = semiotic.config.syntagmatic.model_max_length
         self.tensor_imp = semiotic.config.general.tensor_implementation
@@ -132,6 +133,7 @@ class Paradigmatic:
         dataset = None,
         load_tokenized = None,
         save_tokenized = None,
+        n_sents = None,
         save = None,
         ):
         
@@ -164,8 +166,24 @@ class Paradigmatic:
         if load_tokenized and path.exists(self.path / "tokenized"):
             tokenized_datasets = datasets.load_from_disk(self.path / "tokenized")
             print("SLG: Tokenized dataset loaded from disk")
+
+            if n_sents !=None:
+                tokenized_datasets = datasets.DatasetDict({
+                    "train":tokenized_datasets["train"].select(range(n_sents)),
+                    "dev": tokenized_datasets["dev"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[1])))
+                    })
+
         else:
             print("SLG: Tokenizing dataset...")
+
+            if n_sents !=None:
+                dataset = datasets.DatasetDict({
+                    "train":dataset["train"].select(range(n_sents)),
+                    "dev": dataset["dev"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[1])))
+                    "test": dataset["test"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[2])))
+                    })
+
+
             tokenized_datasets = dataset.map(
                 tokenize_function,
                 batched = self.config.input_tokenize["batched"],
