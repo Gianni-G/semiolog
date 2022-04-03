@@ -198,7 +198,13 @@ class Paradigmatic:
             )
             if save_tokenized:
                 tokenized_datasets.save_to_disk(self.path / "tokenized")
-        
+
+        print("SLG: Filtering rows of length <2")
+        tokenized_datasets = datasets.DatasetDict({
+            "train":tokenized_datasets["train"].filter(lambda example: len(example['input_ids'])>1),
+            "dev": tokenized_datasets["dev"].filter(lambda example: len(example['input_ids'])>1)
+            })
+
         print("SLG: Building train set")
         train_set = tokenized_datasets["train"].to_tf_dataset(
             columns = ["attention_mask", "input_ids", "labels"],
