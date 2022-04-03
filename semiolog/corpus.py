@@ -110,8 +110,7 @@ class Corpus:
         if split_rate == None:
             split_rate = self.config.split_rate
 
-        if self.config.dataset == None and dataset == []:
-            return print("SLG: Error: No dataset defined or no txt files found in the model's folder.")
+        assert self.config.dataset != None or dataset != [], f"SLG [corpus]: No dataset defined or no txt files found in the model's folder."
         
         self.dataset = self.load_dataset(dataset, original=True)
         print(f"\nSLG: Dataset loaded from the following files: {dataset}.\n")
@@ -128,7 +127,7 @@ class Corpus:
                 split_lengths = tuple([int(length*r) for r in split_rate])
             print("This feature has not been tested yet. Please check")
 
-            #TODO: Check the entire "if"
+            #TODO: Check the entire "if". Use "train_test_split" instead 
 
             self.train = self.dataset["train"][:split_lengths[0]]
             
@@ -149,7 +148,7 @@ class Corpus:
         
         else:
 
-            dataset_train = self.dataset["train"].train_test_split(sum(split_rate[1:]))
+            dataset_train = self.dataset["train"].train_test_split(test_size=sum(split_rate[1:]))
 
             dataset_test = dataset_train["test"].train_test_split(split_rate[1]/sum(split_rate[1:]))
 

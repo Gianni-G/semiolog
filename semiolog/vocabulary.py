@@ -249,12 +249,14 @@ class Vocabulary:
 
         if parallel:
             # TODO: The chunks limits could be improved (in particular, if corpus_length is very small compared to cpu_count, last chunks may be empty. It shouldn't be a problem for large corpus_length)
-
+            
+            print(f"SLG: Computing in parallel. CPU count: {self.cpu_count}")
+            
             corpus_chunks = [self.corpus.train.shard(self.cpu_count,n, contiguous=True, keep_in_memory = keep_in_memory) for n in range(self.cpu_count)]
 
             with Parallel(n_jobs=self.cpu_count, require='sharedmem') as parallel_pool:
-                print("Computing in parallel")
-                print("Normalize and jobs data...")
+                print("SLG: Starting parallel jobs.")
+                print("SLG: Normalize and jobs data...")
                 start = time.time()
                 jobs_data = parallel_pool(delayed(pre_process)(chunk,self.normalizer) for chunk in corpus_chunks)
 
@@ -266,7 +268,7 @@ class Vocabulary:
                 merges = [" ".join(best_pair)]
                 print(f"... computed in {time.time()-start} secs.\n")
 
-                print("Build alphabet...")
+                print("SLG: Build alphabet...")
                 start = time.time()
                 alphabet = Counter()
                 for (l,r),v in pair_len_global.items():
@@ -274,7 +276,7 @@ class Vocabulary:
                 # In extreme cases, right characters of pairs might not be left characters. If there are such chars, they're added with freq 1
                 left_out_chars = {r for l,r in pair_len_global.keys()}-alphabet.keys()
                 if len(left_out_chars)>0:
-                    print(f"Adding characters: {left_out_chars}")
+                    print(f"SLG: Adding characters: {left_out_chars}")
                     for char in left_out_chars:
                         alphabet[char] += 1
                 print(f"... computed in {time.time()-start} secs.\n")
@@ -282,8 +284,8 @@ class Vocabulary:
                 alpha_len = len(alphabet)
                 special_tokens_len = 0 if special_tokens == None else len(special_tokens)
                 
-                print(f"Alphabet Size: {alpha_len}")
-                print(f"Special Tokens Size: {special_tokens_len}")
+                print(f"SLG: Alphabet Size: {alpha_len}")
+                print(f"SLG: Special Tokens Size: {special_tokens_len}")
                 
                 if vocab_size<0:
                     voc_final_length = alpha_len + special_tokens_len + abs(vocab_size)
@@ -292,9 +294,9 @@ class Vocabulary:
 
                 delta_voc = voc_final_length - alpha_len - special_tokens_len
 
-                print(f"Terms to compute: {delta_voc}\n")
+                print(f"SLG: Terms to compute: {delta_voc}\n")
 
-                print("Enter loop")
+                print("SLG: Enter loop")
 
                 t = trange(delta_voc, disable = not progress_bar)
                 for _ in t:
@@ -318,7 +320,7 @@ class Vocabulary:
                         voc_partial_len = alpha_len + special_tokens_len + _ + 1
                         if voc_partial_len % save_step == 0 and voc_partial_len != voc_final_length:
 
-                            print("Saving intermediate results...")
+                            print("SLG: Saving intermediate results...")
                             start = time.time()
                             freqs = parallel_pool(delayed(compute_freq)(chain_zip) for chain_zip, pair_pos, pair_len_delta in jobs_data)
                             freq = reduce(operator.add, freqs)
@@ -335,9 +337,9 @@ class Vocabulary:
                             step_path = self.path / str(voc_partial_len)
                             self.save(step_path)
                             print(f"... computed in {time.time()-start} secs.")
-                            print(f"Intermediate vocabulary saved to {step_path}\n")
+                            print(f"SLG: Intermediate vocabulary saved to {step_path}\n")
 
-                print("Compute freq...")
+                print("SLG: Compute freq...")
                 start = time.time()
                 freqs = parallel_pool(delayed(compute_freq)(chain_zip) for chain_zip, pair_pos, pair_len_delta in jobs_data)
                 freq = reduce(operator.add, freqs)
@@ -345,8 +347,8 @@ class Vocabulary:
         
         else:
             #TODO: Sequential computing not completely tested
-            print("Computing sequentially")
-            print("Normalize and jobs data...")
+            print("SLG: Computing sequentially")
+            print("SLG: Normalize and jobs data...")
             start = time.time()
             corpus_chain = self.corpus.train[:corpus_length]
             chain_zip, pair_pos, pair_len_global = pre_process(corpus_chain,self.normalizer)
@@ -357,7 +359,7 @@ class Vocabulary:
             merges = [" ".join(best_pair)]
             print(f"... computed in {time.time()-start} secs.\n")
 
-            print("Build alphabet...")
+            print("SLG: Build alphabet...")
             start = time.time()
             alphabet = Counter()
             for (l,r),v in pair_len_global.items():
@@ -365,7 +367,7 @@ class Vocabulary:
             # In extreme cases, right characters of pairs might not be left characters. If there are such chars, they're added with freq 1
             left_out_chars = {r for l,r in pair_len_global.keys()}-alphabet.keys()
             if len(left_out_chars)>0:
-                print(f"Adding characters: {left_out_chars}")
+                print(f"SLG: Adding characters: {left_out_chars}")
                 for char in left_out_chars:
                     alphabet[char] =+ 1
             print(f"... computed in {time.time()-start} secs.\n")
@@ -373,8 +375,8 @@ class Vocabulary:
             alpha_len = len(alphabet)
             special_tokens_len = 0 if special_tokens == None else len(special_tokens)
             
-            print(f"Alphabet Size: {alpha_len}")
-            print(f"Special Tokens Size: {special_tokens_len}")
+            print(f"SLG: Alphabet Size: {alpha_len}")
+            print(f"SLG: Special Tokens Size: {special_tokens_len}")
             
             if vocab_size<0:
                 voc_final_length = alpha_len + special_tokens_len + abs(vocab_size)
@@ -383,9 +385,9 @@ class Vocabulary:
 
             delta_voc = voc_final_length - alpha_len - special_tokens_len
             
-            print(f"Terms to compute: {delta_voc}\n")
+            print(f"SLG: Terms to compute: {delta_voc}\n")
 
-            print("Enter loop")
+            print("SLG: Enter loop")
 
             t = trange(delta_voc, disable = not progress_bar)
             for _ in t:
@@ -409,7 +411,7 @@ class Vocabulary:
                     voc_partial_len = alpha_len + special_tokens_len + _ + 1
                     if voc_partial_len % save_step == 0 and voc_partial_len != voc_final_length:
 
-                        print("Saving intermediate results...")
+                        print("SLG: Saving intermediate results...")
                         start = time.time()
                         freq = compute_freq(chain_zip)
 
@@ -425,9 +427,9 @@ class Vocabulary:
                         step_path = self.path / str(voc_partial_len)
                         self.save(step_path)
                         print(f"... computed in {time.time()-start} secs.")
-                        print(f"Intermediate vocabulary saved to {step_path}\n")
+                        print(f"SLG: Intermediate vocabulary saved to {step_path}\n")
             
-            print("Compute freq...")
+            print("SLG: Compute freq...")
             start = time.time()
             freq = compute_freq(chain_zip)
             print(f"... computed in {time.time()-start} secs.\n")
@@ -448,15 +450,15 @@ class Vocabulary:
         self.freq_mass = sum(self.freq.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
 
-        print("Vocabulary built\n")
+        print("SLG: Vocabulary built\n")
         
         if save == True:
             self.save()
-            print(f"Vocabulary saved to {self.path}\n")
+            print(f"SLG: Vocabulary saved to {self.path}\n")
         
         self.semiotic.syntagmatic = Syntagmatic(self.semiotic)
         self.semiotic.paradigmatic = Paradigmatic(self.semiotic)
-        print("Syntagmatic and Paradigmatic updated with the new vocabulary\n")
+        print("SLG: Syntagmatic and Paradigmatic updated with the new vocabulary\n")
 
     def save(self, path = None):
         

@@ -171,9 +171,22 @@ class Paradigmatic:
             print("SLG: Tokenized dataset loaded from disk")
 
             if n_sents !=None:
+                
+                #TODO: Maybe if both sizes are bigger than the respective datasets, it would be best not to perform select at all
+
+                if n_sents > tokenized_datasets["train"].num_rows:
+                    print(f"SLG [paradigmatic - Warning]: n_sents greater than num_rows in tokenized_datasets.train. Keeping tokenized_datasets.train full size")
+                    n_sents = tokenized_datasets["train"].num_rows
+                if int(n_sents*(1/self.split_rate[0])*self.split_rate[1]) > tokenized_datasets["dev"].num_rows:
+                    print(f"SLG [paradigmatic - Warning]: n_sents greater than num_rows in tokenized_datasets.train. Keeping tokenized_datasets.train full size")
+                    n_sents_dev = tokenized_datasets["dev"].num_rows
+                else:
+                    n_sents_dev = int(n_sents*(1/self.split_rate[0])*self.split_rate[1])
+
+
                 tokenized_datasets = datasets.DatasetDict({
                     "train":tokenized_datasets["train"].select(range(n_sents)),
-                    "dev": tokenized_datasets["dev"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[1])))
+                    "dev": tokenized_datasets["dev"].select(range(n_sents_dev))
                     })
 
         else:
