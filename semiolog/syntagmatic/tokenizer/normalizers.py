@@ -2,7 +2,8 @@ import string
 import unicodedata
 import re
 
-punctuation = "...—•…–’"
+# punctuation = '...—•…–’‘-·[]⁄′¿"‐―'
+punctuation = '...—•…–’‘·⁄′¿"‐―'
 
 class Normalizer:
     """
