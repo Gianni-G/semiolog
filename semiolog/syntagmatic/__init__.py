@@ -19,13 +19,17 @@ from tokenizers import (
 from .tokenizer import SequenceSLG, NormalizeSLG
 
 from transformers import PreTrainedTokenizerFast
-
+import datasets
 
 class Syntagmatic:
     def __init__(self,semiotic) -> None:
         
         self.config = semiotic.config.syntagmatic
         self.config_vocab = semiotic.config.vocabulary
+        self.dataset = semiotic.corpus.dataset
+        self.split_rate = semiotic.config.corpus.split_rate
+        self.path = semiotic.paths.syntagmas
+
         self.tokenizer_path = str(semiotic.paths.vocabulary.joinpath("tokenizer.json"))
 
         # Load HF Tokenizer model (from "processor" config)
@@ -100,7 +104,53 @@ class Syntagmatic:
 
     def save_tokenizer(self):
         self.tokenizer.save(self.tokenizer_path)
-    
-    # @property
-    # def SLG_tokenizer(self):
-    #     return SLG_Tokenizer(self.config)
+
+    def build(
+        self,
+        dataset = None,
+        save_tokenized = None,
+        n_sents = None,
+        return_tokenized = False,
+        ):
+
+        # TODO: Add save_tokenized and n_sents to config!!!
+
+        if dataset == None:
+            dataset = self.dataset
+
+        if save_tokenized == None:
+            save_tokenized = self.config.save_tokenized
+
+        if n_sents == None:
+            n_sents = self.config.n_sents
+
+        def tokenize_function(syntagmas):
+            return self.bert_tokenizer(syntagmas["text"], return_special_tokens_mask = True)
+
+        print("SLG: Tokenizing dataset...")
+
+        if n_sents !=None:
+            dataset = datasets.DatasetDict({
+                "train":dataset["train"].select(range(n_sents)),
+                "dev": dataset["dev"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[1]))),
+                "test": dataset["test"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[2])))
+                })
+
+
+        tokenized_datasets = dataset.map(
+            tokenize_function,
+            batched = self.config.input_tokenize["batched"],
+            batch_size = self.config.input_tokenize["batch_size"],
+
+            # Using more than 1 proc in iMac with m1 blocks the process
+            num_proc = 1, #self.cpu_count, 
+            remove_columns = self.config.input_tokenize["remove_columns"]
+        )
+        if save_tokenized:
+            tokenized_datasets.save_to_disk(self.path / "tokenized")
+            print(f"SLG: Tokenized corpus saved to {self.path / 'tokenized'}")
+        
+        print("SLG: Corpus tokenized!")
+
+        if return_tokenized:
+            return tokenized_datasets

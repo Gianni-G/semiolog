@@ -5,7 +5,7 @@ from os.path import isfile
 from .util import dict2json, json2dict
 
 # TODO: Solve version as global variable
-slg_version = "0.2.1"
+slg_version = "0.2.2"
 
 class Config:
     
@@ -116,6 +116,13 @@ class Syntagmatic(Section):
         self.processor = "WordLevel"
         self.post_processor = None
         self.model_max_length = None
+        self.n_sents = None
+        self.input_tokenize = {
+            "batched": True,
+            "batch_size": 512,
+            "remove_columns": ["text"],
+        }
+        self.save_tokenized = True
 
 
 class Paradigmatic(Section):
@@ -127,6 +134,9 @@ class Paradigmatic(Section):
         self.load_pretrained = False
 
         self.huggingface_pretrained = None
+
+        self.load_tokenized = True
+        self.n_sents = None
 
         self.model_config = {
             "hidden_size": 768,
@@ -157,12 +167,6 @@ class Paradigmatic(Section):
         }
 
         self.mask_probability = 0.15
-
-        self.input_tokenize = {
-            "batched": True,
-            "batch_size": 512,
-            "remove_columns": ["text"],
-        }
 
         self.input_sets = {
             "shuffle": True,

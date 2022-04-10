@@ -1,5 +1,5 @@
 import semiolog as slg
 
-semiotic = slg.Cenematic("hf_tokenizers")
+semiotic = slg.Cenematic("my_model")
 
 semiotic.paradigmatic.build()

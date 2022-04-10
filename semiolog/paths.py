@@ -17,6 +17,7 @@ class Paths:
         self.corpus = self.models / name / "corpus"
         self.vocabulary = self.models / name / "vocabulary"
         self.paradigms = self.models / name / "paradigms"
+        self.syntagmas = self.models / name / "syntagmas"
         
     def __repr__(self) -> str:
         return str(self.__dict__)
