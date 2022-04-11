@@ -4,6 +4,16 @@ semiotic = slg.Cenematic("en_bnc")
 
 print(f"Numbers of cores: {semiotic.config.system.cpu_count}")
 
-semiotic.syntagmatic.build()
+# semiotic.corpus.build(
+#     save = True,
+#     )
 
-# semiotic.paradigmatic.build(n_sents=200000)
+# semiotic.vocab.build(
+#     save = True,
+#     parallel = True,
+#     save_step = 1000,
+#     )
+
+# semiotic.syntagmatic.build()
+
+semiotic.paradigmatic.build(n_sents=200000)

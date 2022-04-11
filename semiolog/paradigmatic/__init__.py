@@ -260,4 +260,4 @@ class Paradigmatic:
             dict2json(self.history.history, "history", self.path)
             print("SLG: Training history saved.")
 
-        return "SLG: Model built!"
+        print("SLG: Model built!")
