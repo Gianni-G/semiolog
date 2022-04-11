@@ -16,4 +16,4 @@ print(f"Numbers of cores: {semiotic.config.system.cpu_count}")
 
 # semiotic.syntagmatic.build()
 
-semiotic.paradigmatic.build(n_sents=200000)
+semiotic.paradigmatic.build(n_sents=500000)
