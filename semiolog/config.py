@@ -155,14 +155,14 @@ class Paradigmatic(Section):
             "use_cache": True,
             "classifier_dropout": None,
 
-            "learning_rate": 2e-5,
+            "learning_rate": 5e-5,
             "weight_decay": 0.01
         }
         
         self.optimizer = {
             "optimizer": "AdamWeightDecay",
 
-            "learning_rate": 2e-5,
+            "learning_rate": 5e-5,
             "weight_decay": 0.01
         }
 
