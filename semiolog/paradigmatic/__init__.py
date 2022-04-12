@@ -19,6 +19,7 @@ class model_per_epoch(tf.keras.callbacks.Callback):
         name= str(epoch) +'-' + str(v_loss)[:str(v_loss).rfind('.')+3] + '.h5'
         file_id=path.join(self.filepath, name)
         self.model.save_weights(file_id, overwrite=True)
+        print(f"\nSLG: Checkpoint saved as: {name}")
 
 class Paradigmatic:
     def __init__(self,semiotic) -> None:
