@@ -4,9 +4,21 @@ import datasets
 from .paradigm import Paradigmatizer, ParadigmChain
 
 import tensorflow as tf
-from os import path
+import numpy as np
+from os import path, makedirs
 
 from ..util import dict2json
+
+# adapted from https://stackoverflow.com/questions/68038820/how-to-save-the-best-model-of-each-epoch-with-transformers-bert-in-tensorflow/68042600#68042600
+class model_per_epoch(tf.keras.callbacks.Callback):
+    def __init__(self, model, filepath):
+        self.filepath = filepath
+        self.model = model
+    def on_epoch_end(self, epoch, logs=None):
+        v_loss = logs.get('val_loss')
+        name= str(epoch) +'-' + str(v_loss)[:str(v_loss).rfind('.')+3] + '.h5'
+        file_id=path.join(self.filepath, name)
+        self.model.save_weights(file_id, overwrite=True)
 
 class Paradigmatic:
     def __init__(self,semiotic) -> None:
@@ -134,8 +146,8 @@ class Paradigmatic:
         self,
         dataset = None,
         load_tokenized = None,
-        # save_tokenized = None,
         n_sents = None,
+        checkpoints = False,
         save = None,
         ):
         
@@ -144,9 +156,6 @@ class Paradigmatic:
 
         if load_tokenized == None:
             load_tokenized = self.config.load_tokenized
-
-        # if save_tokenized == None:
-        #     save_tokenized = self.config.save_tokenized
 
         if n_sents == None:
             n_sents = self.config.n_sents
@@ -163,9 +172,6 @@ class Paradigmatic:
             # loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             # metrics=tf.metrics.SparseCategoricalAccuracy(),
             )
-
-        # def tokenize_function(syntagmas):
-        #     return self.tokenizer(syntagmas["text"], return_special_tokens_mask = True)
 
         if load_tokenized and path.exists(self.syntagmas_path / "tokenized"):
             tokenized_datasets = datasets.load_from_disk(self.syntagmas_path / "tokenized")
@@ -199,29 +205,6 @@ class Paradigmatic:
                 return_tokenized = True,
             )
 
-
-            # print("SLG: Tokenizing dataset...")
-
-            # if n_sents !=None:
-            #     dataset = datasets.DatasetDict({
-            #         "train":dataset["train"].select(range(n_sents)),
-            #         "dev": dataset["dev"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[1]))),
-            #         "test": dataset["test"].select(range(int(n_sents*(1/self.split_rate[0])*self.split_rate[2])))
-            #         })
-
-
-            # tokenized_datasets = dataset.map(
-            #     tokenize_function,
-            #     batched = self.config.input_tokenize["batched"],
-            #     batch_size = self.config.input_tokenize["batch_size"],
-
-            #     # Using more than 1 proc in iMac with m1 blocks the process
-            #     num_proc = 1, #self.cpu_count, 
-            #     remove_columns = self.config.input_tokenize["remove_columns"]
-            # )
-            # if save_tokenized:
-            #     tokenized_datasets.save_to_disk(self.path / "tokenized")
-
         print("SLG: Filtering rows of length <2")
         tokenized_datasets = datasets.DatasetDict({
             "train":tokenized_datasets["train"].filter(lambda example: len(example['input_ids'])>1),
@@ -244,11 +227,20 @@ class Paradigmatic:
             collate_fn = self.data_collator,
         )
 
+        if checkpoints:
+            checkpoint_filepath = self.path / "checkpoints"
+            if not path.isdir(checkpoint_filepath):
+                makedirs(checkpoint_filepath)
+            model_checkpoint_callback=[model_per_epoch(self.model, checkpoint_filepath)]  
+        else:
+            model_checkpoint_callback = None
+
         print("SLG: Starting training...\n")  
         self.history = self.model.fit(
             train_set,
             validation_data = validation_set,
-            epochs = self.config.training_epochs
+            epochs = self.config.training_epochs,
+            callbacks = model_checkpoint_callback
         )
         print("SLG: Training finished")
 
