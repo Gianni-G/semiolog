@@ -13,7 +13,7 @@ if any(name in socket_name for name in {"Gianni","vpn"}):
 else:
     from tqdm.auto import tqdm, trange
 
-from .util import list2txt, flatten
+from .util import list2txt, flatten, txt2list
 
 
 class Corpus:
@@ -70,7 +70,12 @@ class Corpus:
         self.dev_len = self.dev.num_rows
         self.test_len = self.test.num_rows
 
-    def load_dataset(self, dataset = None, original=False):
+    def load_dataset(
+        self,
+        dataset = None,
+        original=False,
+        keep_source=False
+        ):
 
         if original:
             load_path = self.path / 'original'
@@ -79,10 +84,26 @@ class Corpus:
 
         if dataset == None:
             dataset = [fn for fn in listdir(load_path) if fn.endswith(".txt")]
+
+
+        if keep_source:
+            if not original:
+                print("SLG [Warning]: 'keep_source' is True for non original corpus files. Dataset will be loaded without a source feature. If you want a source feature in your dataset, please make sure to load orignal files.")
+            else:
+                text = []
+                source = []
+                for fn in dataset:
+                    treatise_raw = txt2list(fn[:-4],self.path / 'original')
+                    text += treatise_raw
+                    source += [fn[:-4]]*len(treatise_raw)
+                
+                data = DatasetDict({"train": Dataset.from_dict({"text":text, "source":source})})
+        else:
+
             if len(dataset) == 1:
                 dataset = dataset[0]
 
-        data = load_dataset(str(load_path), data_files=dataset)
+            data = load_dataset(str(load_path), data_files=dataset)
 
         return data
 
@@ -113,15 +134,49 @@ class Corpus:
 
         assert self.config.dataset != None or dataset != [], f"SLG [corpus]: No dataset defined or no txt files found in the model's folder."
         
-        self.dataset = self.load_dataset(dataset, original=True)
+
+        # if keep_source:
+        #     text = []
+        #     source = []
+        #     for fn in dataset:
+        #         treatise_raw = txt2list(fn[:-4],self.path / 'original')
+        #         if split_sent:
+        #             treatise_sents = []
+        #             for paragraph in treatise_raw:
+        #                 treatise_sents += sent_tokenize(paragraph)
+        #         else:
+        #             treatise_sents = treatise_raw
+        #         text += treatise_sents
+        #         source += [fn[:-4]]*len(treatise_sents)
+
+
+        #     self.dataset = Dataset.from_dict({"text":text, "source":source})
+
+        # else:
+        if len(dataset) == 1:
+            dataset = dataset[0]
+
+        self.dataset = self.load_dataset(dataset, original=True, keep_source=keep_source)
         print(f"\nSLG: Dataset loaded from the following files: {dataset}.\n")
         
+        # TODO: The splitting should be generalized to handle any kind of feature potentially existing in a database
         if split_sent:
-
             print("Spliting original text into sentences.")
 
-            for column in self.dataset.column_names:
-                self.dataset[f"{column}"] = self.dataset[f"{column}"].map(lambda batch: {"text": flatten([sent_tokenize(sent) for sent in batch["text"]])}, remove_columns=["text"], batched=True)
+            if keep_source:
+                def split(batch):
+                    text_src = [(sent_tokenize(sent),src) for sent,src in zip(batch["text"],batch["source"])]
+                    text = flatten([t for t,s in text_src])
+                    source = flatten([[s]*len(t) for t,s in text_src])
+                    split_dict = {"text": text, "source": source}
+                    return split_dict
+                    
+                for column in self.dataset.column_names:
+                    self.dataset[f"{column}"] = self.dataset[f"{column}"].map(split, remove_columns=["text","source"], batched=True)
+
+            else:
+                for column in self.dataset.column_names:
+                    self.dataset[f"{column}"] = self.dataset[f"{column}"].map(lambda batch: {"text": flatten([sent_tokenize(sent) for sent in batch["text"]])}, remove_columns=["text"], batched=True)
 
         if "test" in self.dataset:
             if length != None:
