@@ -94,6 +94,7 @@ class Corpus:
         save = False,
         split_rate = None,
         split_sent = False,
+        keep_source = False,
         ):
         
         if dataset == None:
