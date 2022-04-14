@@ -1,8 +1,8 @@
-from datasets import load_dataset, DatasetDict, Dataset
+from datasets import load_dataset, load_from_disk, DatasetDict, Dataset
 from datasets.utils import disable_progress_bar
 # disable_progress_bar()
 
-from os.path import isfile
+from os.path import isfile, isdir
 from os import listdir
 from nltk.tokenize import sent_tokenize
 
@@ -48,21 +48,31 @@ class Corpus:
         if path == None:
             path = self.path
         
-        splits = ["train","dev","test"] if test_only == False else ["dev","test"]
-        filenames = [(path / f"{fn}.txt") for fn in splits]
-        
-        for filename in filenames:
-            if not isfile(filename):
-                return print(f"SLG Warning: {filename} does not exist.\nCorpus will not be loaded from file.\n")
-
-        if not test_only:
-            self.dataset = self.load_dataset({"train": "train.txt", "dev": "dev.txt", "test": "test.txt"})
-
-            self.train = self.dataset["train"]
-            self.train_len = self.train.num_rows
+        if isdir(path / "dataset"):
+            self.dataset = load_from_disk(path / "dataset")
+            print("SLG [I]: Dataset loaded from disk (dataset file)")
+            if not test_only:
+                self.train = self.dataset["train"]
+                self.train_len = self.train.num_rows
 
         else:
-            self.dataset = self.load_dataset({"dev": "dev.txt", "test": "test.txt"})
+            splits = ["train","dev","test"] if test_only == False else ["dev","test"]
+            filenames = [(path / f"{fn}.txt") for fn in splits]
+            
+            for filename in filenames:
+                if not isfile(filename):
+                    return print(f"SLG [W]: {filename} does not exist.\nCorpus will not be loaded from file.\n")
+
+            if not test_only:
+                self.dataset = self.load_dataset({"train": "train.txt", "dev": "dev.txt", "test": "test.txt"})
+                print("SLG [I]: Dataset loaded from disk (TXT files)")
+                
+
+                self.train = self.dataset["train"]
+                self.train_len = self.train.num_rows
+
+            else:
+                self.dataset = self.load_dataset({"dev": "dev.txt", "test": "test.txt"})
         
         self.dev = self.dataset["dev"]
         self.test = self.dataset["test"]
@@ -88,7 +98,7 @@ class Corpus:
 
         if keep_source:
             if not original:
-                print("SLG [Warning]: 'keep_source' is True for non original corpus files. Dataset will be loaded without a source feature. If you want a source feature in your dataset, please make sure to load orignal files.")
+                print("SLG [W]: 'keep_source' is True for non original corpus files. Dataset will be loaded without a source feature. If you want a source feature in your dataset, please make sure to load orignal files.")
             else:
                 text = []
                 source = []
@@ -132,7 +142,7 @@ class Corpus:
         if split_rate == None:
             split_rate = self.config.split_rate
 
-        assert self.config.dataset != None or dataset != [], f"SLG [corpus]: No dataset defined or no txt files found in the model's folder."
+        assert self.config.dataset != None or dataset != [], f"SLG [E]: No dataset defined or no txt files found in the model's folder."
         
 
         # if keep_source:
@@ -157,7 +167,7 @@ class Corpus:
             dataset = dataset[0]
 
         self.dataset = self.load_dataset(dataset, original=True, keep_source=keep_source)
-        print(f"\nSLG: Dataset loaded from the following files: {dataset}.\n")
+        print(f"\nSLG [I]: Dataset loaded from the following files: {dataset}.\n")
         
         # TODO: The splitting should be generalized to handle any kind of feature potentially existing in a database
         if split_sent:
@@ -221,16 +231,24 @@ class Corpus:
         self.test_len = self.test.num_rows
         
         print("Corpus built")
-        if save == True:
-            self.save()
-            print(f"Corpus saved to {self.path}")
+        if save:
+            if keep_source:
+                self.save(dataset_format=True)
+                print(f"Corpus saved as dataset file to {self.path / 'dataset'}")
+
+            else:
+                self.save()
+                print(f"Corpus saved as TXT files to {self.path}")
         
         
-    def save(self, path = None):
+    def save(self, path = None, dataset_format=False):
         
         if path == None:
             path = self.path
 
-        list2txt(self.train["text"],"train", path)
-        list2txt(self.dev["text"],"dev", path)
-        list2txt(self.test["text"],"test", path)
+        if dataset_format:
+            self.dataset.save_to_disk(path / "dataset")
+        else:
+            list2txt(self.train["text"],"train", path)
+            list2txt(self.dev["text"],"dev", path)
+            list2txt(self.test["text"],"test", path)

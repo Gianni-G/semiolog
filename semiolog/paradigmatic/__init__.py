@@ -175,6 +175,7 @@ class Paradigmatic:
             )
 
         if load_tokenized and path.exists(self.syntagmas_path / "tokenized"):
+            
             tokenized_datasets = datasets.load_from_disk(self.syntagmas_path / "tokenized")
             print("SLG: Tokenized dataset loaded from disk")
 
@@ -183,10 +184,10 @@ class Paradigmatic:
                 #TODO: Maybe if both sizes are bigger than the respective datasets, it would be best not to perform select at all
 
                 if n_sents > tokenized_datasets["train"].num_rows:
-                    print(f"SLG [paradigmatic - Warning]: n_sents greater than num_rows in tokenized_datasets.train. Keeping tokenized_datasets.train full size")
+                    print(f"SLG [paradigmatic - W]: n_sents greater than num_rows in tokenized_datasets.train. Keeping tokenized_datasets.train full size")
                     n_sents = tokenized_datasets["train"].num_rows
                 if int(n_sents*(1/self.split_rate[0])*self.split_rate[1]) > tokenized_datasets["dev"].num_rows:
-                    print(f"SLG [paradigmatic - Warning]: n_sents greater than num_rows in tokenized_datasets.train. Keeping tokenized_datasets.train full size")
+                    print(f"SLG [paradigmatic - W]: n_sents greater than num_rows in tokenized_datasets.train. Keeping tokenized_datasets.train full size")
                     n_sents_dev = tokenized_datasets["dev"].num_rows
                 else:
                     n_sents_dev = int(n_sents*(1/self.split_rate[0])*self.split_rate[1])

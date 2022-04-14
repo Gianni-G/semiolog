@@ -40,7 +40,7 @@ class Config:
         
         filename = str(path / "config.json")
         if not isfile(filename):
-            return print(f"SLG Warning: {filename} does not exist.\Config will not be loaded from file.\n")
+            return print(f"SLG [W]: {filename} does not exist.\Config will not be loaded from file.\n")
             
         config_dict = json2dict("config",path)
         
