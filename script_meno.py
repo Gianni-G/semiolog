@@ -17,5 +17,6 @@ semiotic = slg.Cenematic("abacus")
 # semiotic.syntagmatic.build()
 
 semiotic.paradigmatic.build(
-    checkpoints=True
+    checkpoints=True,
+    min_token_length = 20,
     )

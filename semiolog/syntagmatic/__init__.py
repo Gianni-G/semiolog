@@ -36,6 +36,7 @@ class Syntagmatic:
 
         if self.config.from_file and path.exists(self.tokenizer_path):
             self.tokenizer = Tokenizer.from_file(self.tokenizer_path)
+            print(f"SLG [I]: Tokenizer loaded from file")
         else:
             self.tokenizer = Tokenizer(
                 eval(

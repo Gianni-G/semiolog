@@ -80,6 +80,7 @@ class Paradigmatic:
                         self.path / "tf_model.h5",
                         config = self.model_config_path
                         )
+                print(f"SLG [I]: Paradigmatizer loaded from file")
             else:
                 self.model = TFBertForMaskedLM(self.bert_config)
 
@@ -150,6 +151,7 @@ class Paradigmatic:
         n_sents = None,
         checkpoints = False,
         save = None,
+        min_token_length = 2,
         ):
         
         if dataset == None:
@@ -177,7 +179,7 @@ class Paradigmatic:
         if load_tokenized and path.exists(self.syntagmas_path / "tokenized"):
             
             tokenized_datasets = datasets.load_from_disk(self.syntagmas_path / "tokenized")
-            print("SLG: Tokenized dataset loaded from disk")
+            print("SLG [I]: Tokenized dataset loaded from disk")
 
             if n_sents !=None:
                 
@@ -207,10 +209,10 @@ class Paradigmatic:
                 return_tokenized = True,
             )
 
-        print("SLG: Filtering rows of length <2")
+        print(f"SLG: Filtering rows of length < {min_token_length}")
         tokenized_datasets = datasets.DatasetDict({
-            "train":tokenized_datasets["train"].filter(lambda example: len(example['input_ids'])>1),
-            "dev": tokenized_datasets["dev"].filter(lambda example: len(example['input_ids'])>1)
+            "train":tokenized_datasets["train"].filter(lambda example: len(example['input_ids'])>=min_token_length),
+            "dev": tokenized_datasets["dev"].filter(lambda example: len(example['input_ids'])>=min_token_length)
             })
 
         print("SLG: Building train set")
