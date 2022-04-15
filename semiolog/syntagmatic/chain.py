@@ -21,8 +21,11 @@ class Chain:
         self.semiotic = semiotic
         self.input = input_chain
         self.split = input_chain.split()
-        self.split_norm = [self.semiotic.syntagmatic.tokenizer.normalizer.normalize_str(s) for s in self.split]
-        self.split_norm = [t for t in self.split_norm if t!='']
+        if self.semiotic.syntagmatic.tokenizer.normalizer != None:
+            self.split_norm = [self.semiotic.syntagmatic.tokenizer.normalizer.normalize_str(s) for s in self.split]
+            self.split_norm = [t for t in self.split_norm if t!='']
+        else:
+             self.split_norm = self.split
 
         # self.norm = None
         # self.pre_tokens = None

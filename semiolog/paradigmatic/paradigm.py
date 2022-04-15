@@ -81,6 +81,8 @@ class Paradigm:
         self.values = values.numpy()
         query = itemgetter(*self.keys)
         self.probs = query(semiotic.vocab.prob)
+        if isinstance(self.probs,float): # if len of keys is 1, then query outputs a float instead of a tuple
+            self.probs = tuple([self.probs])
         self.mass = sum(self.probs)
 
         self.entropy = entropy(self.values)

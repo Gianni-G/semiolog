@@ -5,7 +5,7 @@ from os.path import isfile
 from .util import dict2json, json2dict
 
 # TODO: Solve version as global variable
-slg_version = "0.2.2"
+slg_version = "0.2.3"
 
 class Config:
     
@@ -86,9 +86,12 @@ class Vocabulary(Section):
     
     def __init__(self, semiotic) -> None:
         """
+        Possible models: "SLG", "SLG_WL"
+        
         By default, the special tokens are:
         [PAD], [UNK], [CLS], [SEP], [MASK]
         """
+        self.model = "SLG"
         self.size = None
         self.special_tokens = [
             "[PAD]",
