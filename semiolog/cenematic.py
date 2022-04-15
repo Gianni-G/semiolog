@@ -30,11 +30,11 @@ class Cenematic:
             self.config.from_file()
 
             # Check config correctness
-            print("SLG: Checking config correctness...")
+            print("SLG [I]: Checking config correctness...")
 
             assert sum(self.config.corpus.split_rate) == 1, f"SLG [config.corpus]: Incorrect split rates. Split rates should add to 1 but the ones given add to {sum(self.config.corpus.split_rate)}."
 
-            print("SLG: Config correct!")
+            print("Config correct!")
 
         self.config.system.cpu_count = cpu_count(logical = False) if requested_cpu == None else requested_cpu
 

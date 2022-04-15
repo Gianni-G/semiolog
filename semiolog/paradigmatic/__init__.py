@@ -168,7 +168,7 @@ class Paradigmatic:
 
         # Following Huggingface, no loss and metrics are provided
 
-        print("SLG: Compiling model")
+        print("SLG [I]: Compiling model")
         self.model.compile(
             optimizer = self.optimizer,
             # optimizer=tf.keras.optimizers.Adam(learning_rate=5e-5),
@@ -209,13 +209,13 @@ class Paradigmatic:
                 return_tokenized = True,
             )
 
-        print(f"SLG: Filtering rows of length < {min_token_length}")
+        print(f"SLG [I]: Filtering rows of length < {min_token_length}")
         tokenized_datasets = datasets.DatasetDict({
             "train":tokenized_datasets["train"].filter(lambda example: len(example['input_ids'])>=min_token_length),
             "dev": tokenized_datasets["dev"].filter(lambda example: len(example['input_ids'])>=min_token_length)
             })
 
-        print("SLG: Building train set")
+        print("SLG [I]: Building train set")
         train_set = tokenized_datasets["train"].to_tf_dataset(
             columns = ["attention_mask", "input_ids", "labels"],
             shuffle = self.config.input_sets["shuffle"],
@@ -223,7 +223,7 @@ class Paradigmatic:
             collate_fn = self.data_collator,
         )
 
-        print("SLG: Building validation set")
+        print("SLG [I]: Building validation set")
         validation_set = tokenized_datasets["dev"].to_tf_dataset(
             columns = ["attention_mask", "input_ids", "labels"],
             shuffle = self.config.input_sets["shuffle"],
@@ -239,21 +239,21 @@ class Paradigmatic:
         else:
             model_checkpoint_callback = None
 
-        print("SLG: Starting training...\n")  
+        print("SLG [I]: Starting training...\n")  
         self.history = self.model.fit(
             train_set,
             validation_data = validation_set,
             epochs = self.config.training_epochs,
             callbacks = model_checkpoint_callback
         )
-        print("SLG: Training finished")
+        print("SLG [I]: Training finished")
 
         if self.config.save:
 
             self.model.save_pretrained(save_directory = self.path)
-            print("\nSLG: Model saved.")
+            print("\nSLG [I]: Model saved.")
 
             dict2json(self.history.history, "history", self.path)
-            print("SLG: Training history saved.")
+            print("SLG [I]: Training history saved.")
 
-        print("SLG: Model built!")
+        print("SLG [I]: Model built!")

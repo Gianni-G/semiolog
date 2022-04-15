@@ -2,7 +2,7 @@ from datasets import load_dataset, load_from_disk, DatasetDict, Dataset
 from datasets.utils import disable_progress_bar
 # disable_progress_bar()
 
-from os.path import isfile, isdir
+from os.path import isfile, isdir, basename
 from os import listdir
 from nltk.tokenize import sent_tokenize
 
@@ -14,7 +14,6 @@ else:
     from tqdm.auto import tqdm, trange
 
 from .util import list2txt, flatten, txt2list
-
 
 class Corpus:
     """
@@ -50,7 +49,7 @@ class Corpus:
         
         if isdir(path / "dataset"):
             self.dataset = load_from_disk(path / "dataset")
-            print("SLG [I]: Dataset loaded from disk (dataset file)")
+            print(f"SLG [I]: Dataset loaded from disk (dataset file)")
             if not test_only:
                 self.train = self.dataset["train"]
                 self.train_len = self.train.num_rows
@@ -65,7 +64,7 @@ class Corpus:
 
             if not test_only:
                 self.dataset = self.load_dataset({"train": "train.txt", "dev": "dev.txt", "test": "test.txt"})
-                print("SLG [I]: Dataset loaded from disk (TXT files)")
+                print(f"SLG [I]: Dataset loaded from disk (TXT files)")
                 
 
                 self.train = self.dataset["train"]
