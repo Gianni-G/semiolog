@@ -30,7 +30,7 @@ class Cenematic:
             self.config.from_file()
 
             # Check config correctness
-            print("SLG [I]: Checking config correctness...")
+            print("SLG [I]: Checking config correctness...", end=" ")
 
             assert sum(self.config.corpus.split_rate) == 1, f"SLG [config.corpus]: Incorrect split rates. Split rates should add to 1 but the ones given add to {sum(self.config.corpus.split_rate)}."
 

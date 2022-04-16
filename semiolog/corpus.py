@@ -60,7 +60,7 @@ class Corpus:
             
             for filename in filenames:
                 if not isfile(filename):
-                    return print(f"SLG [W]: {filename} does not exist.\nCorpus will not be loaded from file.\n")
+                    return print(f"SLG [W]: {filename} does not exist.\nCorpus will not be loaded from disk.\n")
 
             if not test_only:
                 self.dataset = self.load_dataset({"train": "train.txt", "dev": "dev.txt", "test": "test.txt"})

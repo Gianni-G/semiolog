@@ -80,7 +80,7 @@ class Paradigmatic:
                         self.path / "tf_model.h5",
                         config = self.model_config_path
                         )
-                print(f"SLG [I]: Paradigmatizer loaded from file")
+                print(f"SLG [I]: Paradigmatizer loaded from disk")
             else:
                 self.model = TFBertForMaskedLM(self.bert_config)
 
