@@ -109,12 +109,15 @@ class Paradigmatizer:
         """
         If n_token == None, then it computes paradigms for all tokens and adds them as attributes to tokens in chain. If a token is provided, then returns the paradigm for that token.
         """
+        
+        # TODO: inputs longer than self.model.config.max_position_embeddings yield an error. The workaround here is to truncate the input with [:,:self.model.config.max_position_embeddings], but then not all tokens receive their paradigm. A more consistent solution is needed.
+
         if isinstance(n_token,int):
-            if n_token>=chain.len:
-                raise Exception(f"The toke number should be within the range of the chain length (< {chain.len})")
+            if n_token>=min(chain.len, self.model.config.max_position_embeddings):
+                raise Exception(f"The toke number should be within the range of the chain length (< {min(chain.len, self.model.config.max_position_embeddings)})")
             sent_mask = chain.mask(n_token)
             input = self.bert_tokenizer(sent_mask)
-            outputs = self.model(input["input_ids"])
+            outputs = self.model(input["input_ids"][:,:self.model.config.max_position_embeddings])
             parad_logits = outputs.logits[0, n_token]
             logits_positif = tf.nn.relu(parad_logits)
             probs, norms = tf.linalg.normalize(logits_positif, ord=1)
@@ -133,7 +136,7 @@ class Paradigmatizer:
         else:
             sent_mask = [chain.mask(n) for n in range(chain.len)]
             input = self.bert_tokenizer(sent_mask)
-            outputs = self.model(input["input_ids"])
+            outputs = self.model(input["input_ids"][:,:self.model.config.max_position_embeddings])
             parad_logits = tf.gather_nd(outputs.logits, indices=[[i,i] for i in range(chain.len)])
             logits_positif = tf.nn.relu(parad_logits)
             probs, norms = tf.linalg.normalize(logits_positif, ord=1, axis=1)

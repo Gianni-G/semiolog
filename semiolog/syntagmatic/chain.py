@@ -115,8 +115,8 @@ class Chain:
        ''' Returns the Iterator object '''
        return ChainIterator(self)
 
-    # def __getitem__(self, index:str):
-    #     return self.tokens[index]
+    def __getitem__(self, index:str):
+        return self.tokens[index]
 
 
 
