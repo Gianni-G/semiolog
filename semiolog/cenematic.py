@@ -75,5 +75,5 @@ class Cenematic:
     def __repr__(self) -> str:
         return f"Cenematic({self.name})"
 
-    def __call__(self,input_chain):
-        return Text(input_chain,self)
+    def __call__(self,input_chain,paradigms=True):
+        return Text(input_chain,self,paradigms=paradigms)

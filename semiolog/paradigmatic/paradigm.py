@@ -105,26 +105,50 @@ class Paradigmatizer:
         self.bert_tokenizer = bert_tokenizer
         self.decoder = decoder
         
-    def __call__(self,chain):
+    def __call__(self,chain,n_token=None):
+        """
+        If n_token == None, then it computes paradigms for all tokens and adds them as attributes to tokens in chain. If a token is provided, then returns the paradigm for that token.
+        """
+        if isinstance(n_token,int):
+            if n_token>=chain.len:
+                raise Exception(f"The toke number should be within the range of the chain length (< {chain.len})")
+            sent_mask = chain.mask(n_token)
+            input = self.bert_tokenizer(sent_mask)
+            outputs = self.model(input["input_ids"])
+            parad_logits = outputs.logits[0, n_token]
+            logits_positif = tf.nn.relu(parad_logits)
+            probs, norms = tf.linalg.normalize(logits_positif, ord=1)
 
-        sent_mask = [chain.mask(n) for n in range(chain.len)]
-        input = self.bert_tokenizer(sent_mask)
-        outputs = self.model(input["input_ids"])
-        parad_logits = tf.gather_nd(outputs.logits, indices=[[i,i] for i in range(chain.len)])
-        logits_positif = tf.nn.relu(parad_logits)
-        probs, norms = tf.linalg.normalize(logits_positif, ord=1, axis=1)
-        
-        # Maybe its cheaper to compute top k for k = non_zero, which would differ from row to row, and hence not yeld a tensor. To be tested.
+            non_zeroes = tf.math.count_nonzero(probs)
 
-        non_zeroes = tf.math.count_nonzero(probs,axis=1)
-        max_non_zeroes = max(non_zeroes).numpy()
+            parad_data = tf.math.top_k(probs, k = non_zeroes.numpy(), sorted=True)
 
-        parad_data = tf.math.top_k(probs, k = max_non_zeroes, sorted=True)
+            parad = Paradigm(
+                parad_data.indices,
+                parad_data.values,
+                non_zeroes,self.decoder, chain.semiotic)
 
-        parads = [Paradigm(ids,values,nonzeroes,self.decoder, chain.semiotic) for ids,values,nonzeroes in zip(parad_data.indices,parad_data.values,non_zeroes)]
+            return parad
 
-        for token,parad in zip(chain,parads):
-            token.paradigm = parad
+        else:
+            sent_mask = [chain.mask(n) for n in range(chain.len)]
+            input = self.bert_tokenizer(sent_mask)
+            outputs = self.model(input["input_ids"])
+            parad_logits = tf.gather_nd(outputs.logits, indices=[[i,i] for i in range(chain.len)])
+            logits_positif = tf.nn.relu(parad_logits)
+            probs, norms = tf.linalg.normalize(logits_positif, ord=1, axis=1)
+            
+            # Maybe its cheaper to compute top k for k = non_zero, which would differ from row to row, and hence not yeld a tensor. To be tested.
+
+            non_zeroes = tf.math.count_nonzero(probs,axis=1)
+            max_non_zeroes = max(non_zeroes).numpy()
+
+            parad_data = tf.math.top_k(probs, k = max_non_zeroes, sorted=True)
+
+            parads = [Paradigm(ids,values,nonzeroes,self.decoder, chain.semiotic) for ids,values,nonzeroes in zip(parad_data.indices,parad_data.values,non_zeroes)]
+
+            for token,parad in zip(chain,parads):
+                token.paradigm = parad
 
 
 class ParadigmChain:
