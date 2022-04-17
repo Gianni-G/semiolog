@@ -83,6 +83,7 @@ class Paradigmatic:
                 print(f"SLG [I]: Paradigmatizer loaded from disk")
             else:
                 self.model = TFBertForMaskedLM(self.bert_config)
+                print(f"SLG [I]: Empty paradigmatizer model loaded")
 
         elif self.tensor_imp == "pt":
             raise Exception(f"SLG: Models other than TensorFlow are not yet implemented in SemioLog. tensor_implementation is set to {self.tensor_imp}. Please set it to 'tf'")
@@ -239,7 +240,7 @@ class Paradigmatic:
         else:
             model_checkpoint_callback = None
 
-        print("SLG [I]: Starting training...\n")  
+        print("SLG [I]: Start training...\n")  
         self.history = self.model.fit(
             train_set,
             validation_data = validation_set,
