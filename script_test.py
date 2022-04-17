@@ -18,6 +18,7 @@ semiotic = slg.Cenematic("en_bnc_test")
 
 semiotic.paradigmatic.build(
     n_sents=100000,
+    load_tokenized = False,
     checkpoints=True,
-    min_token_length = 10,
+    min_token_length = 20,
     )
