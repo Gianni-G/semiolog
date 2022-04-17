@@ -30,6 +30,14 @@ NormalizeSLG = normalizers.Sequence([
     Replace(Regex("[\[\]\-]"),""),
     ])
 
+NormalizeSLG_w_spaces = normalizers.Sequence([
+    NFKC(),
+    Lowercase(),
+    # Replace(Regex(f"{[i for i in string.whitespace]}"),""),
+    Replace(Regex(f"{[i for i in string.punctuation+punctuation]}"),""),
+    Replace(Regex("[\[\]\-]"),""),
+    ])
+
 # TODO: "NormalizeSLG" should be replaced by generic normalizers to be added to a standard HF normalizer sequence
 # Below is the model to use for doing it
 #
