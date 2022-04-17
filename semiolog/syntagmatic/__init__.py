@@ -16,7 +16,7 @@ from tokenizers import (
     PreTokenizedString,
 )
 
-from .tokenizer import SequenceSLG, NormalizeSLG, NormalizeSLG_w_spaces
+from .tokenizer import SequenceSLG, NormalizeSLG, Normalize_w_spacesSLG
 
 from transformers import PreTrainedTokenizerFast
 import datasets

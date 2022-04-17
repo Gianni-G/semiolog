@@ -22,7 +22,7 @@ logging.set_verbosity_error()
 # from .syntagmatic import NormalizeSLG
 
 from . import util
-from .syntagmatic import Syntagmatic, NormalizeSLG # needed
+from .syntagmatic import Syntagmatic, NormalizeSLG, Normalize_w_spacesSLG # needed
 from .paradigmatic import Paradigmatic
 
 # TODO: Solve version as global variable

@@ -30,7 +30,7 @@ NormalizeSLG = normalizers.Sequence([
     Replace(Regex("[\[\]\-]"),""),
     ])
 
-NormalizeSLG_w_spaces = normalizers.Sequence([
+Normalize_w_spacesSLG = normalizers.Sequence([
     NFKC(),
     Lowercase(),
     # Replace(Regex(f"{[i for i in string.whitespace]}"),""),
