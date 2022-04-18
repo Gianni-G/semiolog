@@ -19,23 +19,24 @@ from semiolog.util import subsequences
 
 from typing import List
 
-# punctuation = '...—•…–’‘-·[]⁄′¿"‐―'
-punctuation = '...—•…–’‘·⁄′¿"‐―'
+
+punctuation = '...—•…–’‘·⁄′¿‐―'
+punctuations = (string.punctuation+punctuation).replace("'","").replace('"','').replace('[','').replace(']','')
 
 NormalizeSLG = normalizers.Sequence([
     NFKC(),
     Lowercase(),
     Replace(Regex(f"{[i for i in string.whitespace]}"),""),
-    Replace(Regex(f"{[i for i in string.punctuation+punctuation]}"),""),
-    Replace(Regex("[\[\]\-]"),""),
+    Replace(Regex("["+punctuations+"]"),"-"),
+    Replace(Regex("[\'\"\[\]\-]"),""),
     ])
 
 Normalize_w_spacesSLG = normalizers.Sequence([
     NFKC(),
     Lowercase(),
     # Replace(Regex(f"{[i for i in string.whitespace]}"),""),
-    Replace(Regex(f"{[i for i in string.punctuation+punctuation]}"),""),
-    Replace(Regex("[\[\]\-]"),""),
+    Replace(Regex("["+punctuations+"]"),"-"),
+    Replace(Regex("[\'\"\[\]\-]"),""),
     ])
 
 # TODO: "NormalizeSLG" should be replaced by generic normalizers to be added to a standard HF normalizer sequence
