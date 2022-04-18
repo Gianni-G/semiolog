@@ -86,7 +86,7 @@ class Vocabulary:
             if not isfile(filename):
                 return print(f"SLG [W]: {filename} does not exist.\nVocabulary will not be loaded from disk.\n")
         
-        self.merges = util.txt2list("merges",path)[1:] # The first line needs to be stripped
+        self.merges = [tuple(merge.split()) for merge in util.txt2list("merges",path)[1:]] # The first line needs to be stripped
         self.encode = util.json2dict("vocab",path)
         self.freq = util.json2dict("freq",path)
         self.alpha = util.json2dict("alpha",path)

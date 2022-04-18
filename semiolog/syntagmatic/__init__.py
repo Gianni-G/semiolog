@@ -38,11 +38,35 @@ class Syntagmatic:
             self.tokenizer = Tokenizer.from_file(self.tokenizer_path)
             print(f"SLG [I]: Tokenizer loaded from file")
         else:
-            self.tokenizer = Tokenizer(
-                eval(
-                    f"models.{self.config.processor}(vocab = {semiotic.vocab.encode}, unk_token = '{self.config_vocab.unk_token}')"
-                    )
-                    )
+            allowed_processors = {"BPE", "WordLevel"}
+            if self.config.processor not in allowed_processors:
+                raise Exception(f"SLG [E]: Processor provided in config.syntagmatic should be among the following: {allowed_processors}. The processor provided was: {self.config.processor}")
+            if self.config.processor == "WordLevel":
+                self.tokenizer = Tokenizer(
+                    models.WordLevel(
+                        vocab = semiotic.vocab.encode,
+                        unk_token = self.config_vocab.unk_token
+                        )
+                        )
+            elif self.config.processor == "BPE":
+                
+                # By the way the vocab is built in SLG, some early merged terms might not appear in the final vocabulary. HF BPE needs them to be there, so they are added here in case it is needed.
+
+                max_vocab_encode = max(semiotic.vocab.encode.values())
+                missing_merges = [(k,max_vocab_encode+i+1) for i,k in enumerate({"".join(m) for m in semiotic.vocab.merges}-semiotic.vocab.encode.keys())]
+
+                if missing_merges != []:
+                    for k,i in missing_merges:
+                        semiotic.vocab.encode[k] = i
+                    print(f"SLG [I]: The following merged terms have been added to the vocabulary: {missing_merges}")
+
+                self.tokenizer = Tokenizer(
+                    models.BPE(
+                        vocab = semiotic.vocab.encode,
+                        merges = semiotic.vocab.merges,
+                        unk_token = self.config_vocab.unk_token
+                        )
+                        )
             
             # Load HF normalizer
             # The elif condition on the string SLG is sort of a hack (needed due to non standard declaration of custom normalizer). There should be a more elegant way
