@@ -1,6 +1,6 @@
 import semiolog as slg
 
-semiotic = slg.Cenematic("en_bnc_test")
+semiotic = slg.Cenematic("en_bnc_old_seg_test")
 
 # print(f"Numbers of cores: {semiotic.config.system.cpu_count}")
 
