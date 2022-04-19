@@ -10,6 +10,7 @@ from joblib import Parallel, delayed
 import csv
 import json
 import itertools
+import functools
 import ast
 from collections import Counter
 import numpy as np
@@ -291,6 +292,58 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
 
     print('Done')
     return pmi_mat
+
+
+
+def mm_no_modif(contexts, orthogonals, term):
+    return [
+        orthogonals.get((term, context),0) for context in contexts
+    ]
+
+def matrix_maker(
+    terms,
+    contexts,
+    orthogonals,
+    measure = mm_no_modif):
+    results = multithreading(functools.partial(measure, contexts, orthogonals), terms)
+    return results
+
+def build_term_context_matrix(
+    terms,
+    contexts,
+    orthogonals,
+    normalizeQ = False):
+    print("Building oR Matrix...")
+    start = time.perf_counter()
+    if normalizeQ:
+        orthogonals = normalize_dict(orthogonals)
+    matrix = csr_matrix(matrix_maker(terms,contexts,orthogonals))
+    finish = time.perf_counter()
+    print(f"Term-Context Matrix built in {round(finish-start,2)} secs.\n")
+    return matrix
+
+def build_pmi_matrix(
+    term_context_matrix,
+    type = "pmi",
+    alpha = .75,
+    normalizeQ = False,
+    ):
+
+    print("Computing PMI Matrix...")
+    print(f"Type: {type}")
+    if "s" in type:
+        print(f"Smoothing (alpha): {alpha}")
+    start = time.perf_counter()
+    pmi_matrix = pmi(term_context_matrix,alpha=alpha,type_pmi=type)
+    finish = time.perf_counter()
+    if normalizeQ:
+        print("Normalizing Matrix")
+        pmi_matrix = (1/(pmi_matrix.sum()))*pmi_matrix
+    print(f"PMI Matrix built in {round(finish-start,2)} secs.")
+    print("Done\n")
+    return pmi_matrix
+
+
 
 def parallel_processes(processes:list):
     """

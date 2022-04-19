@@ -153,6 +153,7 @@ class Paradigmatic:
         checkpoints = False,
         save = None,
         min_token_length = 2,
+        checkpoint_weights = None,
         ):
         
         if dataset == None:
@@ -176,6 +177,13 @@ class Paradigmatic:
             # loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             # metrics=tf.metrics.SparseCategoricalAccuracy(),
             )
+        
+        if checkpoint_weights!=None:
+            if path.isfile(self.path / f"checkpoints/{checkpoint_weights}"):
+                self.model.load_weights(self.path / f"checkpoints/{checkpoint_weights}")
+                print(f"SLG [I]: Checkpoint weights loaded from {checkpoint_weights}.")
+            else:
+                print(f"SLG [W]: Checkpoint file {checkpoint_weights} not found. Weights will not be loaded.")
 
         if load_tokenized and path.exists(self.syntagmas_path / "tokenized"):
             
@@ -200,6 +208,7 @@ class Paradigmatic:
                     "train":tokenized_datasets["train"].select(range(n_sents)),
                     "dev": tokenized_datasets["dev"].select(range(n_sents_dev))
                     })
+
 
         else:
 
