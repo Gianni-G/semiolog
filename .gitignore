@@ -1,6 +1,7 @@
 README.pdf
 
 lsf.*
+debug.*
 *.pyc
 .ipynb_checkpoints/*
 .SynologyWorkingDirectory/
