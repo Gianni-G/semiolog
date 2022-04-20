@@ -18,7 +18,7 @@ class model_per_epoch(tf.keras.callbacks.Callback):
         v_loss = logs.get('val_loss')
         name= str(epoch) +'-' + str(v_loss)[:str(v_loss).rfind('.')+3] + '.h5'
         file_id=path.join(self.filepath, name)
-        self.model.save_weights(file_id, overwrite=True)
+        self.model.save(file_id, overwrite=True)
         print(f"\nSLG: Checkpoint saved as: {name}")
 
 class Paradigmatic:
@@ -153,7 +153,7 @@ class Paradigmatic:
         checkpoints = False,
         save = None,
         min_token_length = 2,
-        checkpoint_weights = None,
+        # checkpoint_weights = None,
         ):
         
         if dataset == None:
@@ -177,13 +177,16 @@ class Paradigmatic:
             # loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             # metrics=tf.metrics.SparseCategoricalAccuracy(),
             )
-        
-        if checkpoint_weights!=None:
-            if path.isfile(self.path / f"checkpoints/{checkpoint_weights}"):
-                self.model.load_weights(self.path / f"checkpoints/{checkpoint_weights}")
-                print(f"SLG [I]: Checkpoint weights loaded from {checkpoint_weights}.")
-            else:
-                print(f"SLG [W]: Checkpoint file {checkpoint_weights} not found. Weights will not be loaded.")
+
+            
+        # Commented out because of bugs on loading weights. Checkpoints are now saved as models, not as weights. They should be loaded differently
+        # if checkpoint_weights!=None: 
+        #     if path.isfile(self.path / f"checkpoints/{checkpoint_weights}"):
+        #         self.model.built = True
+        #         self.model.load_weights(self.path / f"checkpoints/{checkpoint_weights}", by_name = True, skip_mismatch = True)
+        #         print(f"SLG [I]: Checkpoint weights loaded from {checkpoint_weights}.")
+        #     else:
+        #         print(f"SLG [W]: Checkpoint file {checkpoint_weights} not found. Weights will not be loaded.")
 
         if load_tokenized and path.exists(self.syntagmas_path / "tokenized"):
             

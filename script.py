@@ -21,5 +21,4 @@ semiotic.paradigmatic.build(
     load_tokenized = True,
     checkpoints=True,
     min_token_length = 10,
-    checkpoint_weights = "14-5.25.h5"
     )
