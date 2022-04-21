@@ -102,10 +102,10 @@ class Vocabulary:
 
         ngram_files = [f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}")]
 
+        self.ng1 = nGram(from_dict=self.alpha)
         if ngram_files!=[]:
             for f in ngram_files:
-                # ngram_dict = util.load_file(self.path / f"ngrams/{f}")
-                setattr(self, f"ng{f.split('.')[0]}", nGram(self.path / f"ngrams/{f}"))
+                setattr(self, f"ng{f.split('.')[0]}", nGram(from_file = self.path / f"ngrams/{f}"))
             print(f"SLG [I]: nGrams loaded from disk ({ngram_files})")
 
 
@@ -500,12 +500,56 @@ class Vocabulary:
         util.dict2json(self.alpha,"alpha", path)
         
 class nGram():
-    def __init__(self, filename = None):
+    def __init__(self, from_file = None, from_dict = None):
 
-        self.freq = util.load_file(filename)
+        if isinstance(from_dict,dict):
+            self.freq = from_dict
+        
+        elif isfile(from_file):
+            self.freq = util.load_file(from_file)
+        else:
+            raise Exception(f"SLG [E]: No valid dictionnary or filename provided.")
+
+        self.keys = list(self.freq.keys())
+        self.encode = {t:i for i,t in enumerate(self.keys)}
+        self.decode = {i:t for i,t in enumerate(self.keys)}
+
+    def extract_ngrams(text, n, count = False):
+
+        if count:
+            n_grams = Counter(zip(*[text[i:] for i in range(n)]))
+        else:
+            n_grams = list(zip(*[text[i:] for i in range(n)]))
+
+        return n_grams
+
+    def build(corpus=None, n=2, str_normalizer = None):
+        print("SLG [W]: This feature is not fully implemented/tested yet")
+        #TODO: implement automatic loading of corpus if corpus==None
+        #TODO: implement save option
+
+        ngrams = Counter()
+        for sent in tqdm(corpus):
+
+            if str_normalizer != None:
+                sent = str_normalizer(sent)
+            sent_ngrams = self.extract_ngrams(sent,n, count = True)
+            ngrams += sent_ngrams
+
+
+        ngrams = {"".join(pair) : freq for pair, freq in ngrams.most_common()}
+
+        # if save:
+        #     slg.util.save_file(ngrams, str(n),semiotic.paths.vocabulary / "ngrams")
+
+        return ngrams
 
     def __repr__(self) -> str:
         return f"nGram({self.freq})"
+
+    # def __getitem__(self, item):
+    #      return self.freq.items()[item]
+
 
 # class nGram(Vocabulary):
 #     def __init__(self, filename = None, special_tokens = None):

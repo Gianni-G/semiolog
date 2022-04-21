@@ -333,9 +333,13 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
 
 
 def mm_no_modif(contexts, orthogonals, term):
-    return [
-        orthogonals.get((term, context),0) for context in contexts
-    ]
+
+    if isinstance(next(iter(orthogonals)),str):
+        return [orthogonals.get(term+context,0) for context in contexts]
+    elif isinstance(next(iter(orthogonals)),tuple):
+        return [orthogonals.get((term, context),0) for context in contexts]
+    else:
+        raise Exception(f"SLG [E]: Orthogonal dictionnary keys have the wrong type ({type(type(next(iter(orthogonals))))}). Types accepted: str and tuple ")
 
 def matrix_maker(
     terms,
