@@ -9,7 +9,7 @@ else:
     from tqdm.auto import tqdm, trange
     
 import regex as re
-from os import makedirs
+from os import makedirs, listdir
 from os.path import isfile, isdir
 from functools import reduce
 import operator
@@ -97,6 +97,16 @@ class Vocabulary:
         self.freq_mass = sum(self.freq.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
         print(f"SLG [I]: Vocabulary loaded from disk")
+    
+        # TODO: implement better automatic loading of all files in ngram
+
+        ngram_files = [f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}")]
+
+        if ngram_files!=[]:
+            for f in ngram_files:
+                # ngram_dict = util.load_file(self.path / f"ngrams/{f}")
+                setattr(self, f"ng{f.split('.')[0]}", nGram(self.path / f"ngrams/{f}"))
+            print(f"SLG [I]: nGrams loaded from disk ({ngram_files})")
 
 
     def __repr__(self) -> str:
@@ -489,6 +499,13 @@ class Vocabulary:
         util.dict2json(self.freq,"freq", path)
         util.dict2json(self.alpha,"alpha", path)
         
+class nGram():
+    def __init__(self, filename = None):
+
+        self.freq = util.load_file(filename)
+
+    def __repr__(self) -> str:
+        return f"nGram({self.freq})"
 
 # class nGram(Vocabulary):
 #     def __init__(self, filename = None, special_tokens = None):

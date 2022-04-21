@@ -3,7 +3,7 @@
 
 # Load Modules
 
-import os,sys
+import os, sys
 import math
 import concurrent.futures
 from joblib import Parallel, delayed
@@ -120,7 +120,41 @@ def multiprocessing_tqdm(function, array, cores=None, desc = None):
             out.append(e)
     return out
 
+def save_file(data, filename):
+    
+    if os.path.exists(filename):
+        raise Exception(f"SLG [E]: {filename} already exist [TODO: implement overwrite]")
 
+    fn_dir = os.path.dirname(filename)
+    fn_extension = os.path.splitext(filename)[-1]
+
+    if not os.path.isdir(fn_dir):
+        os.makedirs(fn_dir)
+
+    if fn_extension == ".json":
+        with open(filename, 'w',encoding='utf-8') as json_file:
+            json.dump(data, json_file,indent=4, ensure_ascii=False)
+
+    else:
+        raise Exception(f"SLG [E]: File extension {fn_extension} not recognised")
+
+
+
+def load_file(filename):
+    
+    if not os.path.isfile(filename):
+        raise Exception(f"SLG [E]: {filename} does not exist")
+    
+    fn_extension = os.path.splitext(filename)[-1]
+
+    if fn_extension == ".json":
+        with open(filename) as json_file:
+            data = json.load(json_file)
+
+    else:
+        raise Exception(f"SLG [E]: File extension {fn_extension} not recognised")
+
+    return data
 
 def dict2csv(input: dict, filename: str, path: str):
     if not os.path.isdir(path):
@@ -134,6 +168,9 @@ def dict2json(input: dict, filename: str, path: str):
         os.makedirs(path)
     with open(f"{path}/{filename}.json", 'w',encoding='utf-8') as json_file:
         json.dump(input, json_file,indent=4, ensure_ascii=False)
+
+
+
 
 def json2dict(filename, path):
     with open(f"{path}/{filename}.json") as json_file:
