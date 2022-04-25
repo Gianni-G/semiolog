@@ -3,7 +3,7 @@ import csv
 
 import socket
 socket_name = socket.gethostname()
-if any(name in socket_name for name in {"Gianni","vpn"}):
+if any(name in socket_name for name in {"Gianni","vpn","Berenice"}):
     from tqdm.notebook import tqdm, trange
 else:
     from tqdm.auto import tqdm, trange
@@ -352,7 +352,7 @@ class Vocabulary:
                                 self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
                                 self.freq = dict(vocabulary)
                                 self.alpha = dict(alphabet.most_common())
-                                step_path = self.path / str(voc_partial_len)
+                                step_path = self.path /  "checkpoints/" + str(voc_partial_len)
                                 self.save(step_path)
                                 print(f"... computed in {time.time()-start} secs.")
                                 print(f"SLG [I]: Intermediate vocabulary saved to {step_path}\n")
@@ -515,6 +515,8 @@ class nGram():
         self.encode = {t:i for i,t in enumerate(self.keys)}
         self.decode = {i:t for i,t in enumerate(self.keys)}
 
+        self.prob = util.normalize_dict(self.freq)
+
     def extract_ngrams(text, n, count = False):
 
         if count:
@@ -524,18 +526,46 @@ class nGram():
 
         return n_grams
 
-    def build(corpus=None, n=2, str_normalizer = None):
+    def build(
+        corpus=None,
+        n=2,
+        str_normalizer = None,
+        parallel = False,
+        keep_in_memory = False,
+        ):
+        
         print("SLG [W]: This feature is not fully implemented/tested yet")
         #TODO: implement automatic loading of corpus if corpus==None
         #TODO: implement save option
 
-        ngrams = Counter()
-        for sent in tqdm(corpus):
+        cpu_count = 8
 
-            if str_normalizer != None:
-                sent = str_normalizer(sent)
-            sent_ngrams = self.extract_ngrams(sent,n, count = True)
-            ngrams += sent_ngrams
+        def extract_ngrams(text, n):
+            n_grams = Counter(zip(*[text[i:] for i in range(n)]))
+            return n_grams
+
+        def build_ngrams(corpus,n,str_normalizer):
+            ngrams = Counter()
+            for sent in tqdm(corpus["text"]):
+
+                if str_normalizer != None:
+                    sent = str_normalizer(sent)
+                sent_ngrams = extract_ngrams(sent,n)
+                ngrams += sent_ngrams
+            
+            return ngrams
+
+        if parallel:
+            corpus_chunks = [corpus.shard(cpu_count, n, contiguous=True, keep_in_memory = keep_in_memory) for n in range(cpu_count)]
+
+            with Parallel(n_jobs=8, require='sharedmem') as parallel_pool:
+                jobs_data = parallel_pool(delayed(build_ngrams)(chunk,n,str_normalizer) for chunk in corpus_chunks)
+
+                ngrams = reduce(operator.add,jobs_data)
+
+        else:
+            ngrams = build_ngrams(corpus=corpus,n=n,str_normalizer=str_normalizer)
+
 
 
         ngrams = {"".join(pair) : freq for pair, freq in ngrams.most_common()}
@@ -544,6 +574,7 @@ class nGram():
         #     slg.util.save_file(ngrams, str(n),semiotic.paths.vocabulary / "ngrams")
 
         return ngrams
+    
 
     def __repr__(self) -> str:
         return f"nGram({self.freq})"
