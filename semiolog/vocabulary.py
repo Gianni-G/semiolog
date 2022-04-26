@@ -101,7 +101,7 @@ class Vocabulary:
         # TODO: implement better automatic loading of all files in ngram
 
         if isdir(self.path / "ngrams"):
-            ngram_files = [f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}")]
+            ngram_files = [f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"]
 
             self.ng1 = nGram(from_dict=self.alpha)
             if ngram_files!=[]:
@@ -515,7 +515,7 @@ class nGram():
         self.encode = {t:i for i,t in enumerate(self.keys)}
         self.decode = {i:t for i,t in enumerate(self.keys)}
 
-        self.prob = util.normalize_dict(self.freq)
+        # self.prob = util.normalize_dict(self.freq)
 
     def extract_ngrams(text, n, count = False):
 
@@ -536,42 +536,80 @@ class nGram():
         
         print("SLG [W]: This feature is not fully implemented/tested yet")
         #TODO: implement automatic loading of corpus if corpus==None
+        #TODO: Dynamic cpu_count
         #TODO: implement save option
 
         cpu_count = 8
 
-        def extract_ngrams(text, n):
-            n_grams = Counter(zip(*[text[i:] for i in range(n)]))
-            return n_grams
+        def count_ngrams(corpus,n,str_normalizer):
+            """
+            Corpus needs to be a list of strings
+            """
+            corpus = " ".join(corpus)
 
-        def build_ngrams(corpus,n,str_normalizer):
-            ngrams = Counter()
-            for sent in tqdm(corpus["text"]):
-
-                if str_normalizer != None:
-                    sent = str_normalizer(sent)
-                sent_ngrams = extract_ngrams(sent,n)
-                ngrams += sent_ngrams
+            print(f"SLG: Counting {n}-Grams...")
             
+            ngrams = Counter()
+            for ng in tqdm(zip(*[corpus[i:] for i in range(n)]),total=(len(corpus)-n)):
+                ngrams[ng]+=1
+
             return ngrams
+
+        if str_normalizer != None:
+            print(f"SLG: Normalizing Corpus...")
+            corpus_norm = []
+            for sent in tqdm(corpus["text"]):
+                corpus_norm.append(str_normalizer(sent))
+
+            corpus = Dataset.from_dict({"text":corpus_norm})
+            del(corpus_norm)
 
         if parallel:
             corpus_chunks = [corpus.shard(cpu_count, n, contiguous=True, keep_in_memory = keep_in_memory) for n in range(cpu_count)]
 
-            with Parallel(n_jobs=8, require='sharedmem') as parallel_pool:
-                jobs_data = parallel_pool(delayed(build_ngrams)(chunk,n,str_normalizer) for chunk in corpus_chunks)
+            with Parallel(n_jobs=cpu_count, require='sharedmem') as parallel_pool:
+                jobs_data = parallel_pool(delayed(count_ngrams)(chunk["text"],n,str_normalizer) for chunk in corpus_chunks)
 
                 ngrams = reduce(operator.add,jobs_data)
 
         else:
-            ngrams = build_ngrams(corpus=corpus,n=n,str_normalizer=str_normalizer)
+        
+            ngrams = count_ngrams(corpus=corpus["text"],n=n,str_normalizer=str_normalizer)
 
+        ngrams = {"".join(tup) : freq for tup, freq in ngrams.most_common() if " " not in tup}
+    
 
+        # else:
+        #     def extract_ngrams(text, n):
+        #         n_grams = Counter(zip(*[text[i:] for i in range(n)]))
+        #         return n_grams
 
-        ngrams = {"".join(pair) : freq for pair, freq in ngrams.most_common()}
+        #     def build_ngrams(corpus,n,str_normalizer):
+        #         ngrams = Counter()
+        #         for sent in tqdm(corpus["text"]):
+
+        #             if str_normalizer != None:
+        #                 sent = str_normalizer(sent)
+        #             sent_ngrams = extract_ngrams(sent,n)
+        #             ngrams += sent_ngrams
+                
+        #         return ngrams
+
+        #     if parallel:
+        #         corpus_chunks = [corpus.shard(cpu_count, n, contiguous=True, keep_in_memory = keep_in_memory) for n in range(cpu_count)]
+
+        #         with Parallel(n_jobs=8, require='sharedmem') as parallel_pool:
+        #             jobs_data = parallel_pool(delayed(build_ngrams)(chunk,n,str_normalizer) for chunk in corpus_chunks)
+
+        #             ngrams = reduce(operator.add,jobs_data)
+
+        #     else:
+        #         ngrams = build_ngrams(corpus=corpus,n=n,str_normalizer=str_normalizer)
+
+        #     ngrams = {"".join(tup) : freq for tup, freq in ngrams.most_common()}
 
         # if save:
-        #     slg.util.save_file(ngrams, str(n),semiotic.paths.vocabulary / "ngrams")
+        #     slg.util.save_file(ngrams,semiotic.paths.vocabulary / f"ngrams/{n}.json")
 
         return ngrams
     
