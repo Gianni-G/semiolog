@@ -199,6 +199,11 @@ def subsequences(sequence, n: int):
     list_of_tuples = [tuple(sequence[i:i+n]) for i in range(len(sequence)-n+1)]
     return list_of_tuples
 
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
+
 def list2csv(input: list, filename: str, directory: str):
     if not os.path.isdir(directory):
         os.makedirs(directory)
