@@ -529,9 +529,11 @@ class nGram():
     def build(
         corpus=None,
         n=2,
+        thres = 1,
         str_normalizer = None,
         parallel = False,
         keep_in_memory = False,
+        cpu_count = 8,
         ):
         
         print("SLG [W]: This feature is not fully implemented/tested yet")
@@ -576,37 +578,7 @@ class nGram():
         
             ngrams = count_ngrams(corpus=corpus["text"],n=n,str_normalizer=str_normalizer)
 
-        ngrams = {"".join(tup) : freq for tup, freq in ngrams.most_common() if " " not in tup}
-    
-
-        # else:
-        #     def extract_ngrams(text, n):
-        #         n_grams = Counter(zip(*[text[i:] for i in range(n)]))
-        #         return n_grams
-
-        #     def build_ngrams(corpus,n,str_normalizer):
-        #         ngrams = Counter()
-        #         for sent in tqdm(corpus["text"]):
-
-        #             if str_normalizer != None:
-        #                 sent = str_normalizer(sent)
-        #             sent_ngrams = extract_ngrams(sent,n)
-        #             ngrams += sent_ngrams
-                
-        #         return ngrams
-
-        #     if parallel:
-        #         corpus_chunks = [corpus.shard(cpu_count, n, contiguous=True, keep_in_memory = keep_in_memory) for n in range(cpu_count)]
-
-        #         with Parallel(n_jobs=8, require='sharedmem') as parallel_pool:
-        #             jobs_data = parallel_pool(delayed(build_ngrams)(chunk,n,str_normalizer) for chunk in corpus_chunks)
-
-        #             ngrams = reduce(operator.add,jobs_data)
-
-        #     else:
-        #         ngrams = build_ngrams(corpus=corpus,n=n,str_normalizer=str_normalizer)
-
-        #     ngrams = {"".join(tup) : freq for tup, freq in ngrams.most_common()}
+        ngrams = {"".join(tup) : freq for tup, freq in ngrams.most_common() if " " not in tup and freq>=thres}
 
         # if save:
         #     slg.util.save_file(ngrams,semiotic.paths.vocabulary / f"ngrams/{n}.json")
