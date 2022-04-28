@@ -3,7 +3,7 @@ import csv
 
 import socket
 socket_name = socket.gethostname()
-if any(name in socket_name for name in {"Gianni","vpn"}):
+if any(name in socket_name for name in {"Gianni","vpn","Berenice"}):
     from tqdm.notebook import tqdm, trange
 else:
     from tqdm.auto import tqdm, trange
@@ -101,7 +101,7 @@ class Vocabulary:
         # TODO: implement better automatic loading of all files in ngram
 
         if isdir(self.path / "ngrams"):
-            ngram_files = [f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}")]
+            ngram_files = [f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"]
 
             self.ng1 = nGram(from_dict=self.alpha)
             if ngram_files!=[]:
@@ -352,7 +352,7 @@ class Vocabulary:
                                 self.encode = {k:i for i,(k,v) in enumerate(vocabulary)}
                                 self.freq = dict(vocabulary)
                                 self.alpha = dict(alphabet.most_common())
-                                step_path = self.path / str(voc_partial_len)
+                                step_path = self.path /  "checkpoints/" + str(voc_partial_len)
                                 self.save(step_path)
                                 print(f"... computed in {time.time()-start} secs.")
                                 print(f"SLG [I]: Intermediate vocabulary saved to {step_path}\n")
@@ -515,6 +515,8 @@ class nGram():
         self.encode = {t:i for i,t in enumerate(self.keys)}
         self.decode = {i:t for i,t in enumerate(self.keys)}
 
+        # self.prob = util.normalize_dict(self.freq)
+
     def extract_ngrams(text, n, count = False):
 
         if count:
@@ -524,26 +526,65 @@ class nGram():
 
         return n_grams
 
-    def build(corpus=None, n=2, str_normalizer = None):
+    def build(
+        corpus=None,
+        n=2,
+        thres = 1,
+        str_normalizer = None,
+        parallel = False,
+        keep_in_memory = False,
+        cpu_count = 8,
+        ):
+        
         print("SLG [W]: This feature is not fully implemented/tested yet")
         #TODO: implement automatic loading of corpus if corpus==None
+        #TODO: Dynamic cpu_count
         #TODO: implement save option
 
-        ngrams = Counter()
-        for sent in tqdm(corpus):
+        cpu_count = 8
 
-            if str_normalizer != None:
-                sent = str_normalizer(sent)
-            sent_ngrams = self.extract_ngrams(sent,n, count = True)
-            ngrams += sent_ngrams
+        def count_ngrams(corpus,n,str_normalizer):
+            """
+            Corpus needs to be a list of strings
+            """
+            corpus = " ".join(corpus)
 
+            print(f"SLG: Counting {n}-Grams...")
+            
+            ngrams = Counter()
+            for ng in tqdm(zip(*[corpus[i:] for i in range(n)]),total=(len(corpus)-n)):
+                ngrams[ng]+=1
 
-        ngrams = {"".join(pair) : freq for pair, freq in ngrams.most_common()}
+            return ngrams
+
+        if str_normalizer != None:
+            print(f"SLG: Normalizing Corpus...")
+            corpus_norm = []
+            for sent in tqdm(corpus["text"]):
+                corpus_norm.append(str_normalizer(sent))
+
+            corpus = Dataset.from_dict({"text":corpus_norm})
+            del(corpus_norm)
+
+        if parallel:
+            corpus_chunks = [corpus.shard(cpu_count, n, contiguous=True, keep_in_memory = keep_in_memory) for n in range(cpu_count)]
+
+            with Parallel(n_jobs=cpu_count, require='sharedmem') as parallel_pool:
+                jobs_data = parallel_pool(delayed(count_ngrams)(chunk["text"],n,str_normalizer) for chunk in corpus_chunks)
+
+                ngrams = reduce(operator.add,jobs_data)
+
+        else:
+        
+            ngrams = count_ngrams(corpus=corpus["text"],n=n,str_normalizer=str_normalizer)
+
+        ngrams = {"".join(tup) : freq for tup, freq in ngrams.most_common() if " " not in tup and freq>=thres}
 
         # if save:
-        #     slg.util.save_file(ngrams, str(n),semiotic.paths.vocabulary / "ngrams")
+        #     slg.util.save_file(ngrams,semiotic.paths.vocabulary / f"ngrams/{n}.json")
 
         return ngrams
+    
 
     def __repr__(self) -> str:
         return f"nGram({self.freq})"

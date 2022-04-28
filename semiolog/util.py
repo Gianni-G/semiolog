@@ -199,6 +199,11 @@ def subsequences(sequence, n: int):
     list_of_tuples = [tuple(sequence[i:i+n]) for i in range(len(sequence)-n+1)]
     return list_of_tuples
 
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
+
 def list2csv(input: list, filename: str, directory: str):
     if not os.path.isdir(directory):
         os.makedirs(directory)
@@ -235,9 +240,12 @@ def marginalize(joint_dist:dict,side="left"):
         marginal[r if side == "right" else l] += v
     return dict(marginal.most_common())
 
-def normalize_dict(dictionnary: dict):
-    norm = sum(dictionnary.values())
-    prob_dict = {k: v / norm for k, v in dictionnary.items()}
+def normalize_dict(dictionnary: dict, norm_factor = None):
+    if norm_factor == None:
+        norm = 1/sum(dictionnary.values())
+    else:
+        norm = norm_factor
+    prob_dict = {k: v * norm for k, v in dictionnary.items()}
     return prob_dict
 
 def pmi(matrix, alpha=.75, type_pmi="sppmi"):
