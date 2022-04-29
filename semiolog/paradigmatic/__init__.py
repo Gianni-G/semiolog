@@ -153,6 +153,7 @@ class Paradigmatic:
         checkpoints = False,
         save = None,
         min_token_length = 2,
+        max_token_length = 256,
         # checkpoint_weights = None,
         ):
         
@@ -222,10 +223,10 @@ class Paradigmatic:
                 return_tokenized = True,
             )
 
-        print(f"SLG [I]: Filtering rows of length < {min_token_length}")
+        print(f"SLG [I]: Filtering rows of length < {min_token_length} and > {max_token_length}")
         tokenized_datasets = datasets.DatasetDict({
-            "train":tokenized_datasets["train"].filter(lambda example: len(example['input_ids'])>=min_token_length),
-            "dev": tokenized_datasets["dev"].filter(lambda example: len(example['input_ids'])>=min_token_length)
+            "train":tokenized_datasets["train"].filter(lambda example: min_token_length<=len(example['input_ids'])<=max_token_length),
+            "dev": tokenized_datasets["dev"].filter(lambda example: min_token_length<=len(example['input_ids'])<=max_token_length)
             })
 
         print("SLG [I]: Building train set")
