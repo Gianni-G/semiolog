@@ -101,11 +101,12 @@ class Vocabulary:
         # TODO: implement better automatic loading of all files in ngram
 
         if isdir(self.path / "ngrams"):
-            ngram_files = [f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"]
+            ngram_files = sorted([f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"])
 
             self.ng1 = nGram(from_dict=self.alpha)
             if ngram_files!=[]:
-                for f in ngram_files:
+                for f in tqdm(ngram_files):
+                    print(f"Loading nGram file {f}...", end="\r")
                     setattr(self, f"ng{f.split('.')[0]}", nGram(from_file = self.path / f"ngrams/{f}"))
                 print(f"SLG [I]: nGrams loaded from disk ({ngram_files})")
 
