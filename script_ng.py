@@ -13,11 +13,12 @@ for sent in tqdm(corpus["text"]):
 
 corpus_norm = Dataset.from_dict({"text":corpus_norm})
 
-for ng_n in trange(11,15):
+thres = 5
+for ng_n in trange(15,27):
     ng = slg.vocabulary.nGram.build(
         corpus=corpus_norm,
         n=ng_n,
-        thres = 5,
+        thres = thres,
         parallel=False,
         keep_in_memory=True,
         cpu_count = 24,
