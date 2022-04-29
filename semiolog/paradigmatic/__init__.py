@@ -148,6 +148,7 @@ class Paradigmatic:
     def build(
         self,
         dataset = None,
+        epochs = None,
         load_tokenized = None,
         n_sents = None,
         checkpoints = False,
@@ -159,6 +160,9 @@ class Paradigmatic:
         
         if dataset == None:
             dataset = self.dataset
+        
+        if epochs == None:
+            epochs = self.config.training_epochs
 
         if load_tokenized == None:
             load_tokenized = self.config.load_tokenized
