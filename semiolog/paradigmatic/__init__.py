@@ -261,7 +261,7 @@ class Paradigmatic:
         self.history = self.model.fit(
             train_set,
             validation_data = validation_set,
-            epochs = self.config.training_epochs,
+            epochs = epochs,
             callbacks = model_checkpoint_callback
         )
         print("SLG [I]: Training finished")
