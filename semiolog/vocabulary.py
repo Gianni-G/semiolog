@@ -101,7 +101,7 @@ class Vocabulary:
         # TODO: implement better automatic loading of all files in ngram
 
         if isdir(self.path / "ngrams"):
-            ngram_files = sorted([f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"])
+            ngram_files = sorted([f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"], key=lambda x: int(x.split(".")[0].split("_")[0]))
 
             self.ng1 = nGram(from_dict=self.alpha)
             if ngram_files!=[]:
