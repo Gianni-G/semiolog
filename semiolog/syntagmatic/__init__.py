@@ -16,7 +16,7 @@ from tokenizers import (
     PreTokenizedString,
 )
 
-from .tokenizer import SequenceSLG, NormalizeSLG, Normalize_w_spacesSLG
+from .tokenizer import SequenceSLG, PMI_SLG, NormalizeSLG, Normalize_w_spacesSLG
 
 from transformers import PreTrainedTokenizerFast
 import datasets
@@ -29,6 +29,8 @@ class Syntagmatic:
         self.dataset = semiotic.corpus.dataset
         self.split_rate = semiotic.config.corpus.split_rate
         self.path = semiotic.paths.syntagmas
+        
+        self.thres_ = 0
 
         self.tokenizer_path = str(semiotic.paths.vocabulary.joinpath("tokenizer.json"))
 
@@ -179,3 +181,7 @@ class Syntagmatic:
 
         if return_tokenized:
             return tokenized_datasets
+
+    @property
+    def thres(self):
+        return self.thres_

@@ -95,6 +95,7 @@ class Vocabulary:
         
         self.len = len(self.encode)
         self.freq_mass = sum(self.freq.values())
+        self.char_mass = sum(self.alpha.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
         print(f"SLG [I]: Vocabulary loaded from disk")
     
