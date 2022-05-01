@@ -30,8 +30,6 @@ class Syntagmatic:
         self.split_rate = semiotic.config.corpus.split_rate
         self.path = semiotic.paths.syntagmas
         
-        self.thres_ = 0
-
         self.tokenizer_path = str(semiotic.paths.vocabulary.joinpath("tokenizer.json"))
 
         # Load HF Tokenizer model (from "processor" config)
@@ -182,6 +180,3 @@ class Syntagmatic:
         if return_tokenized:
             return tokenized_datasets
 
-    @property
-    def thres(self):
-        return self.thres_

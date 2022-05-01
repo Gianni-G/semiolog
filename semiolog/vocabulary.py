@@ -41,6 +41,7 @@ class Vocabulary:
         self.config = semiotic.config.vocabulary
         self.model = self.config.model
         self.cpu_count = semiotic.config.system.cpu_count
+        self.thres_ = 0 #TODO: This should go to the configs
         
         self.merges = None
         self.encode = None
@@ -52,6 +53,8 @@ class Vocabulary:
         self.len = None
         self.freq_mass = None
         self.prob = None
+
+        
 
         # Load HF normalizer
         
@@ -74,6 +77,10 @@ class Vocabulary:
             # self.normalizer = lambda x: x
             self.normalizer = None
 
+
+    @property
+    def thres(self):
+        return self.thres_
 
     def from_file(self,path = None):
         if path == None:
