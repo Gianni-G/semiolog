@@ -41,7 +41,7 @@ class Vocabulary:
         self.config = semiotic.config.vocabulary
         self.model = self.config.model
         self.cpu_count = semiotic.config.system.cpu_count
-        self.thres_ = 0 #TODO: This should go to the configs
+        self.thres_ = 0.000001 #TODO: This should go to the configs
         
         self.merges = None
         self.encode = None
