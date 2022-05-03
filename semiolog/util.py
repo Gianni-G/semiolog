@@ -234,7 +234,7 @@ def take(n, iterable):
     return list(itertools.islice(iterable, n))
 
 def marginalize(joint_dist:dict,side="left"):
-    print(f"Marginalizing to the {side}")
+    # print(f"Marginalizing to the {side}")
     marginal = Counter()
     for (l,r),v in joint_dist.items():
         marginal[r if side == "right" else l] += v
