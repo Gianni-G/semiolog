@@ -41,6 +41,7 @@ class Vocabulary:
         self.config = semiotic.config.vocabulary
         self.model = self.config.model
         self.cpu_count = semiotic.config.system.cpu_count
+        self.thres_ = 0.000001 #TODO: This should go to the configs
         
         self.merges = None
         self.encode = None
@@ -52,6 +53,8 @@ class Vocabulary:
         self.len = None
         self.freq_mass = None
         self.prob = None
+
+        
 
         # Load HF normalizer
         
@@ -75,6 +78,10 @@ class Vocabulary:
             self.normalizer = None
 
 
+    @property
+    def thres(self):
+        return self.thres_
+
     def from_file(self,path = None):
         if path == None:
             path = self.path
@@ -95,13 +102,14 @@ class Vocabulary:
         
         self.len = len(self.encode)
         self.freq_mass = sum(self.freq.values())
+        self.char_mass = sum(self.alpha.values())
         self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
         print(f"SLG [I]: Vocabulary loaded from disk")
     
         # TODO: implement better automatic loading of all files in ngram
 
         if isdir(self.path / "ngrams"):
-            ngram_files = sorted([f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"])
+            ngram_files = sorted([f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"], key=lambda x: int(x.split(".")[0].split("_")[0]))
 
             self.ng1 = nGram(from_dict=self.alpha)
             if ngram_files!=[]:
