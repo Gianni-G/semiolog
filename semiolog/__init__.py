@@ -4,6 +4,7 @@ from os import environ
 environ['TRANSFORMERS_OFFLINE'] = "1"
 environ['HF_DATASETS_OFFLINE'] = "1"
 environ['TF_GPU_ALLOCATOR'] = "cuda_malloc_async"
+environ["TOKENIZERS_PARALLELISM"] = "true"
 
 from typing import Union, Iterable, Dict, Any
 from pathlib import Path

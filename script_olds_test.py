@@ -1,6 +1,6 @@
 import semiolog as slg
 
-semiotic = slg.Cenematic("en_bnc_old_seg_test")
+semiotic = slg.Cenematic("en_bnc_os_test")
 
 # print(f"Numbers of cores: {semiotic.config.system.cpu_count}")
 
@@ -14,11 +14,11 @@ semiotic = slg.Cenematic("en_bnc_old_seg_test")
 #     save_step = 1000,
 #     )
 
-# semiotic.syntagmatic.build()
+semiotic.syntagmatic.build()
 
-semiotic.paradigmatic.build(
-    n_sents=100000,
-    load_tokenized = False,
-    checkpoints=True,
-    min_token_length = 3,
-    )
+# semiotic.paradigmatic.build(
+#     # n_sents=100000,
+#     load_tokenized = False,
+#     checkpoints=True,
+#     # min_token_length = 3,
+#     )
