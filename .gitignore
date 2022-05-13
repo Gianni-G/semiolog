@@ -13,5 +13,7 @@ euler_script.py
 models/*
 !models/example
 
+wip/res_bnc/*
+
 examples/*
 !examples/en_bnc
