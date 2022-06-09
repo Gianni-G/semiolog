@@ -14,11 +14,12 @@ semiotic = slg.Cenematic("en_bnc_os_test")
 #     save_step = 1000,
 #     )
 
-semiotic.syntagmatic.build()
+# semiotic.syntagmatic.build()
 
-# semiotic.paradigmatic.build(
-#     # n_sents=100000,
-#     load_tokenized = False,
-#     checkpoints=True,
-#     # min_token_length = 3,
-#     )
+semiotic.paradigmatic.build(
+    # n_sents=100000,
+    epochs = 12,
+    load_tokenized = True,
+    checkpoints=True,
+    # min_token_length = 3,
+    )
