@@ -256,9 +256,10 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
     if type_pmi == "nopmi":
         return matrix
 
-    if type_pmi not in {"pmi","ppmi","spmi","sppmi","ssppmi","nopmi"}:
+    if type_pmi not in {"pmi","npmi","ppmi","nppmi","spmi","sppmi","ssppmi","nopmi"}:
         pmi = "sppmi"
         print("Unknown type of PMI. Continuing with smoothed positive PMI (SPPMI)")
+
     num_skipgrams = matrix.sum()
     matrix_items = {(i, j): matrix[i,j] for i, j in zip(*matrix.nonzero())}
     # assert(sum(matrix_items.values()) == num_skipgrams)
@@ -270,9 +271,6 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
     col_indxs = []
 
     pmi_dat_values = []    # pointwise mutual information
-    ppmi_dat_values = []   # positive pointwise mutual information
-    spmi_dat_values = []   # smoothed pointwise mutual information
-    sppmi_dat_values = []  # smoothed positive pointwise mutual information
 
     # reusable quantities
 
@@ -311,11 +309,23 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
         if type_pmi == "pmi":
             nc = sum_over_terms[tok_context]
             Pc = nc / num_skipgrams
-            pmi = np.log(Pwc/(Pw*Pc))   
+            pmi = np.log(Pwc/(Pw*Pc))
+
+        elif type_pmi == "npmi":
+            nc = sum_over_terms[tok_context]
+            Pc = nc / num_skipgrams
+            pmi = np.log(Pwc/(Pw*Pc))/-np.log(Pwc)
+        
         elif type_pmi == "ppmi":
             nc = sum_over_terms[tok_context]
             Pc = nc / num_skipgrams
             pmi = max(np.log(Pwc/(Pw*Pc)), 0)
+
+        elif type_pmi == "nppmi":
+            nc = sum_over_terms[tok_context]
+            Pc = nc / num_skipgrams
+            pmi = max(np.log(Pwc/(Pw*Pc))/-np.log(Pwc),0)
+
         elif type_pmi == "spmi":
             nca = sum_over_terms_alpha[tok_context]
             Pca = nca / nca_denom
@@ -333,7 +343,7 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
         col_indxs.append(tok_context)
         pmi_dat_values.append(pmi)
             
-    pmi_mat = csr_matrix((pmi_dat_values, (row_indxs, col_indxs)))
+    pmi_mat = csr_matrix((pmi_dat_values, (row_indxs, col_indxs)),shape=matrix.shape)
 
     print('Done')
     return pmi_mat
