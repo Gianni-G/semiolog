@@ -248,7 +248,11 @@ def normalize_dict(dictionnary: dict, norm_factor = None):
     prob_dict = {k: v * norm for k, v in dictionnary.items()}
     return prob_dict
 
-def pmi(matrix, alpha=.75, type_pmi="sppmi"):
+def pmi(
+    matrix,
+    alpha=.75,
+    type_pmi="sppmi",
+    ):
     """
     """
     # Taken from Kaggle, and modified
@@ -265,7 +269,6 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
     # assert(sum(matrix_items.values()) == num_skipgrams)
 
 
-
     # for creating sparse matrices
     row_indxs = []
     col_indxs = []
@@ -273,7 +276,6 @@ def pmi(matrix, alpha=.75, type_pmi="sppmi"):
     pmi_dat_values = []    # pointwise mutual information
 
     # reusable quantities
-
     sum_over_contexts = np.array(matrix.sum(axis=1)).flatten()
     sum_over_terms = np.array(matrix.sum(axis=0)).flatten()
 
