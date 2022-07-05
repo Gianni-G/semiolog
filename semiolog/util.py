@@ -132,9 +132,14 @@ def save_file(data, filename):
         os.makedirs(fn_dir)
 
     if fn_extension == ".json":
-        with open(filename, 'w',encoding='utf-8') as json_file:
+        with open(filename, 'w', encoding='utf-8') as json_file:
             json.dump(data, json_file,indent=4, ensure_ascii=False)
 
+    elif fn_extension == ".txt":
+        with open(filename, "w", encoding='utf-8') as txt_file:
+            for element in input:
+                txt_file.write(element+"\n")
+    
     else:
         raise Exception(f"SLG [E]: File extension {fn_extension} not recognised")
 
@@ -150,6 +155,10 @@ def load_file(filename):
     if fn_extension == ".json":
         with open(filename) as json_file:
             data = json.load(json_file)
+
+    if fn_extension == ".txt":
+        with open(filename) as txt_file:
+            data = [line.strip() for line in txt_file]
 
     else:
         raise Exception(f"SLG [E]: File extension {fn_extension} not recognised")
@@ -171,7 +180,6 @@ def dict2json(input: dict, filename: str, path: str):
 
 
 
-
 def json2dict(filename, path):
     with open(f"{path}/{filename}.json") as json_file:
         data = json.load(json_file)
@@ -183,17 +191,17 @@ def str2txt(input: str, filename: str, path: str):
     with open(f"{path}{filename}.txt", "w") as nf:
         nf.write(input)
 
-def list2txt(input: list, filename: str = "text_list", path = None):
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    with open(f"{path}/{filename}.txt", "w") as nf:
-        for element in input:
-            nf.write(element+"\n")
+# def list2txt(input: list, filename: str = "text_list", path = None):
+#     if not os.path.isdir(path):
+#         os.makedirs(path)
+#     with open(f"{path}/{filename}.txt", "w") as nf:
+#         for element in input:
+#             nf.write(element+"\n")
             
-def txt2list(filename, path):
-    with open(f"{path}/{filename}.txt") as txt_file:
-        txt_list = [line.strip() for line in txt_file]
-    return txt_list
+# def txt2list(filename, path):
+#     with open(f"{path}/{filename}.txt") as txt_file:
+#         txt_list = [line.strip() for line in txt_file]
+#     return txt_list
 
 def subsequences(sequence, n: int):
     list_of_tuples = [tuple(sequence[i:i+n]) for i in range(len(sequence)-n+1)]

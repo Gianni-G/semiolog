@@ -13,7 +13,7 @@ if any(name in socket_name for name in {"Gianni","vpn"}):
 else:
     from tqdm.auto import tqdm, trange
 
-from .util import list2txt, flatten, txt2list
+from .util import load_file, save_file, flatten
 
 class Corpus:
     """
@@ -102,7 +102,8 @@ class Corpus:
                 text = []
                 source = []
                 for fn in dataset:
-                    treatise_raw = txt2list(fn[:-4],self.path / 'original')
+                    # treatise_raw = txt2list(fn[:-4],self.path / 'original')
+                    treatise_raw = load_file(self.path / f"original/{fn}")
                     text += treatise_raw
                     source += [fn[:-4]]*len(treatise_raw)
                 
@@ -248,6 +249,6 @@ class Corpus:
         if dataset_format:
             self.dataset.save_to_disk(path / "dataset")
         else:
-            list2txt(self.train["text"],"train", path)
-            list2txt(self.dev["text"],"dev", path)
-            list2txt(self.test["text"],"test", path)
+            save_file(self.train["text"], path / "train.txt")
+            save_file(self.dev["text"], path / "dev.txt")
+            save_file(self.test["text"], path / "test.txt")
