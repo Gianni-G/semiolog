@@ -93,7 +93,7 @@ class Vocabulary:
             if not isfile(filename):
                 return print(f"SLG [W]: {filename} does not exist.\nVocabulary will not be loaded from disk.\n")
         
-        self.merges = [tuple(merge.split()) for merge in util.txt2list("merges",path)[1:]] # The first line needs to be stripped
+        self.merges = [tuple(merge.split()) for merge in util.load_file(path / "merges.txt")[1:]] # The first line needs to be stripped
         self.encode = util.json2dict("vocab",path)
         self.freq = util.json2dict("freq",path)
         self.alpha = util.json2dict("alpha",path)
@@ -504,10 +504,10 @@ class Vocabulary:
             
         version_stamp = f"#version: {slg_version} - Built by `semiolog`"
         
-        util.list2txt([version_stamp]+self.merges,"merges", path)
-        util.dict2json(self.encode,"vocab", path)
-        util.dict2json(self.freq,"freq", path)
-        util.dict2json(self.alpha,"alpha", path)
+        util.save_file([version_stamp]+self.merges,path / "merges.txt")
+        util.save_file(self.encode,path / "vocab.json")
+        util.save_file(self.freq,path / "freq.json")
+        util.save_file(self.alpha,path / "alpha.json")
         
 class nGram():
     def __init__(self, from_file = None, from_dict = None):

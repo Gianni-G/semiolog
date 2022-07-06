@@ -137,7 +137,7 @@ def save_file(data, filename):
 
     elif fn_extension == ".txt":
         with open(filename, "w", encoding='utf-8') as txt_file:
-            for element in input:
+            for element in data:
                 txt_file.write(element+"\n")
     
     else:
