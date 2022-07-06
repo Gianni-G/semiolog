@@ -34,6 +34,15 @@ Normalize_w_spacesSLG = normalizers.Sequence([
     Replace(Regex("[\'\"\[\]\-]"),""),
     ])
 
+Normalize_menoSLG = normalizers.Sequence([
+    NFKC(),
+    Lowercase(),
+    # Replace(Regex(f"{[i for i in string.whitespace]}"),""),
+    Replace(Regex("["+punctuations+"]"),"-"),
+    Replace(Regex("[\'\"\[\]\-]"),""),
+    Replace(Regex("j$"),"i"),
+    ])
+
 # TODO: "NormalizeSLG" should be replaced by generic normalizers to be added to a standard HF normalizer sequence
 # Below is the model to use for doing it
 #
