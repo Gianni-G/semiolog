@@ -156,7 +156,7 @@ def load_file(filename):
         with open(filename) as json_file:
             data = json.load(json_file)
 
-    if fn_extension == ".txt":
+    elif fn_extension == ".txt":
         with open(filename) as txt_file:
             data = [line.strip() for line in txt_file]
 
