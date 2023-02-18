@@ -10,10 +10,11 @@ debug.*
 
 euler_script.py
 
-models/*
+models/**
 !models/example
 
-wip/res_bnc/*
+wip/models/**
+wip/res_bnc/**
 
 examples/*
 !examples/en_bnc
