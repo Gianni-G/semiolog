@@ -18,3 +18,5 @@ wip/res_bnc/**
 
 examples/*
 !examples/en_bnc
+
+docs/build/**
