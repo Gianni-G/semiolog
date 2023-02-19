@@ -1,0 +1,78 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semiolog"
+version = "0.0.0"
+description = "Tools for the semiological analysis of corpora"
+readme = "README.md"
+authors = [{ name = "Gianni Gastaldi", email = "giannigastaldi@gmail.com" }]
+license = { file = "LICENSE" }
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Text Processing :: Linguistic",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+]
+
+keywords = ["texts", "NLP", "semiology", "corpus", "philosophy", "semiomaths"]
+
+dependencies = [
+    "os",
+    "sys",
+    "typing",
+    "pathlib",
+    "datasets",
+    "psutils",
+    "inspect",
+    "sys",
+    "nltk",
+    "socket",
+    "tqdm",
+    "math",
+    "futures3",
+    "joblib",
+    "csv",
+    "json",
+    "itertools",
+    "functools",
+    "ast",
+    "numpy",
+    "scipy",
+    "time",
+    "pandas",
+    "matplotlib",
+    "plotly",
+    "pyinstrument",
+    "regex",
+    "operator",
+    "tokenizers",
+    "transformers",
+    "tensorflow",
+    "string",
+    "networkx",
+    "graphviz",
+    "ipywidgets",
+    "iPython",
+    "unicodedata",
+    "re",
+]
+
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+dev = ["seaborn","random"]
+
+[project.urls]
+Homepage = [
+    "https://github.com/Gianni-G/semiolog",
+    "https://semiolog.readthedocs.io/en/latest/",
+]
+
+# [project.scripts]
+# realpython = "reader.__main__:main"
