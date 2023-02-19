@@ -18,18 +18,24 @@
   body {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
+  --color-brand-primary: hsl(210, 50%, 50%);
+  --color-brand-content: hsl(210, 50%, 50%);
   
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
+  --color-brand-primary: hsl(210, 50%, 60%);
+  --color-brand-content: hsl(210, 50%, 60%);
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
+  --color-brand-primary: hsl(210, 50%, 60%);
+  --color-brand-content: hsl(210, 50%, 60%);
   
       }
     }
@@ -145,8 +151,11 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
   
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/SemioMaths.jpg" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/SemioMaths.jpg" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">semiolog 0.0.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -189,6 +198,7 @@
         <article role="main">
           <section id="welcome-to-semiolog-s-documentation">
 <h1>Welcome to semiolog’s documentation!<a class="headerlink" href="#welcome-to-semiolog-s-documentation" title="Permalink to this heading">#</a></h1>
+<a class="reference internal image-reference" href="_images/SemioMaths.jpg"><img alt="_images/SemioMaths.jpg" src="_images/SemioMaths.jpg" style="width: 800px;" /></a>
 <p><strong>semiolog</strong> is a Python library for the semiological analysis of text.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

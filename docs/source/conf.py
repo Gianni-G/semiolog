@@ -26,3 +26,18 @@ exclude_patterns = []
 
 html_theme = 'furo'
 html_static_path = ['_static']
+
+html_theme_options = {
+    "sidebar_hide_name": True,
+    "light_css_variables": {
+        # "color-brand-primary": "hsl(45, 80%, 45%)",
+        "color-brand-primary": "hsl(210, 50%, 50%)",
+        "color-brand-content": "hsl(210, 50%, 50%)",
+    },
+    "dark_css_variables": {
+        "color-brand-primary": "hsl(210, 50%, 60%)",
+        "color-brand-content": "hsl(210, 50%, 60%)",
+    },
+    "light_logo": "SemioMaths.jpg",
+    "dark_logo": "SemioMaths.jpg",
+}

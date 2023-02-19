@@ -6,6 +6,9 @@
 Welcome to semiolog's documentation!
 ====================================
 
+.. image:: ./_static/img/SemioMaths.jpg
+  :width: 800px
+
 **semiolog** is a Python library for the semiological analysis of text.
 
 .. note::

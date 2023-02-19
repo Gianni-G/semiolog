@@ -16,18 +16,24 @@
   body {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
+  --color-brand-primary: hsl(210, 50%, 50%);
+  --color-brand-content: hsl(210, 50%, 50%);
   
   }
   @media not print {
     body[data-theme="dark"] {
       --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
+  --color-brand-primary: hsl(210, 50%, 60%);
+  --color-brand-content: hsl(210, 50%, 60%);
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
         --color-code-background: #202020;
   --color-code-foreground: #d0d0d0;
+  --color-brand-primary: hsl(210, 50%, 60%);
+  --color-brand-content: hsl(210, 50%, 60%);
   
       }
     }
@@ -143,8 +149,11 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/SemioMaths.jpg" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/SemioMaths.jpg" alt="Dark Logo"/>
+  </div>
   
-  <span class="sidebar-brand-text">semiolog 0.0.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
