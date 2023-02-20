@@ -1,0 +1,2 @@
+recursive-include semiolog *
+prune **/__pycache__

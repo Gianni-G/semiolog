@@ -1,5 +1,9 @@
+LICENSE
+MANIFEST.in
 README.md
+pyproject.toml
 setup.py
+semiolog/.DS_Store
 semiolog/__init__.py
 semiolog/cenematic.py
 semiolog/config.py
@@ -15,4 +19,24 @@ semiolog.egg-info/PKG-INFO
 semiolog.egg-info/SOURCES.txt
 semiolog.egg-info/dependency_links.txt
 semiolog.egg-info/not-zip-safe
+semiolog.egg-info/requires.txt
 semiolog.egg-info/top_level.txt
+semiolog/classifier/__init__.py
+semiolog/classifier/pclass.py
+semiolog/paradigmatic/.DS_Store
+semiolog/paradigmatic/__init__.py
+semiolog/paradigmatic/paradigm.py
+semiolog/syntagmatic/.DS_Store
+semiolog/syntagmatic/__init__.py
+semiolog/syntagmatic/__init__old.py
+semiolog/syntagmatic/chain.py
+semiolog/syntagmatic/tree.py
+semiolog/syntagmatic/tokenizer/__init__ old.py
+semiolog/syntagmatic/tokenizer/__init__.py
+semiolog/syntagmatic/tokenizer/normalizers.py
+semiolog/syntagmatic/tokenizer/post_processors.py
+semiolog/syntagmatic/tokenizer/pre_tokenizers.py
+semiolog/syntagmatic/tokenizer/processors.py
+semiolog/syntagmatic/tokenizer/processors_old.py
+semiolog/typing/__init__.py
+semiolog/typing/ptype.py
