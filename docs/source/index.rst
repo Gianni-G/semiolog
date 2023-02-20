@@ -6,6 +6,9 @@
 Welcome to semiolog's documentation!
 ====================================
 
+.. image:: https://zenodo.org/badge/432172560.svg
+   :target: https://zenodo.org/badge/latestdoi/432172560
+
 .. image:: ./_static/img/SemioMaths.jpg
   :width: 800px
 
