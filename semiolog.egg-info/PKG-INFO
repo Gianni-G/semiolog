@@ -142,6 +142,8 @@ License-File: LICENSE
 
 # semiolog
 
+[![DOI](https://zenodo.org/badge/432172560.svg)](https://zenodo.org/badge/latestdoi/432172560)
+
 `semiolog` is software package for the semiological analysis of corpora. It is intended for the use of the scientific community in the humanities. It is currently in alpha version.
 
 This project has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreement No 839730.
