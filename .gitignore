@@ -20,4 +20,3 @@ examples/*
 !examples/en_bnc
 
 docs/build/**
-semiolog.egg-info/PKG-INFO
