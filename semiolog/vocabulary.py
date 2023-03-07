@@ -82,41 +82,58 @@ class Vocabulary:
     def thres(self):
         return self.thres_
 
-    def from_file(self,path = None):
-        if path == None:
-            path = self.path
-
-
-        filenames = [(path / fn) for fn in ["merges.txt","vocab.json","freq.json","alpha.json"]]
-        
-        for filename in filenames:
-            if not isfile(filename):
-                return print(f"SLG [W]: {filename} does not exist.\nVocabulary will not be loaded from disk.\n")
-        
-        self.merges = [tuple(merge.split()) for merge in util.load_file(path / "merges.txt")[1:]] # The first line needs to be stripped
-        self.encode = util.json2dict("vocab",path)
-        self.freq = util.json2dict("freq",path)
-        self.alpha = util.json2dict("alpha",path)
-
-        self.decode = {i:k for k,i in self.encode.items()}
-        
-        self.len = len(self.encode)
-        self.freq_mass = sum(self.freq.values())
-        self.char_mass = sum(self.alpha.values())
-        self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
-        print(f"SLG [I]: Vocabulary loaded from disk")
-    
-        # TODO: implement better automatic loading of all files in ngram
-
+    def load_ngrams(self):
         if isdir(self.path / "ngrams"):
             ngram_files = sorted([f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"], key=lambda x: int(x.split(".")[0].split("_")[0]))
 
-            self.ng1 = nGram(from_dict=self.alpha)
+            # self.ng1 = nGram(from_dict=self.alpha)
+
             if ngram_files!=[]:
                 for f in tqdm(ngram_files):
                     print(f"Loading nGram file {f}...", end="\r")
                     setattr(self, f"ng{f.split('.')[0]}", nGram(from_file = self.path / f"ngrams/{f}"))
                 print(f"SLG [I]: nGrams loaded from disk ({ngram_files})")
+        else:
+            print(f"SLG [W]: no directory {self.path / 'ngrams'}")
+
+    def from_file(self,path = None):
+        if path == None:
+            path = self.path
+
+        if isfile(path/"merges.txt"):
+            self.merges = [tuple(merge.split()) for merge in util.load_file(path / "merges.txt")[1:]] # The first line needs to be stripped
+        else:
+            print(f"SLG [W]: {path/'merges.txt'} does not exist. It will not be loaded from disk.\n")
+
+        if isfile(path/"vocab.json"):
+            self.encode = util.json2dict("vocab",path)
+            self.decode = {i:k for k,i in self.encode.items()}
+            self.len = len(self.encode)
+        else:
+            print(f"SLG [W]: {path/'vocab.json'} does not exist. It will not be loaded from disk.\n")
+
+        if isfile(path/"freq.json"):
+            self.freq = util.json2dict("freq",path)
+            self.freq_mass = sum(self.freq.values())
+            self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
+        else:
+            print(f"SLG [W]: {path/'freq.json'} does not exist. It will not be loaded from disk.\n")
+
+        if isfile(path/"alpha.json"):
+            self.alpha = util.json2dict("alpha",path)
+            self.char_mass = sum(self.alpha.values())
+        else:
+            print(f"SLG [W]: {path/'alpha.json'} does not exist. It will not be loaded from disk.\n")
+
+        # filenames = [(path / fn) for fn in ["merges.txt","vocab.json","freq.json","alpha.json"]]
+        
+
+        print(f"SLG [I]: Vocabulary loaded from disk")
+    
+        # TODO: implement better automatic loading of all files in ngram
+
+        if isdir(self.path / "ngrams"):
+            self.load_ngrams()
 
 
     def __repr__(self) -> str:

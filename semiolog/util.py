@@ -18,6 +18,7 @@ from scipy.sparse import csr_matrix
 import time
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
 import plotly.graph_objects as go
 
 import socket
@@ -479,6 +480,194 @@ def csv2list_raw(file: str, directory: str, n_start=None, n_end=None,progress=Fa
             list_line = [ast.literal_eval(item) for item in line]
             my_list.append(list_line)
     return my_list[n_start:n_end]
+
+#########
+# PLOTS #
+#########
+
+def matplotlib_to_plotly(cmap, pl_entries):
+    h = 1.0/(pl_entries-1)
+    pl_colorscale = []
+
+    for k in range(pl_entries):
+        C = list(map(np.uint8, np.array(cmap(k*h)[:3])*255))
+        pl_colorscale.append([k*h, 'rgb'+str((C[0], C[1], C[2]))])
+
+    return pl_colorscale
+
+coolwarm_cmap = get_cmap('coolwarm')
+coolwarm = matplotlib_to_plotly(coolwarm_cmap, 255)
+
+def plot_hm(z,x,y):
+    fig = go.Figure(data=go.Heatmap(dict(
+        z=z,
+        x=x,
+        y=y,
+        colorscale = coolwarm,
+        zmid = 0,
+        xgap = 1,
+        ygap = 1,
+        )))
+    fig.update_layout(
+        yaxis = dict(
+            scaleanchor = 'x',
+            autorange="reversed"
+            ),
+        xaxis = dict(
+            side="top"
+            ),
+        plot_bgcolor='rgba(0,0,0,0)',
+        autosize=False,
+        width=950,
+        height=900,
+        font = dict(
+            family = "Courier New"
+        ),
+        )
+    # fig.update_yaxes(autorange="reversed")
+    # fig.update_xaxes(side="top")
+    return fig
+
+def plot_3D(tensor,elements,buttons=None):
+
+    x = []
+    y = []
+    z = []
+    for e1 in elements:
+        for e2 in elements:
+            for e3 in elements:
+                x.append(e1)
+                y.append(e2)
+                z.append(e3)
+    
+    vals = tensor.flatten()
+    
+    e_len = len(elements)
+
+    # colorscales = list(plotly.colors.sequential.__dict__.keys())[12:-1]
+    colorscales = [None,"Electric","Inferno","Plasma"]
+    
+    if not isinstance(vals,tuple):
+        vals = (vals, "Default", 0)
+
+    fig = go.Figure(data=[go.Scatter3d(
+        x=x,
+        y=y,
+        z=z,
+        mode='markers',
+        marker = dict(
+            symbol = "circle",#'square' | 'circle'
+            sizemode='area',
+            size = vals[0]/(10**(np.floor(np.log10(vals[0].mean()))-.5)),
+            color = vals[0],
+            colorbar=dict(thickness=20),
+            # colorscale = colorscales[vals[2]], #TODO for some reason this colorscale
+                                                 #differs from the corresponding button
+            opacity=1,
+            )
+    )])
+
+    if buttons != None:
+
+        for vals_but in enumerate(buttons):
+            if not isinstance(vals_but,tuple):
+                buttons[i] = (vals_but,str(i+2),i+1)
+                
+        # Add buttons
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    type = "buttons",
+                    direction = "left",
+                    buttons=list(
+                        [dict(
+                        label=vals_but[1],
+                        method="restyle",
+                        args=[
+                            {"marker": dict(
+                                symbol = "circle",#'square' | 'circle'
+                                sizemode='area',
+                                size= vals_but[0]/(10**(np.floor(np.log10(vals_but[0].mean()))-.5)),
+                                color=vals_but[0],
+                                colorbar=dict(thickness=20),
+                                colorscale = colorscales[vals_but[2]],
+                                opacity=1,
+                            )
+                            }
+                            ],
+                    )
+                    for vals_but in [vals] + buttons
+                    ]
+                    ),
+                    pad={"r": 10, "t": 10},
+                    showactive=True,
+                    x=0.11,
+                    xanchor="left",
+                    y=1.1,
+                    yanchor="top"
+                ),
+            ]
+        )
+
+        # Add annotation
+        fig.update_layout(
+            annotations=[
+                dict(
+                    text="Measure:",
+                    showarrow=False,
+                    x=0.05,
+                    y=1.08,
+                    yref="paper",
+                    align="left")
+            ],
+        )
+
+    # tight layout
+    fig.update_layout(
+        # width=750,
+        # height=700,
+        margin=dict(l=0, r=0, b=0, t=0),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font = dict(
+            family = "Courier New"
+        ),
+        scene=dict(
+            # dragmode = "turntable",
+            xaxis_title='c1',
+            yaxis_title='c2',
+            zaxis_title='c3',
+            xaxis=dict(
+                nticks=e_len*2,
+                gridcolor="#DFE8F3",
+                showbackground=False,
+            ),
+            yaxis=dict(
+                nticks=e_len*2,
+                gridcolor="#DFE8F3",
+                showbackground=False,
+                ),
+            zaxis=dict(
+                nticks=e_len*2,
+                gridcolor="#DFE8F3",
+                showbackground=False,
+            ),
+        ),
+        scene_camera = dict(
+            up = dict(x=1, y=0, z=0),
+            eye = dict(x=1.25, y=1.25, z=-1.25),
+        ),
+    )
+
+
+    fig.update_scenes(
+        xaxis_autorange="reversed",
+        )
+
+    return fig
+
+
+
 
 def plot_scatter_line(
     x,

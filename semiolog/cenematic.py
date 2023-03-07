@@ -11,6 +11,8 @@ from .classifier import Classifier
 from .typing import Typing
 from .text import Text
 
+from .tensor import Tensor
+
 class Cenematic:
     
     def __init__(
@@ -40,6 +42,7 @@ class Cenematic:
 
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
+        self.tensor = Tensor(self)
 
         # TODO: configure online repository for models, with automatic download
         
