@@ -3,7 +3,7 @@ import csv
 
 import socket
 socket_name = socket.gethostname()
-if any(name in socket_name for name in {"Gianni","vpn","Berenice"}):
+if any(name in socket_name for name in {"Gianni","vpn","Berenice","gess"}):
     from tqdm.notebook import tqdm, trange
 else:
     from tqdm.auto import tqdm, trange
