@@ -257,7 +257,7 @@ def normalize_dict(dictionnary: dict, norm_factor = None):
     prob_dict = {k: v * norm for k, v in dictionnary.items()}
     return prob_dict
 
-def pmi(
+def pmi_old(
     matrix,
     alpha=.75,
     type_pmi="sppmi",
@@ -360,6 +360,32 @@ def pmi(
     return pmi_mat
 
 
+def pmi(
+    matrix,
+    normalize = False,
+):
+
+    matrix = matrix/matrix.sum()
+    p_marg = np.array(matrix.sum(axis=1)).flatten()
+    q_marg = np.array(matrix.sum(axis=0)).flatten()
+
+    M_pmi = np.outer(p_marg,q_marg)
+
+    # If division by 0, it means that either p or q are 0, and so pq, and the quotient can be set to 1
+    M_pmi = np.divide(matrix, M_pmi, out=np.zeros_like(matrix)+1, where=M_pmi!=0)
+
+    # log(0) is set to -inf
+    M_pmi = np.log(M_pmi, out=np.zeros_like(M_pmi)-np.inf, where=M_pmi!=0)
+
+    if normalize:
+        
+        # log(0) is set to -inf
+        pmi_norm = -np.log(matrix, out=np.zeros_like(matrix)-np.inf, where=matrix!=0)
+
+        # if pmi = -inf, the normalized version is set to -1
+        M_pmi = np.divide(M_pmi, pmi_norm, out=np.zeros_like(M_pmi)-1, where=M_pmi!=-np.inf)
+
+    return M_pmi
 
 def mm_no_modif(contexts, orthogonals, term):
 
