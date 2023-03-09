@@ -99,18 +99,24 @@ class Tensor():
         if normalize == "pmi":
 
             self.tc_pmi = pmi(self.tc, normalize = True)
+            self.ct_pmi = self.tc_pmi.T
 
-            self.pt = self.tc_pmi.T@self.tc_pmi
+            if center:
+                self.tc_pmi -= self.tc_pmi.mean(axis=0)
+                self.ct_pmi -= self.ct_pmi.mean(axis=0)
+
+            self.pt = self.ct_pmi@self.tc_pmi
+
+            if center:
+                self.pt = self.pt/(self.pt.shape[0]-1)
         
         elif normalize == "probs":
             
-
             # self.tc_probs = self.tc / self.tc.sum(axis=0)
             # self.ct_probs = self.tc.T / self.tc.T.sum(axis=0)
 
             col_sums = self.tc.sum(axis=0)
             self.tc_probs = np.divide(self.tc, col_sums, out=np.zeros_like(self.tc), where=col_sums!=0)
-
 
             row_sums = self.tc.T.sum(axis=0)
             self.ct_probs = np.divide(self.tc.T, row_sums, out=np.zeros_like(self.tc.T), where=row_sums!=0)
@@ -119,8 +125,6 @@ class Tensor():
             if center:
                 self.tc_probs -= self.tc_probs.mean(axis=0)
                 self.ct_probs -= self.ct_probs.mean(axis=0)
-
-
 
             self.pt = self.ct_probs@self.tc_probs
 
