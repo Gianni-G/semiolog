@@ -3,7 +3,6 @@ MANIFEST.in
 README.md
 pyproject.toml
 setup.py
-semiolog/.DS_Store
 semiolog/__init__.py
 semiolog/cenematic.py
 semiolog/config.py
@@ -11,6 +10,7 @@ semiolog/corpus.py
 semiolog/functive.py
 semiolog/paths.py
 semiolog/temp.py
+semiolog/tensor.py
 semiolog/text.py
 semiolog/util.py
 semiolog/util_slg.py
@@ -23,10 +23,8 @@ semiolog.egg-info/requires.txt
 semiolog.egg-info/top_level.txt
 semiolog/classifier/__init__.py
 semiolog/classifier/pclass.py
-semiolog/paradigmatic/.DS_Store
 semiolog/paradigmatic/__init__.py
 semiolog/paradigmatic/paradigm.py
-semiolog/syntagmatic/.DS_Store
 semiolog/syntagmatic/__init__.py
 semiolog/syntagmatic/__init__old.py
 semiolog/syntagmatic/chain.py
