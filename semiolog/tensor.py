@@ -17,9 +17,9 @@ class Tensor():
         self.dims = len(self.elements)
         self.rank = rank
 
-        ng_atts = sorted([att for att in self.semiotic.vocab.__dict__.keys() if att.startswith("ng")])
+        # ng_atts = sorted([att for att in self.semiotic.vocab.__dict__.keys() if att.startswith("ng")])
 
-        ngs = getattr(self.semiotic.vocab,ng_atts[rank-1])
+        ngs = getattr(self.semiotic.vocab,f"ng{rank}")
 
         self.M_freq = np.zeros([dims]*rank)
         for k,v in ngs.freq.items():

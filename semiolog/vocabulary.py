@@ -91,7 +91,9 @@ class Vocabulary:
             if ngram_files!=[]:
                 for f in tqdm(ngram_files):
                     print(f"Loading nGram file {f}...", end="\r")
-                    setattr(self, f"ng{f.split('.')[0]}", nGram(from_file = self.path / f"ngrams/{f}"))
+                    ng = nGram(from_file = self.path / f"ngrams/{f}")
+                    # Beware that if there are two files with same length ngrams, the second will rewrite the first
+                    setattr(self, f"ng{ng.n}", ng)
                 print(f"SLG [I]: nGrams loaded from disk ({ngram_files})")
         else:
             print(f"SLG [W]: no directory {self.path / 'ngrams'}")
@@ -538,6 +540,7 @@ class nGram():
             raise Exception(f"SLG [E]: No valid dictionnary or filename provided.")
 
         self.keys = list(self.freq.keys())
+        self.n = len(self.keys[0])
         self.encode = {t:i for i,t in enumerate(self.keys)}
         self.decode = {i:t for i,t in enumerate(self.keys)}
 
