@@ -3,6 +3,7 @@ import numpy as np
 from itertools import product, combinations
 import jax.numpy as jnp
 from .util import plot_hm, pmi
+from .vocabulary import nGram
 
 class Tensor():
 
@@ -19,7 +20,10 @@ class Tensor():
 
         # ng_atts = sorted([att for att in self.semiotic.vocab.__dict__.keys() if att.startswith("ng")])
 
-        ngs = getattr(self.semiotic.vocab,f"ng{rank}")
+        if self.rank == 1:
+            ngs = nGram(from_dict=self.semiotic.vocab.alpha)
+        else:
+            ngs = getattr(self.semiotic.vocab,f"ng{rank}")
 
         self.M_freq = np.zeros([dims]*rank)
         for k,v in ngs.freq.items():
