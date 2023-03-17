@@ -3,7 +3,7 @@ from transformers import BertConfig, TFBertForMaskedLM, BertTokenizer, AdamWeigh
 import datasets
 from .paradigm import Paradigmatizer, ParadigmChain
 
-import tensorflow as tf
+# import tensorflow as tf
 import numpy as np
 from os import path, makedirs
 

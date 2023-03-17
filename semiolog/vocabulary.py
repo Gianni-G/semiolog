@@ -23,7 +23,7 @@ logging.set_verbosity_error()
 
 from . import util
 from .syntagmatic import Syntagmatic, NormalizeSLG, Normalize_w_spacesSLG # needed
-from .paradigmatic import Paradigmatic
+# from .paradigmatic import Paradigmatic
 
 # TODO: Solve version as global variable
 slg_version = "0.2.3"
@@ -513,7 +513,7 @@ class Vocabulary:
             print(f"SLG [I]: Vocabulary saved to {self.path}\n")
         
         self.semiotic.syntagmatic = Syntagmatic(self.semiotic)
-        self.semiotic.paradigmatic = Paradigmatic(self.semiotic)
+        # self.semiotic.paradigmatic = Paradigmatic(self.semiotic)
         print("SLG [I]: Syntagmatic and Paradigmatic updated with the new vocabulary\n")
 
     def save(self, path = None):

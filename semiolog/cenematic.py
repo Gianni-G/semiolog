@@ -6,7 +6,7 @@ from .config import Config
 from .corpus import Corpus
 from .vocabulary import Vocabulary #, nGram
 from .syntagmatic import Syntagmatic
-from .paradigmatic import Paradigmatic
+# from .paradigmatic import Paradigmatic
 from .classifier import Classifier
 from .typing import Typing
 from .text import Text
@@ -66,7 +66,7 @@ class Cenematic:
                 
         self.syntagmatic = Syntagmatic(self)
         # self.ng2 = nGram()
-        self.paradigmatic = Paradigmatic(self)
+        # self.paradigmatic = Paradigmatic(self)
         # self.classifier = Classifier(self)
         # self.typing = Typing(self)
         

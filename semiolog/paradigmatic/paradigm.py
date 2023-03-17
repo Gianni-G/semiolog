@@ -1,6 +1,6 @@
 from scipy.stats import entropy
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 import string
 from ..syntagmatic.tokenizer import normalizers
 from collections import Counter, defaultdict
