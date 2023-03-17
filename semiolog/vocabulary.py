@@ -1,13 +1,19 @@
 from collections import Counter, defaultdict
 import csv
 
-import socket
-socket_name = socket.gethostname()
-if any(name in socket_name for name in {"Gianni","vpn","Berenice","gess"}):
+# import socket
+# socket_name = socket.gethostname()
+# if any(name in socket_name for name in {"Gianni","vpn","Berenice","gess"}):
+#     from tqdm.notebook import tqdm, trange
+# else:
+#     from tqdm.auto import tqdm, trange
+
+try:
+    __IPYTHON__
     from tqdm.notebook import tqdm, trange
-else:
+except NameError:
     from tqdm.auto import tqdm, trange
-    
+
 import regex as re
 from os import makedirs, listdir
 from os.path import isfile, isdir

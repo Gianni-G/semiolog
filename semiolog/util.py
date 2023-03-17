@@ -21,11 +21,17 @@ import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import plotly.graph_objects as go
 
-import socket
-socket_name = socket.gethostname()
-if any(name in socket_name for name in {"Gianni","vpn"}):
+# import socket
+# socket_name = socket.gethostname()
+# if any(name in socket_name for name in {"Gianni","vpn"}):
+#     from tqdm.notebook import tqdm, trange
+# else:
+#     from tqdm.auto import tqdm, trange
+
+try:
+    __IPYTHON__
     from tqdm.notebook import tqdm, trange
-else:
+except NameError:
     from tqdm.auto import tqdm, trange
 
 # Definitions of Functions

@@ -6,11 +6,17 @@ from os.path import isfile, isdir, basename
 from os import listdir
 from nltk.tokenize import sent_tokenize
 
-import socket
-socket_name = socket.gethostname()
-if any(name in socket_name for name in {"Gianni","vpn"}):
+# import socket
+# socket_name = socket.gethostname()
+# if any(name in socket_name for name in {"Gianni","vpn"}):
+#     from tqdm.notebook import tqdm, trange
+# else:
+#     from tqdm.auto import tqdm, trange
+
+try:
+    __IPYTHON__
     from tqdm.notebook import tqdm, trange
-else:
+except NameError:
     from tqdm.auto import tqdm, trange
 
 from .util import load_file, save_file, flatten
