@@ -129,34 +129,34 @@ class Syntagmatic:
             }
         self.bert_tokenizer.add_special_tokens(self.special_tokens)
 
-        # The following is a test for debugging. I construct a SLG tokenizer to produce a tokenized string separated by spaces to feed to the main tokenized defined as a simple whitespace splitting
+        # # The following is a test for debugging. I construct a SLG tokenizer to produce a tokenized string separated by spaces to feed to the main tokenized defined as a simple whitespace splitting
 
-        self.debug_tokenizer = Tokenizer(
-                    models.WordLevel(
-                        vocab = semiotic.vocab.encode,
-                        unk_token = self.config_vocab.unk_token
-                        )
-                        )
-        self.debug_tokenizer.normalizer = NormalizeSLG
+        # self.debug_tokenizer = Tokenizer(
+        #             models.WordLevel(
+        #                 vocab = semiotic.vocab.encode,
+        #                 unk_token = self.config_vocab.unk_token
+        #                 )
+        #                 )
+        # self.debug_tokenizer.normalizer = NormalizeSLG
 
-        self.debug_tokenizer.pre_tokenizer = pre_tokenizers.PreTokenizer.custom(SequenceSLG(semiotic))
+        # self.debug_tokenizer.pre_tokenizer = pre_tokenizers.PreTokenizer.custom(SequenceSLG(semiotic))
 
-        self.debug_bert_tokenizer = PreTrainedTokenizerFast(
-            tokenizer_object = self.debug_tokenizer,
-            # tokenizer_file=str(semiotic.vocab.path.joinpath("tokenizer.json")), # You can load from the tokenizer file, alternatively
+        # self.debug_bert_tokenizer = PreTrainedTokenizerFast(
+        #     tokenizer_object = self.debug_tokenizer,
+        #     # tokenizer_file=str(semiotic.vocab.path.joinpath("tokenizer.json")), # You can load from the tokenizer file, alternatively
 
-            model_max_length = self.config.model_max_length,
-            model_input_names = ["input_ids","token_type_ids", "attention_mask"],
+        #     model_max_length = self.config.model_max_length,
+        #     model_input_names = ["input_ids","token_type_ids", "attention_mask"],
 
-            unk_token= self.config_vocab.unk_token,
-            pad_token= self.config_vocab.pad_token,
-            cls_token= self.config_vocab.cls_token,
-            sep_token= self.config_vocab.sep_token,
-            mask_token= self.config_vocab.mask_token,
-        )
-        self.debug_bert_tokenizer.add_special_tokens(self.special_tokens)
+        #     unk_token= self.config_vocab.unk_token,
+        #     pad_token= self.config_vocab.pad_token,
+        #     cls_token= self.config_vocab.cls_token,
+        #     sep_token= self.config_vocab.sep_token,
+        #     mask_token= self.config_vocab.mask_token,
+        # )
+        # self.debug_bert_tokenizer.add_special_tokens(self.special_tokens)
 
-        # END OF THE DEBUGGING (but see below)
+        # # END OF THE DEBUGGING (but see below)
 
 
     def save_tokenizer(self):
@@ -183,7 +183,7 @@ class Syntagmatic:
 
         def tokenize_function(syntagmas):
 
-            # DEBUGGING: pre segment string into a string separated by spaces and then feed it to a whitspace tokenizer
+            # DEBUGGING: pre segment string into a string separated by spaces and then feed it to a whitespace tokenizer
 
             syntagmas = {"text": [" ".join(self.debug_bert_tokenizer.tokenize(sent)) for sent in syntagmas["text"]]}
             
