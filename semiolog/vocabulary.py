@@ -60,6 +60,7 @@ class Vocabulary:
         self.freq_mass = None
         self.prob = None
 
+        self.punctuation = set(" \n\t.,;:|()[]\{\}\xa0'’‘\"”“?!")
         
 
         # Load HF normalizer
@@ -538,10 +539,19 @@ class nGram():
     def __init__(self, from_file = None, from_dict = None):
 
         if isinstance(from_dict,dict):
-            self.freq = from_dict
+            # stored ngrams can be continuous chars or words separated by spaces. After detecting which is the case, they are converted to tuples. This should be done more systematically
+            if " " in next(iter(from_dict.keys())):
+                self.freq = {tuple(k.split(" ")):v for k,v in from_dict.items()}
+            else:
+                self.freq = {tuple(k):v for k,v in from_dict.items()}
+
         
         elif isfile(from_file):
             self.freq = util.load_file(from_file)
+            if " " in next(iter(self.freq.keys())):
+                self.freq = {tuple(k.split(" ")):v for k,v in self.freq.items()}
+            else:
+                self.freq = {tuple(k):v for k,v in self.freq.items()}
         else:
             raise Exception(f"SLG [E]: No valid dictionnary or filename provided.")
 
