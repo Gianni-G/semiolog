@@ -165,7 +165,7 @@ class Tensor():
     
     def plot(self, data, x=None, y=None):
         
-        if type(data) == np.ndarray:
+        if type(data) in {np.ndarray,np.matrix}:
             z = data
         elif data == "pt":
             z = self.pt
