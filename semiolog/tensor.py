@@ -156,8 +156,16 @@ class Tensor():
                 # Warning: this centering works for the particular normalization by colums of the TC matrix (and CT the transpose of TC). Not intended for other forms of normalization
                 mean = self.M.mean(axis=1)
                 mtc = mean.T@self.M
-                mct = mtc.T
+                mct = mtc.reshape((mtc.size,1))
                 mm = mean.T@mean
+
+                #Degbug: erase after debugging
+                self.cttc = cttc
+                self.mtc = mtc
+                self.mct = mct
+                self.mm = mm
+                #End of Debug
+
                 self.pt = (cttc - mtc - mct) + mm
                 self.pt = self.pt/(self.pt.shape[0]-1)
             else:
@@ -389,28 +397,44 @@ class Tensor():
         fig = go.Figure()
 
         # Add all traces
-        for i in range(len(x)):
+
+        # align signs of eigenvectors across n_rank pt
+        sign = np.sign(x[:,0]).reshape((x.shape[0],1))
+        x = x * sign
+        sign = np.sign(y[:,0]).reshape((y.shape[0],1))
+        y = y * sign
+        sign = np.sign(z[:,0]).reshape((z.shape[0],1))
+        z = z * sign
+
+        del sign
+
+        x_color = convert_to_color(x)
+        y_color = convert_to_color(y)
+        z_color = convert_to_color(z)
+
+        for i,(xi,yi,zi) in enumerate(zip(x,y,z)):
 
             fig.add_trace(
                 go.Scatter3d(
-                        x = x[i] if x[i][0]>0 else -x[i], # align signs of eigenvectors across n_rank pt
-                        y = y[i] if y[i][0]>0 else -y[i],
-                        z = z[i] if z[i][0]>0 else -z[i],
+                        x = xi, #if xi[0]>0 else -xi, # align signs of eigenvectors across n_rank pt
+                        y = yi, #if yi[0]>0 else -yi,
+                        z = zi, #if zi[0]>0 else -zi,
                         mode='markers+text',
                         text=self.elements,
                         textposition="bottom center",
                         marker = dict(
                             symbol = "circle",
-                            # color = x[i],
                             color = [d for d in zip(
-                                convert_to_color(x[i]) if x[i][0]>0 else convert_to_color(-x[i]), # align signs of eigenvectors across n_rank pt
-                                convert_to_color(y[i]) if y[i][0]>0 else convert_to_color(-y[i]),
-                                convert_to_color(z[i]) if z[i][0]>0 else convert_to_color(-z[i]),
+                                x_color[i],
+                                y_color[i],
+                                z_color[i],
                                 )]
                         ),
                         visible= False if i>0 else True
                         )
                 )
+
+        del x_color, y_color, z_color
 
         # Add buttons
         n_traces = len(x)
