@@ -44,7 +44,11 @@ class Tensor():
         if self.rank == 1:
             ngs = nGram(from_dict=self.semiotic.vocab.alpha)
         else:
-            ngs = getattr(self.semiotic.vocab,f"ng{rank}")
+            try:
+                ngs = getattr(self.semiotic.vocab,f"ng{rank}")
+            except:
+                self.semiotic.vocab.load_ngrams(rank)
+                ngs = getattr(self.semiotic.vocab,f"ng{rank}")
 
         if sparse:
             
@@ -83,6 +87,8 @@ class Tensor():
             self.terms = terms
         else:
             self.terms = [terms]
+        
+        
 
         if not self.built:
             return "SLG [E]: Tensor not built. Run the `build()` method on the object"
@@ -98,6 +104,9 @@ class Tensor():
         #TODO: verify that term is completely well formed (list of integers, no repetition, not all ranks, etc.)
 
         self.contexts = [i for i in range(self.rank) if i not in set(self.terms)]
+
+        self.terms_len = len(self.terms)
+        self.contexts_len = len(self.contexts)
 
         blank_t = ["_"]*self.rank
         for i in self.terms:
@@ -211,6 +220,13 @@ class Tensor():
 
             if self.center:
                 self.pt = self.pt/(self.pt.shape[0]-1)
+        
+        # WIP to analyze syntagmatic connection between paradigms
+        # # TODO generalize to len>1
+        # if self.terms_len==2: 
+        #     self.pt_syn = self.pt.reshape([self.dims]*self.terms_len*2)
+        #     self.pt_syn = np.moveaxis(self.pt_syn,range(0,self.pt_syn.ndim,2),range(int(self.pt_syn.ndim/2)))
+        #     self.pt_syn = self.pt_syn.reshape([self.dims**self.terms_len]*2)
 
 
     def pt_svd(self, top_w = None, sparse = True, canonical = True, return_singular_vectors = "vh"):
@@ -282,6 +298,31 @@ class Tensor():
         if canonical:
             sign = np.sign(self.eig_v[0]).reshape((1,self.eig_v.shape[0]))
             self.eig_v = self.eig_v * sign
+
+    # WIP to analyze syntagmatic connection between paradigms
+    # def pt_syn_eig(self, top_w = 10, canonical = True):
+
+    #     # Compute eigenvalues and eigenvectors
+    #     if self.pt_syn.ndim > 2:
+    #         "SLG [E]: The partial trace is a tensor of rank > 2. Eigenvectors are not implemented for these cases"
+
+
+    #     N = self.pt_syn.shape[0]
+
+    #     # Centering breaks the sparsity, hence we can't benefit from sparse algorithms here
+    #     if self.center:
+    #         self.eig_w_syn, self.eig_v_syn = jsp.linalg.eigh(self.pt_syn)
+    #     else:
+    #         self.eig_w_syn, self.eig_v_syn = sparse.linalg.eigsh(self.pt_syn, k=top_w, which='LM', v0=None)
+
+    #     # order eigenvectors by greatest eigenvalue
+    #     idx = self.eig_w_syn.argsort()[::-1]   
+    #     self.eig_w_syn = np.array(self.eig_w_syn[idx])
+    #     self.eig_v_syn = np.array(self.eig_v_syn[:,idx])
+
+    #     if canonical:
+    #         sign = np.sign(self.eig_v_syn[0]).reshape((1,self.eig_v_syn.shape[0]))
+    #         self.eig_v_syn = self.eig_v_syn * sign
     
 
 
@@ -293,14 +334,28 @@ class Tensor():
         elif data == "pt":
             z = self.pt
             x = y = self.terms_labels
+
+        # WIP to analyze syntagmatic connection between paradigms
+        # elif data == "pt_syn":
+        #     z = self.pt_syn
+        #     x = y = self.terms_labels
+
         elif data == "svd":
             z = jnp.diag(self.pt_s) @ self.pt_Vh
             x = self.terms_labels
             y = [f"d{i}" for i in range(self.dims)]
         elif data == "eig":
-            z = (self.eig_v @ jnp.diag(self.eig_w/self.eig_w.sum())).T
+            z = (self.eig_v @ jnp.diag(skl_normalize([self.eig_w])[0])).T
             x = self.terms_labels
             y = [f"d{i}" for i in range(self.dims)]
+
+        # WIP to analyze syntagmatic connection between paradigms
+        # elif data == "eig_syn":
+        #     z = (self.eig_v_syn @ jnp.diag(skl_normalize([self.eig_w_syn])[0])).T
+        #     x = self.terms_labels
+        #     y = [f"d{i}" for i in range(self.dims)]
+
+
         else:
             return f"SLG [E]: Type of Data ({type(data)}) not recognized."
             
@@ -315,9 +370,13 @@ class Tensor():
 
             return fig
 
-    def plot_eig_hm(self, top_w = 10, top_d = 10, term = None):
+    def plot_eig_hm(self, top_w = 10, top_d = 10, term = None, syn = False):
         
-        z = (self.eig_v @ np.diag(self.eig_w/self.eig_w.sum())).T
+        # WIP to analyze syntagmatic connection between paradigms
+        if syn:
+            z = (self.eig_v_syn @ np.diag(skl_normalize([self.eig_w_syn])[0])).T
+        else:
+            z = (self.eig_v @ np.diag(skl_normalize([self.eig_w])[0])).T
 
         if term == None:
             dbk = []

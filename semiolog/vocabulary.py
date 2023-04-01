@@ -36,7 +36,7 @@ slg_version = "0.2.3"
     
 class Vocabulary:
     
-    def __init__(self,semiotic):
+    def __init__(self, semiotic):
         
         #TODO: Is there another way than loading the corpus (or the semiotic) here?
         self.corpus = semiotic.corpus
@@ -89,26 +89,53 @@ class Vocabulary:
     def thres(self):
         return self.thres_
 
-    def load_ngrams(self):
+    def load_ngrams(self, n = None):
+        """
+        n should be an integer or a list of integers (or None)
+        """
+
+        if isinstance(n,int):
+            n = [n]
+
         if isdir(self.path / "ngrams"):
             ngram_files = sorted([f for f in listdir(self.path / "ngrams") if isfile(self.path / f"ngrams/{f}") and f[-4:]=="json"], key=lambda x: int(x.split(".")[0].split("_")[0]))
 
             # self.ng1 = nGram(from_dict=self.alpha)
 
             if ngram_files!=[]:
-                for f in tqdm(ngram_files):
-                    print(f"Loading nGram file {f}...", end="\r")
-                    ng = nGram(from_file = self.path / f"ngrams/{f}")
-                    # Beware that if there are two files with same length ngrams, the second will rewrite the first
-                    setattr(self, f"ng{ng.n}", ng)
-                print(f"SLG [I]: nGrams loaded from disk: {', '.join(ngram_files)}")
+                ngram_files_loaded = []
+                for f in ngram_files:
+                    
+                    if n is not None:
+                        with open(self.path / f"ngrams/{f}", "r") as file:
+                            key1 = file.readlines(2)
+                        key1 = (key1[1].split(":")[0]).strip()
+                        if " " in key1:
+                            ngn = len(key1.split(" "))
+                        else:
+                            ngn = len(key1)-2
+
+                    
+                    if ngn in n or n is None:
+                        print(f"Loading nGram file {f}...", end="\r")
+                        ng = nGram(from_file = self.path / f"ngrams/{f}")
+                        # Beware that if there are two files with same length ngrams, the second will rewrite the first
+                        setattr(self, f"ng{ng.n}", ng)
+                        ngram_files_loaded.append(f)
+
+                print(f"SLG [I]: nGrams loaded from disk: {', '.join(ngram_files_loaded)}")
         else:
             print(f"SLG [W]: no directory {self.path / 'ngrams'}")
 
-    def from_file(self,path = None):
+    def from_file(self, path = None, load_ngrams = False):
+        """
+        load_ngrams should be a Boolean or an integer, or a list of integers
+        """
+
         if path == None:
             path = self.path
 
+        # Trace loaded and non-loaded files
         loaded = []
         not_loaded = []
 
@@ -152,8 +179,14 @@ class Vocabulary:
     
         # TODO: implement better automatic loading of all files in ngram
 
-        if isdir(self.path / "ngrams"):
-            self.load_ngrams()
+        if load_ngrams is not False:
+            if not isdir(self.path / "ngrams"):
+                print(f"SLG [W]: {path/ 'ngrams'} does not exist. nGrams will not be loaded from disk.\n")
+            else:
+                if load_ngrams == True:
+                    self.load_ngrams()
+                else:
+                    self.load_ngrams(n = load_ngrams)
 
 
     def __repr__(self) -> str:
