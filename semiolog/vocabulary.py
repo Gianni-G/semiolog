@@ -101,7 +101,7 @@ class Vocabulary:
                     ng = nGram(from_file = self.path / f"ngrams/{f}")
                     # Beware that if there are two files with same length ngrams, the second will rewrite the first
                     setattr(self, f"ng{ng.n}", ng)
-                print(f"SLG [I]: nGrams loaded from disk ({ngram_files})")
+                print(f"SLG [I]: nGrams loaded from disk: {', '.join(ngram_files)}")
         else:
             print(f"SLG [W]: no directory {self.path / 'ngrams'}")
 
@@ -109,35 +109,46 @@ class Vocabulary:
         if path == None:
             path = self.path
 
+        loaded = []
+        not_loaded = []
+
         if isfile(path/"merges.txt"):
             self.merges = [tuple(merge.split()) for merge in util.load_file(path / "merges.txt")[1:]] # The first line needs to be stripped
+            loaded.append("merges.txt")
         else:
-            print(f"SLG [W]: {path/'merges.txt'} does not exist. It will not be loaded from disk.\n")
+            # print(f"SLG [W]: {path/'merges.txt'} does not exist. It will not be loaded from disk.\n")
+            not_loaded.append("merges.txt")
 
         if isfile(path/"vocab.json"):
             self.encode = util.json2dict("vocab",path)
             self.decode = {i:k for k,i in self.encode.items()}
             self.len = len(self.encode)
+            loaded.append("vocab.json")
         else:
-            print(f"SLG [W]: {path/'vocab.json'} does not exist. It will not be loaded from disk.\n")
+            # print(f"SLG [W]: {path/'vocab.json'} does not exist. It will not be loaded from disk.\n")
+            not_loaded.append("vocab.json")
 
         if isfile(path/"freq.json"):
             self.freq = util.json2dict("freq",path)
             self.freq_mass = sum(self.freq.values())
             self.prob = {k:v/self.freq_mass for k,v in self.freq.items()}
+            loaded.append("freq.json")
         else:
-            print(f"SLG [W]: {path/'freq.json'} does not exist. It will not be loaded from disk.\n")
+            # print(f"SLG [W]: {path/'freq.json'} does not exist. It will not be loaded from disk.\n")
+            not_loaded.append("freq.json")
 
         if isfile(path/"alpha.json"):
             self.alpha = util.json2dict("alpha",path)
             self.char_mass = sum(self.alpha.values())
+            loaded.append("alpha.json")
         else:
-            print(f"SLG [W]: {path/'alpha.json'} does not exist. It will not be loaded from disk.\n")
+            # print(f"SLG [W]: {path/'alpha.json'} does not exist. It will not be loaded from disk.\n")
+            not_loaded.append("alpha.json")
 
         # filenames = [(path / fn) for fn in ["merges.txt","vocab.json","freq.json","alpha.json"]]
         
 
-        print(f"SLG [I]: Vocabulary loaded from disk")
+        print(f"SLG [I]: Vocabulary files loaded from disk: {', '.join(loaded)}. Missing files: {', '.join(not_loaded)}")
     
         # TODO: implement better automatic loading of all files in ngram
 

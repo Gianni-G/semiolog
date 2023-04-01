@@ -1,14 +1,18 @@
 
+from itertools import product
+from collections import defaultdict
 import numpy as np
 from scipy import sparse, linalg
-from itertools import product, combinations
-from collections import defaultdict
+from scipy.sparse.linalg import svds
 import jax.numpy as jnp
-from .util import plot_hm, pmi, coolwarm
-from .vocabulary import nGram
 import jax.scipy as jsp
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from sklearn.preprocessing import normalize as skl_normalize
+
+from .util import plot_hm, pmi, coolwarm
+from .vocabulary import nGram
+
 
 try:
     __IPYTHON__
@@ -37,27 +41,26 @@ class Tensor():
         self.shape = (self.dims,)*self.rank
         self.sparse = sparse
 
-        # ng_atts = sorted([att for att in self.semiotic.vocab.__dict__.keys() if att.startswith("ng")])
-
         if self.rank == 1:
             ngs = nGram(from_dict=self.semiotic.vocab.alpha)
         else:
             ngs = getattr(self.semiotic.vocab,f"ng{rank}")
 
         if sparse:
-
+            
+            elements_set = set(self.elements)
             self.T_freq = defaultdict(int)
-            for k,v in tqdm(ngs.freq.items()):
+            for k,v in ngs.freq.items():
                 if v>filter_thres:
-                    if set(k).issubset(set(self.elements)):
+                    if set(k).issubset(elements_set):
                         indeces = tuple([self.elements_dict[i] for i in k])
                         self.T_freq[indeces] = v
-            del ngs
+            del ngs, elements_set
 
         else:
 
             self.T_freq = np.zeros([dims]*rank)
-            for k,v in ngs.freq.items():
+            for k,v in tqdm(ngs.freq.items()):
                 if v>filter_thres:
                     if set(k).issubset(set(self.elements)):
                         indeces = tuple([self.elements_dict[i] for i in k])
@@ -70,7 +73,8 @@ class Tensor():
         self,
         terms,
         normalize = "matrix",
-        center = False
+        center = False,
+        sqrt = True,
         ):
 
         self.center = center
@@ -83,7 +87,8 @@ class Tensor():
         if not self.built:
             return "SLG [E]: Tensor not built. Run the `build()` method on the object"
 
-        norm_set = {"cols","matrix"}
+
+        norm_set = {"cols_l1", "cols_l2", "cols_max", "matrix"}
         if normalize != None and normalize not in norm_set:
             return f"SLG [E]: Unknown normalization argument ({normalize}). Possible arguments are: {norm_set}"
 
@@ -134,11 +139,14 @@ class Tensor():
 
             del indices, vals, cols, rows
 
+            if normalize == "cols_l1" :
+                self.M = skl_normalize(self.M, norm='l1', axis=0, copy = False)
+            
+            elif normalize == "cols_l2" :
+                self.M = skl_normalize(self.M, norm='l2', axis=0, copy = False)
 
-            if normalize == "cols" :
-                with np.errstate(divide='ignore'):
-                    norm_coeff = 1/(self.M.sum(axis=0))
-                self.M = self.M.multiply(norm_coeff)
+            elif normalize == "cols_max" :
+                self.M = skl_normalize(self.M, norm='max', axis=0, copy = False)
 
             elif normalize == "matrix":
                 with np.errstate(divide='ignore'):
@@ -146,7 +154,9 @@ class Tensor():
                 self.M = self.M.multiply(norm_coeff)
             
             # We take sqrt to retrieve probabilities when contrating, following Bradley&Terilla
-            self.M = self.M.sqrt()
+            if sqrt:
+                self.M = self.M.sqrt()
+
             self.M = self.M.tocsc()
 
             cttc = (self.M.T)@self.M
@@ -203,19 +213,53 @@ class Tensor():
                 self.pt = self.pt/(self.pt.shape[0]-1)
 
 
-    def pt_svd(self, top_w = None):
+    def pt_svd(self, top_w = None, sparse = True, canonical = True, return_singular_vectors = "vh"):
+
+        if top_w == None:
+            top_w = self.M.shape[0]-1
 
         # Compute full SVD
         if self.pt.ndim > 2:
             "SLG [E]: The partial trace is a tensor of rank > 2. SVD is not implemented for these cases"
-        self.pt_U, self.pt_s, self.pt_Vh = jnp.linalg.svd(self.pt, 
-                                    full_matrices=False, # It's not necessary to compute the full matrix of U or V
-                                    compute_uv=True,
-                                    )
         
-        # TODO: Compute only first singular values (top_w)
+        if sparse:
 
-    def pt_eig(self, top_w = 10):
+            if self.center:
+                M_mean = self.M.mean(axis=1).reshape((self.M.shape[0],1))
+                M = self.M - M_mean
+
+            self.pt_U, self.pt_s, self.pt_Vh = svds(
+                M,
+                k = top_w,
+                return_singular_vectors = return_singular_vectors
+            )
+
+            if self.pt_U is not None:
+                self.pt_U = np.flip(self.pt_U, axis = 1)
+            self.pt_s = np.flip(self.pt_s)
+            if self.pt_Vh is not None:
+                self.pt_Vh = np.flip(self.pt_Vh, axis = 0)
+
+
+
+
+
+        else:
+            self.pt_U, self.pt_s, self.pt_Vh = jnp.linalg.svd(
+                # self.pt,
+                self.M.toarray(),
+                full_matrices=False, # It's not necessary to compute the full matrix of U or V
+                compute_uv=True,
+                )
+
+        if canonical:
+            if self.pt_Vh is not None:
+                sign = np.sign(self.pt_Vh[:,0]).reshape((self.pt_Vh.shape[0],1))
+                self.pt_Vh = self.pt_Vh * sign
+                if self.pt_U is not None:
+                    self.pt_U = self.pt_U * sign.T
+
+    def pt_eig(self, top_w = 10, canonical = True):
 
         # Compute eigenvalues and eigenvectors
         if self.pt.ndim > 2:
@@ -234,6 +278,12 @@ class Tensor():
         idx = self.eig_w.argsort()[::-1]   
         self.eig_w = np.array(self.eig_w[idx])
         self.eig_v = np.array(self.eig_v[:,idx])
+
+        if canonical:
+            sign = np.sign(self.eig_v[0]).reshape((1,self.eig_v.shape[0]))
+            self.eig_v = self.eig_v * sign
+    
+
 
     
     def plot(self, data, x=None, y=None):
