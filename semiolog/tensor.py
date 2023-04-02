@@ -78,7 +78,52 @@ class Tensor():
             del ngs
 
         self.built = True
+        self.compressed = False
 
+    def type_compress(
+        self,
+        top_w = 10,
+        sparse = True,
+        normalize = "cols_l2",
+        center=True,
+        sqrt = True
+        ):
+
+        dims = top_w * 2
+
+        compression_dict = {}
+        compressed_elements = []
+
+        for p in trange(self.rank):
+            self.partial_trace(p, normalize = normalize, center = center, sqrt = sqrt)
+            self.pt_eig(top_w = top_w)
+            type_index = np.argmax(self.eig_vw,axis=1)
+            term_vals = self.eig_vw[range(self.dims),type_index]
+            type_neg_signs = (np.sign(term_vals)==-1)*1
+            types = (type_index*2+type_neg_signs).astype(int)
+            term_type_dict = dict(enumerate(types))
+            compression_dict[p] = term_type_dict
+            type_term_dict = dict(enumerate(self.types_topterms(top_w,5)))
+            # type_term_dict = {}
+            # for i in range(dims):
+            #     type_term_dict[i] = {self.elements[e] for e in np.where(types == i)[0][:10]}
+            compressed_elements.append(type_term_dict)
+
+        def type_encode(t):
+            return tuple(compression_dict[p][e] for p,e in enumerate(t))
+            
+        if sparse:
+            Tc_freq = defaultdict(int)
+            for k,v in self.T_freq.items():
+                Tc_freq[type_encode(k)] += v
+        else:
+            return "SLG [E]: Compression of non sparse tensor not implemented yet"
+        
+        self.T_freq = Tc_freq
+        self.dims = dims
+        self.compressed_elements = compressed_elements
+        self.compressed = True
+        
     def partial_trace(
         self,
         terms,
@@ -94,11 +139,8 @@ class Tensor():
         else:
             self.terms = [terms]
         
-        
-
         if not self.built:
             return "SLG [E]: Tensor not built. Run the `build()` method on the object"
-
 
         norm_set = {"cols_l1", "cols_l2", "cols_max", "matrix"}
         if normalize != None and normalize not in norm_set:
@@ -117,7 +159,7 @@ class Tensor():
         blank_t = ["_"]*self.rank
         for i in self.terms:
             blank_t[i] = self.elements
-        self.terms_labels = ["".join(t) for t in product(*blank_t)]
+        self.terms_labels = ["||".join(t) for t in product(*blank_t)]
 
         # # Computing context labels can be very expensive and they're usually not useful (other than to plot small matrices)
 
@@ -125,7 +167,7 @@ class Tensor():
             blank_c = ["¯"]*self.rank
             for i in self.contexts:
                 blank_c[i] = self.elements
-            self.context_labels = ["".join(t) for t in product(*blank_c)]
+            self.context_labels = ["||".join(t) for t in product(*blank_c)]
 
         if self.sparse:
 
@@ -326,34 +368,44 @@ class Tensor():
 
         self.eig_vw = self.eig_v @ np.diag(skl_normalize([self.eig_w],"l1")[0])
 
-    # WIP to analyze syntagmatic connection between paradigms
-    # def pt_syn_eig(self, top_w = 10, canonical = True):
+    def types_topterms(
+        self,
+        top_T = 10,
+        top_t = 10,
+        labels = None,
+        ):
 
-    #     # Compute eigenvalues and eigenvectors
-    #     if self.pt_syn.ndim > 2:
-    #         "SLG [E]: The partial trace is a tensor of rank > 2. Eigenvectors are not implemented for these cases"
+        try: # It seems try is wrongly used here, since I need to run it below again
+            z = self.eig_vw.T
+        except:
+            print("SLG [E]: Run 'pt_eig' method first")
+        
+        z = self.eig_vw.T
 
+        if labels is None:
+            labels = self.elements
 
-    #     N = self.pt_syn.shape[0]
+        dbk = []
+        # dbv = []
+        top_T = min(top_T,z.shape[0])
+        for zi in z:
+            dbi = sorted(list(zip(zi, labels)))
+            
+            dbk_i_neg = tuple(k for v,k in dbi[:top_t])
+            dbk_i_pos = tuple(k for v,k in dbi[-top_t:])
+            
+            # dbv_i_neg = [v for v,k in dbi[:top_t]]
+            # dbv_i_pos = [v for v,k in dbi[-top_t:]]
 
-    #     # Centering breaks the sparsity, hence we can't benefit from sparse algorithms here
-    #     if self.center:
-    #         self.eig_w_syn, self.eig_v_syn = jsp.linalg.eigh(self.pt_syn)
-    #     else:
-    #         self.eig_w_syn, self.eig_v_syn = sparse.linalg.eigsh(self.pt_syn, k=top_w, which='LM', v0=None)
+            dbk.append(dbk_i_pos)
+            dbk.append(dbk_i_neg)
+            # dbv.append(dbv_i_neg+[0]+dbv_i_pos)
 
-    #     # order eigenvectors by greatest eigenvalue
-    #     idx = self.eig_w_syn.argsort()[::-1]   
-    #     self.eig_w_syn = np.array(self.eig_w_syn[idx])
-    #     self.eig_v_syn = np.array(self.eig_v_syn[:,idx])
+        # vals = np.array(dbv).T
+        # labels = np.array(dbk).T
 
-    #     if canonical:
-    #         sign = np.sign(self.eig_v_syn[0]).reshape((1,self.eig_v_syn.shape[0]))
-    #         self.eig_v_syn = self.eig_v_syn * sign
-    
+        return dbk
 
-
-    
     def plot(self, data, x=None, y=None):
         
         if type(data) in {np.ndarray,np.matrix}:
@@ -399,11 +451,7 @@ class Tensor():
 
     def plot_eig_hm(self, top_w = 10, top_d = 10, term = None, syn = False):
         
-        # WIP to analyze syntagmatic connection between paradigms
-        if syn:
-            z = (self.eig_v_syn @ np.diag(skl_normalize([self.eig_w_syn])[0])).T
-        else:
-            z = self.eig_vw.T
+        z = self.eig_vw.T
 
         if term == None:
             dbk = []
