@@ -1,4 +1,3 @@
-
 from itertools import product
 from collections import defaultdict
 import numpy as np
@@ -26,7 +25,14 @@ class Tensor():
         self.semiotic = semiotic
         self.built = False
 
-    def build(self, dims, rank, filter_thres = 10, exclude_punctuation = False, sparse = True):
+    def build(
+        self,
+        dims,
+        rank,
+        filter_thres = 10,
+        exclude_punctuation = False,
+        sparse = True
+        ):
         #TODO assert ngrams exist
 
         # Excluding punctuation has the consequence of exludes ngrams that contain at least one punctuation element. However, stats are not corrected. E.g. the 3-gram ('a','.','c') contains one punctuation mark, so it will be excluded, but its frequency should in principle be added to the bare freq of ('a','b'), which is not done here.
@@ -196,7 +202,9 @@ class Tensor():
 
             # Move axis and reshape
             self.M = np.moveaxis(self.T_freq, self.terms, list(range(len(self.terms))))
-            self.M = self.M.reshape((self.dims**len(self.terms), self.dims**len(self.contexts)))
+            # This reshaping needs to be verified, in case np reshapes differently
+            print("SLG [W]: Reshaping here needs to be verified, in case numpy reshapes differently")
+            self.M = self.M.reshape((self.dims**len(self.terms), self.dims**len(self.contexts))) 
             self.M = self.M.T # Terms as columns, according to Anel&Gastaldi
         
             if normalize == "cols":
@@ -228,8 +236,13 @@ class Tensor():
         #     self.pt_syn = np.moveaxis(self.pt_syn,range(0,self.pt_syn.ndim,2),range(int(self.pt_syn.ndim/2)))
         #     self.pt_syn = self.pt_syn.reshape([self.dims**self.terms_len]*2)
 
-
-    def pt_svd(self, top_w = None, sparse = True, canonical = True, return_singular_vectors = "vh"):
+    def pt_svd(
+        self,
+        top_w = None,
+        sparse = True,
+        canonical = True,
+        return_singular_vectors = "vh"
+        ):
 
         if top_w == None:
             top_w = self.M.shape[0]-1
@@ -275,18 +288,29 @@ class Tensor():
                 if self.pt_U is not None:
                     self.pt_U = self.pt_U * sign.T
 
-    def pt_eig(self, top_w = 10, canonical = True):
+    def pt_eig(
+        self,
+        top_w = None,
+        canonical = True
+        ):
+        """
+        top_w: None | int
+        canonical: Bool
+        """
 
         # Compute eigenvalues and eigenvectors
         if self.pt.ndim > 2:
-            "SLG [E]: The partial trace is a tensor of rank > 2. Eigenvectors are not implemented for these cases"
-
+            return "SLG [E]: The partial trace is a tensor of rank > 2. Eigenvectors are not implemented for these cases"
+        if not np.allclose(self.pt,self.pt.T):
+            return "SLG [E]: The partial trace is not symmetric"
 
         N = self.pt.shape[0]
 
         # Centering breaks the sparsity, hence we can't benefit from sparse algorithms here
         if self.center:
-            self.eig_w, self.eig_v = jsp.linalg.eigh(self.pt)
+            if top_w is not None:
+                top_w = [N-top_w, N-1]
+            self.eig_w, self.eig_v = linalg.eigh(self.pt, subset_by_index = top_w)
         else:
             self.eig_w, self.eig_v = sparse.linalg.eigsh(self.pt, k=top_w, which='LM', v0=None)
 
@@ -295,9 +319,12 @@ class Tensor():
         self.eig_w = np.array(self.eig_w[idx])
         self.eig_v = np.array(self.eig_v[:,idx])
 
+        # Canonicalize by making positive all first values across eigenvectors
         if canonical:
-            sign = np.sign(self.eig_v[0]).reshape((1,self.eig_v.shape[0]))
+            sign = np.sign(self.eig_v[0]).reshape((1,self.eig_v.shape[1]))
             self.eig_v = self.eig_v * sign
+
+        self.eig_vw = self.eig_v @ np.diag(skl_normalize([self.eig_w],"l1")[0])
 
     # WIP to analyze syntagmatic connection between paradigms
     # def pt_syn_eig(self, top_w = 10, canonical = True):
@@ -343,11 +370,11 @@ class Tensor():
         elif data == "svd":
             z = jnp.diag(self.pt_s) @ self.pt_Vh
             x = self.terms_labels
-            y = [f"d{i}" for i in range(self.dims)]
+            y = [f"D {i+1}" for i in range(self.dims)]
         elif data == "eig":
-            z = (self.eig_v @ jnp.diag(skl_normalize([self.eig_w])[0])).T
+            z = self.eig_vw.T
             x = self.terms_labels
-            y = [f"d{i}" for i in range(self.dims)]
+            y = [f"D {i+1}" for i in range(z.shape[0])]
 
         # WIP to analyze syntagmatic connection between paradigms
         # elif data == "eig_syn":
@@ -376,14 +403,14 @@ class Tensor():
         if syn:
             z = (self.eig_v_syn @ np.diag(skl_normalize([self.eig_w_syn])[0])).T
         else:
-            z = (self.eig_v @ np.diag(skl_normalize([self.eig_w])[0])).T
+            z = self.eig_vw.T
 
         if term == None:
             dbk = []
             dbv = []
-            axis_n = min(top_w,z.shape[0])
-            for d in range(axis_n):
-                dbi = sorted(list(zip(z[d], self.terms_labels)))
+            top_w = min(top_w,z.shape[0])
+            for d,zi in enumerate(z):
+                dbi = sorted(list(zip(zi, self.terms_labels)))
                 
                 dbk_i_neg = [k for v,k in dbi[:top_d]]
                 dbk_i_pos = [k for v,k in dbi[-top_d:]]
@@ -418,6 +445,8 @@ class Tensor():
                 return f"SLG [E]: Ploting terms is not yet implemented for partial traces of more than one index"
             if term not in self.elements:
                 return f"SLG [E]: The term '{term}' is out of the vocabulary"
+
+            top_w = min(top_w,z.shape[0])
             term = self.elements_dict[term]
             eig_sort = np.argsort(z[:top_w])
             term_indeces = np.where(eig_sort==term)
@@ -498,7 +527,6 @@ class Tensor():
                 )
         return fig
     
-
     def multiplot(self,x,y,z):
 
         def convert_to_color(data):
