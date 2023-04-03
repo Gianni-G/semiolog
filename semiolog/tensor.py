@@ -290,7 +290,7 @@ class Tensor():
         ):
 
         if top_w == None:
-            top_w = self.M.shape[0]-1
+            top_w = min(self.M.shape)-1
 
         # Compute full SVD
         if self.pt.ndim > 2:
@@ -303,7 +303,7 @@ class Tensor():
                 M = self.M - M_mean
 
             self.pt_U, self.pt_s, self.pt_Vh = svds(
-                M,
+                self.M,
                 k = top_w,
                 return_singular_vectors = return_singular_vectors
             )
@@ -313,10 +313,6 @@ class Tensor():
             self.pt_s = np.flip(self.pt_s)
             if self.pt_Vh is not None:
                 self.pt_Vh = np.flip(self.pt_Vh, axis = 0)
-
-
-
-
 
         else:
             self.pt_U, self.pt_s, self.pt_Vh = jnp.linalg.svd(
@@ -357,7 +353,10 @@ class Tensor():
                 top_w = [N-top_w, N-1]
             self.eig_w, self.eig_v = linalg.eigh(self.pt, subset_by_index = top_w)
         else:
-            self.eig_w, self.eig_v = sparse.linalg.eigsh(self.pt, k=top_w, which='LM', v0=None)
+            if top_w is None:
+                self.eig_w, self.eig_v = sparse.linalg.eigsh(self.pt, which='LM', v0=None)
+            else:
+                self.eig_w, self.eig_v = sparse.linalg.eigsh(self.pt, k=top_w, which='LM', v0=None)
 
         # order eigenvectors by greatest eigenvalue
         idx = self.eig_w.argsort()[::-1]   
