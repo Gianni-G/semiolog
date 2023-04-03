@@ -235,10 +235,13 @@ class Tensor():
 
                 self.pt = (cttc - mtc - mct) + mm
                 self.pt = self.pt/(self.pt.shape[0]-1)
+                
+                del cttc, mtc, mct, mm
             else:
                 self.pt = cttc.toarray()
+                
+                del cttc
             
-            del cttc, mtc, mct, mm
 
         else:
 
