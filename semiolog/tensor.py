@@ -142,7 +142,7 @@ class Tensor():
         if not self.built:
             return "SLG [E]: Tensor not built. Run the `build()` method on the object"
 
-        norm_set = {"cols_l1", "cols_l2", "cols_max", "matrix"}
+        norm_set = {"cols_l1", "cols_l2", "cols_max", "rows_l1", "rows_l2", "rows_max", "matrix"}
         if normalize != None and normalize not in norm_set:
             return f"SLG [E]: Unknown normalization argument ({normalize}). Possible arguments are: {norm_set}"
 
@@ -204,6 +204,15 @@ class Tensor():
 
             elif normalize == "cols_max" :
                 self.M = skl_normalize(self.M, norm='max', axis=0, copy = False)
+
+            elif normalize == "rows_l1" :
+                self.M = skl_normalize(self.M, norm='l1', axis=1, copy = False)
+            
+            elif normalize == "rows_l2" :
+                self.M = skl_normalize(self.M, norm='l2', axis=1, copy = False)
+
+            elif normalize == "rows_max" :
+                self.M = skl_normalize(self.M, norm='max', axis=1, copy = False)
 
             elif normalize == "matrix":
                 with np.errstate(divide='ignore'):
