@@ -60,7 +60,7 @@ class Vocabulary:
         self.freq_mass = None
         self.prob = None
 
-        self.punctuation = set(" \n\t.,;:|()[]\{\}\xa0'’‘\"”“?!")
+        self.punctuation = set(" \n\t.,;:|()[]\{\}\xa0'’‘\"”“?!–")
         
 
         # Load HF normalizer

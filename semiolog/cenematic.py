@@ -12,6 +12,7 @@ from .typing import Typing
 from .text import Text
 
 from .tensor import Tensor
+from .concepts import Concepts
 
 class Cenematic:
     
@@ -43,6 +44,7 @@ class Cenematic:
         self.corpus = Corpus(self)
         self.vocab = Vocabulary(self)
         self.tensor = Tensor(self)
+        self.concepts = Concepts(self)
 
         # TODO: configure online repository for models, with automatic download
         

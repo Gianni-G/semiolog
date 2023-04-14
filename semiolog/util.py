@@ -556,8 +556,6 @@ def plot_hm(z,x,y):
             family = "Courier New"
         ),
         )
-    # fig.update_yaxes(autorange="reversed")
-    # fig.update_xaxes(side="top")
     return fig
 
 def plot_3D(tensor,elements,buttons=None):

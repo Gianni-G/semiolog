@@ -8,6 +8,7 @@ import jax.scipy as jsp
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from sklearn.preprocessing import normalize as skl_normalize
+from sklearn.cluster import KMeans
 
 from .util import plot_hm, pmi, coolwarm
 from .vocabulary import nGram
@@ -56,7 +57,7 @@ class Tensor():
                 self.semiotic.vocab.load_ngrams(rank)
                 ngs = getattr(self.semiotic.vocab,f"ng{rank}")
 
-        if sparse:
+        if self.sparse:
             
             elements_set = set(self.elements)
             self.T_freq = defaultdict(int)
@@ -80,38 +81,131 @@ class Tensor():
         self.built = True
         self.compressed = False
 
+    # def type_compress(
+    #     self,
+    #     top_w = 10,
+    #     sparse = True,
+    #     normalize = "cols_l2",
+    #     center=True,
+    #     sqrt = True
+    #     ):
+
+    #     dims = top_w * 2
+
+    #     compression_dict = {}
+    #     compressed_elements = []
+
+    #     for p in trange(self.rank):
+    #         self.partial_trace(p, normalize = normalize, center = center, sqrt = sqrt)
+    #         self.pt_eig(top_w = top_w)
+    #         type_index = np.argmax(self.eig_vw,axis=1)
+    #         term_vals = self.eig_vw[range(self.dims),type_index]
+    #         type_neg_signs = (np.sign(term_vals)==-1)*1
+    #         types = (type_index*2+type_neg_signs).astype(int)
+    #         term_type_dict = dict(enumerate(types))
+    #         compression_dict[p] = term_type_dict
+    #         type_term_dict = dict(enumerate(self.types_topterms(top_w,5)))
+    #         # type_term_dict = {}
+    #         # for i in range(dims):
+    #         #     type_term_dict[i] = {self.elements[e] for e in np.where(types == i)[0][:10]}
+    #         compressed_elements.append(type_term_dict)
+
+    #     def type_encode(t):
+    #         return tuple(compression_dict[p][e] for p,e in enumerate(t))
+            
+    #     if sparse:
+    #         Tc_freq = defaultdict(int)
+    #         for k,v in self.T_freq.items():
+    #             Tc_freq[type_encode(k)] += v
+    #     else:
+    #         return "SLG [E]: Compression of non sparse tensor not implemented yet"
+        
+    #     self.T_freq = Tc_freq
+    #     self.dims = dims
+    #     self.compressed_elements = compressed_elements
+    #     self.compressed = True
+
     def type_compress(
         self,
         top_w = 10,
+        dims = 10,
+        method = "top_eig", # "hjelm"
+        positional = False,
         sparse = True,
         normalize = "cols_l2",
         center=True,
         sqrt = True
         ):
-
-        dims = top_w * 2
+        """
+        'positional = True' computes different types for different positions, otherwise, the middle one is used for all of them
+        """
 
         compression_dict = {}
         compressed_elements = []
 
-        for p in trange(self.rank):
+        if positional:
+            positions = range(self.rank)
+        else:
+            positions = [int(self.rank/2)]
+        
+        self.positional_types = positional
+
+        for p in tqdm(positions):
+
             self.partial_trace(p, normalize = normalize, center = center, sqrt = sqrt)
             self.pt_eig(top_w = top_w)
-            type_index = np.argmax(self.eig_vw,axis=1)
-            term_vals = self.eig_vw[range(self.dims),type_index]
-            type_neg_signs = (np.sign(term_vals)==-1)*1
-            types = (type_index*2+type_neg_signs).astype(int)
+            
+            if method =="top_eig":
+                dims = top_w * 2
+                type_index = np.argmax(self.eig_vw,axis=1)
+                term_vals = self.eig_vw[range(self.dims),type_index]
+                type_neg_signs = (np.sign(term_vals)==-1)*1
+                types = (type_index*2+type_neg_signs).astype(int)
+
+            elif method == "hjelm":
+                embed  = self.eig_v/np.abs(self.eig_v).max(axis=0)
+                embed = np.digitize(embed, [-.25,.25])-1
+                embed2type = {k:t for t,k in enumerate(sorted(list({tuple(i) for i in embed})))}
+                dims = len(embed2type)
+                types = np.apply_along_axis(lambda x:embed2type[tuple(x)], 1, embed)
+
+            elif method == "hjelm_cluster":
+                embed  = self.eig_v/np.abs(self.eig_v).max(axis=0)
+                embed = np.digitize(embed, [-.25,.25])-1
+                kmeans = KMeans(n_clusters=dims, random_state=0, n_init="auto").fit(embed)
+                types = kmeans.labels_
+
+            elif method == "cluster":
+                kmeans = KMeans(n_clusters=dims, random_state=0, n_init="auto").fit(self.eig_vw)
+                types = kmeans.labels_
+            
+            else:
+                return f"SLG [E]: Unknown method '{method}'"
+
+                # embed2type = {k:t for t,k in enumerate(sorted(list({tuple(i) for i in embed})))}
+                # dims = len(embed2type)
+                # types = np.apply_along_axis(lambda x:embed2type[tuple(x)], 1, embed)
+
             term_type_dict = dict(enumerate(types))
             compression_dict[p] = term_type_dict
+            # type_term_dict = dict(enumerate(self.types_topterms(top_w,5)))
             type_term_dict = dict(enumerate(self.types_topterms(top_w,5)))
-            # type_term_dict = {}
-            # for i in range(dims):
-            #     type_term_dict[i] = {self.elements[e] for e in np.where(types == i)[0][:10]}
+            type_term_dict = defaultdict(list)
+            for i,(k,v) in enumerate(zip(types,self.elements)):
+                type_term_dict[k].append(v) if len(type_term_dict[k]) < 7 else None
+                if len(type_term_dict)==dims and (i>200 or min(len(v) for v in type_term_dict.values()) == 6):
+                    break
             compressed_elements.append(type_term_dict)
 
-        def type_encode(t):
-            return tuple(compression_dict[p][e] for p,e in enumerate(t))
-            
+        self.compression_dict = compression_dict
+        
+        if self.positional_types:
+            def type_encode(t):
+                return tuple(self.compression_dict[p][e] for p,e in enumerate(t))
+        else:
+            def type_encode(t):
+                return tuple(self.compression_dict[positions[0]][e] for e in t)
+
         if sparse:
             Tc_freq = defaultdict(int)
             for k,v in self.T_freq.items():
@@ -123,16 +217,13 @@ class Tensor():
         self.dims = dims
         self.compressed_elements = compressed_elements
         self.compressed = True
-        
-    def partial_trace(
+
+    def build_tc_matrix(
         self,
         terms,
         normalize = "matrix",
-        center = False,
-        sqrt = True,
+        label_sep = "",
         ):
-
-        self.center = center
 
         if isinstance(terms, list):
             self.terms = terms
@@ -142,9 +233,11 @@ class Tensor():
         if not self.built:
             return "SLG [E]: Tensor not built. Run the `build()` method on the object"
 
-        norm_set = {"cols_l1", "cols_l2", "cols_max", "rows_l1", "rows_l2", "rows_max", "matrix"}
-        if normalize != None and normalize not in norm_set:
-            return f"SLG [E]: Unknown normalization argument ({normalize}). Possible arguments are: {norm_set}"
+        self.norms = {"cols_l1", "cols_l2", "cols_max", "rows_l1", "rows_l2", "rows_max", "matrix", "pmi", "pmi_norm", "ppmi", "ppmi_norm"}
+        if normalize != None and normalize not in self.norms:
+            return f"SLG [E]: Unknown normalization argument ({normalize}). Possible arguments are: {self.norms}"
+        
+        self.norm = normalize
 
         if max(self.terms) >= self.rank:
             return "SLG [E]: At least one term index is greater than the tensor rank"
@@ -156,18 +249,21 @@ class Tensor():
         self.terms_len = len(self.terms)
         self.contexts_len = len(self.contexts)
 
-        blank_t = ["_"]*self.rank
-        for i in self.terms:
-            blank_t[i] = self.elements
-        self.terms_labels = ["||".join(t) for t in product(*blank_t)]
+        if len(self.terms)>1:
+            blank_t = ["¯"]*self.rank
+            for i in self.terms:
+                blank_t[i] = self.elements
+            self.terms_labels = [label_sep.join(t) for t in product(*blank_t)]
+        else:
+            self.terms_labels = self.elements
 
         # # Computing context labels can be very expensive and they're usually not useful (other than to plot small matrices)
 
         if self.dims <=50 and self.rank<=4:
-            blank_c = ["¯"]*self.rank
+            blank_c = ["_"]*self.rank
             for i in self.contexts:
                 blank_c[i] = self.elements
-            self.context_labels = ["||".join(t) for t in product(*blank_c)]
+            self.context_labels = [label_sep.join(t) for t in product(*blank_c)]
 
         if self.sparse:
 
@@ -196,30 +292,96 @@ class Tensor():
 
             del indices, vals, cols, rows
 
-            if normalize == "cols_l1" :
-                self.M = skl_normalize(self.M, norm='l1', axis=0, copy = False)
+        else:
+            # Move axis and reshape
+            self.M = np.moveaxis(self.T_freq, self.terms, list(range(len(self.terms))))
+            # This reshaping needs to be verified, in case np reshapes differently
+            print("SLG [W]: Reshaping here needs to be verified, in case numpy reshapes differently")
+            self.M = self.M.reshape((self.dims**len(self.terms), self.dims**len(self.contexts))) 
+            self.M = self.M.T # Terms as columns, according to Anel&Gastaldi
+
+        if self.norm == "cols_l1" :
+            self.M = skl_normalize(self.M, norm='l1', axis=0, copy = False)
+        
+        elif self.norm == "cols_l2" :
+            self.M = skl_normalize(self.M, norm='l2', axis=0, copy = False)
+
+        elif self.norm == "cols_max" :
+            self.M = skl_normalize(self.M, norm='max', axis=0, copy = False)
+
+        elif self.norm == "rows_l1" :
+            self.M = skl_normalize(self.M, norm='l1', axis=1, copy = False)
+        
+        elif self.norm == "rows_l2" :
+            self.M = skl_normalize(self.M, norm='l2', axis=1, copy = False)
+
+        elif self.norm == "rows_max" :
+            self.M = skl_normalize(self.M, norm='max', axis=1, copy = False)
+
+        elif self.norm == "matrix":
+            with np.errstate(divide='ignore'):
+                norm_coeff = 1/(self.M.sum())
+            self.M = self.M.multiply(norm_coeff)
+        
+        elif self.norm == "pmi":
+            self.M = pmi(self.M.todense(),normalize = False)
+            if self.sparse:
+                self.M = sparse.coo_array(self.M)
+        
+        elif self.norm == "pmi_norm":
+            self.M = pmi(self.M.todense(),normalize = True)
+            if self.sparse:
+                self.M = sparse.coo_array(self.M)
+
+        elif self.norm == "ppmi":
+            self.M = pmi(self.M.todense(),normalize = False)
+            self.M[self.M<0] = 0
+            if self.sparse:
+                self.M = sparse.coo_array(self.M)
+        
+        elif self.norm == "ppmi_norm":
+            self.M = pmi(self.M.todense(),normalize = True)
+            self.M[self.M<0] = 0
+            if self.sparse:
+                self.M = sparse.coo_array(self.M)
+
+        if self.sparse:
+            self.M = self.M.tocsc()
+
+    def M_dict(self,expr):
+        """
+        expr: str
+        """
+
+        # TODO: assert len(expr) is correct and M exists
+
+        if len(self.terms) == 1:
+            expr_label_t = expr[self.terms[0]]
+        else:
+            expr_label_t = "".join(["¯" if i not in self.terms else expr[i]  for i in range(self.rank)])
+        expr_label_c = "".join(["_" if i not in self.contexts else expr[i]  for i in range(self.rank)])
+
+        t_i = self.terms_labels.index(expr_label_t)
+        c_i = self.context_labels.index(expr_label_c)
+
+        return self.M[c_i,t_i]
+
+    def partial_trace(
+        self,
+        sqrt = False,
+        center = False,
+        ):
+
+        if not hasattr(self, "M"):
+            return "SLG [E]: Term-Context Matrix not built. Please run `build_tc_matrix` before"
+
+        self.center_pt = center
+        self.sqrt_pt = sqrt
             
-            elif normalize == "cols_l2" :
-                self.M = skl_normalize(self.M, norm='l2', axis=0, copy = False)
+        # We take sqrt to retrieve probabilities when contrating, following Bradley&Terilla
 
-            elif normalize == "cols_max" :
-                self.M = skl_normalize(self.M, norm='max', axis=0, copy = False)
+        if self.sparse:
 
-            elif normalize == "rows_l1" :
-                self.M = skl_normalize(self.M, norm='l1', axis=1, copy = False)
-            
-            elif normalize == "rows_l2" :
-                self.M = skl_normalize(self.M, norm='l2', axis=1, copy = False)
-
-            elif normalize == "rows_max" :
-                self.M = skl_normalize(self.M, norm='max', axis=1, copy = False)
-
-            elif normalize == "matrix":
-                with np.errstate(divide='ignore'):
-                    norm_coeff = 1/(self.M.sum())
-                self.M = self.M.multiply(norm_coeff)
-            
-            # We take sqrt to retrieve probabilities when contrating, following Bradley&Terilla
             if sqrt:
                 self.M = self.M.sqrt()
 
@@ -251,25 +413,7 @@ class Tensor():
                 
                 del cttc
             
-
         else:
-
-            # Move axis and reshape
-            self.M = np.moveaxis(self.T_freq, self.terms, list(range(len(self.terms))))
-            # This reshaping needs to be verified, in case np reshapes differently
-            print("SLG [W]: Reshaping here needs to be verified, in case numpy reshapes differently")
-            self.M = self.M.reshape((self.dims**len(self.terms), self.dims**len(self.contexts))) 
-            self.M = self.M.T # Terms as columns, according to Anel&Gastaldi
-        
-            if normalize == "cols":
-
-                col_sums = self.M.sum(axis=0)
-                self.M = np.divide(self.M, col_sums, out=np.zeros_like(self.M), where=col_sums!=0)
-
-                del col_sums
-
-            elif normalize == "matrix":
-                self.M = self.M/self.M.sum()
 
             # We take sqrt to retrieve probabilities when contrating, following Bradley&Terilla
             self.M = np.sqrt(self.M)
@@ -290,53 +434,74 @@ class Tensor():
         #     self.pt_syn = np.moveaxis(self.pt_syn,range(0,self.pt_syn.ndim,2),range(int(self.pt_syn.ndim/2)))
         #     self.pt_syn = self.pt_syn.reshape([self.dims**self.terms_len]*2)
 
-    def pt_svd(
+    def svd(
         self,
+        sqrt = False,
+        center = False,
         top_w = None,
         sparse = True,
         canonical = True,
-        return_singular_vectors = "vh"
+        return_singular_vectors = True
         ):
+        """
+        return_singular_vectors: {True, False, “u”, “vh”}
+        """
 
+        self.sqrt_svd = sqrt
+        self.center_svd = center
         if top_w == None:
             top_w = min(self.M.shape)-1
 
         # Compute full SVD
-        if self.pt.ndim > 2:
-            "SLG [E]: The partial trace is a tensor of rank > 2. SVD is not implemented for these cases"
+        # if self.pt.ndim > 2:
+        #     "SLG [E]: The partial trace is a tensor of rank > 2. SVD is not implemented for these cases"
         
+        M = self.M.copy()
+
         if sparse:
 
-            if self.center:
-                M_mean = self.M.mean(axis=1).reshape((self.M.shape[0],1))
-                M = self.M - M_mean
+            if sqrt:
+                M = M.sqrt()
 
-            self.pt_U, self.pt_s, self.pt_Vh = svds(
-                self.M,
+            if center:
+                M_mean = M.mean(axis=1).reshape((M.shape[0],1))
+                M = M - M_mean
+
+            self.svd_U, self.svd_s, self.svd_Vh = svds(
+                M,
                 k = top_w,
                 return_singular_vectors = return_singular_vectors
             )
 
-            if self.pt_U is not None:
-                self.pt_U = np.flip(self.pt_U, axis = 1)
-            self.pt_s = np.flip(self.pt_s)
-            if self.pt_Vh is not None:
-                self.pt_Vh = np.flip(self.pt_Vh, axis = 0)
+            if self.svd_U is not None:
+                self.svd_U = np.flip(self.svd_U, axis = 1)
+            self.svd_s = np.flip(self.svd_s)
+            if self.svd_Vh is not None:
+                self.svd_Vh = np.flip(self.svd_Vh, axis = 0)
 
         else:
-            self.pt_U, self.pt_s, self.pt_Vh = jnp.linalg.svd(
-                # self.pt,
-                self.M.toarray(),
+
+            M = M.toarray()
+
+            if sqrt:
+                M = np.sqrt(M)
+
+            if center:
+                M_mean = M.mean(axis=1).reshape((M.shape[0],1))
+                M = M - M_mean
+
+            self.svd_U, self.svd_s, self.svd_Vh = jnp.linalg.svd(
+                M,
                 full_matrices=False, # It's not necessary to compute the full matrix of U or V
                 compute_uv=True,
                 )
 
         if canonical:
-            if self.pt_Vh is not None:
-                sign = np.sign(self.pt_Vh[:,0]).reshape((self.pt_Vh.shape[0],1))
-                self.pt_Vh = self.pt_Vh * sign
-                if self.pt_U is not None:
-                    self.pt_U = self.pt_U * sign.T
+            if self.svd_Vh is not None:
+                sign = np.sign(self.svd_Vh[:,0]).reshape((self.svd_Vh.shape[0],1))
+                self.svd_Vh = self.svd_Vh * sign
+                if self.svd_U is not None:
+                    self.svd_U = self.svd_U * sign.T
 
     def pt_eig(
         self,
@@ -386,12 +551,10 @@ class Tensor():
         labels = None,
         ):
 
-        try: # It seems try is wrongly used here, since I need to run it below again
-            z = self.eig_vw.T
+        try:
+            z = (jnp.diag(self.svd_s) @ self.svd_Vh).T
         except:
-            print("SLG [E]: Run 'pt_eig' method first")
-        
-        z = self.eig_vw.T
+            return "SLG [E]: Run 'pt_eig' method first"        
 
         if labels is None:
             labels = self.elements
@@ -417,7 +580,7 @@ class Tensor():
 
         return dbk
 
-    def plot(self, data, x=None, y=None):
+    def plot(self, data, x=None, y=None, plot_first=None):
         
         if type(data) in {np.ndarray,np.matrix}:
             z = data
@@ -431,9 +594,10 @@ class Tensor():
         #     x = y = self.terms_labels
 
         elif data == "svd":
-            z = jnp.diag(self.pt_s) @ self.pt_Vh
-            x = self.terms_labels
-            y = [f"D {i+1}" for i in range(self.dims)]
+            z = jnp.diag(self.svd_s[:plot_first]) @ self.svd_Vh[:plot_first]
+            x = self.elements
+            y = [f"D {i+1}" for i in range(z.shape[0])]
+
         elif data == "eig":
             z = self.eig_vw.T
             x = self.terms_labels
@@ -460,9 +624,162 @@ class Tensor():
 
             return fig
 
-    def plot_eig_hm(self, top_w = 10, top_d = 10, term = None, syn = False):
+
+    # def plot_svd_hm(
+    #     self,
+    #     top_w = 10,
+    #     top_d = 10,
+    #     term = None,
+    #     syn = False,
+    #     transpose = False):
         
-        z = self.eig_vw.T
+    #     # z = self.eig_vw.T
+    #     z = jnp.diag(self.svd_s) @ self.svd_Vh
+
+    #     if term == None:
+    #         dbk = []
+    #         dbv = []
+    #         top_w = min(top_w,z.shape[0])
+    #         for d,zi in enumerate(z):
+    #             dbi = sorted(list(zip(zi, self.terms_labels)))
+                
+    #             dbk_i_neg = [k for v,k in dbi[:top_d]]
+    #             dbk_i_pos = [k for v,k in dbi[-top_d:]]
+                
+    #             dbv_i_neg = [v for v,k in dbi[:top_d]]
+    #             dbv_i_pos = [v for v,k in dbi[-top_d:]]
+
+    #             dbk.append(dbk_i_neg+["..."]+dbk_i_pos)
+    #             dbv.append(dbv_i_neg+[0]+dbv_i_pos)
+
+    #             vals = np.array(dbv).T if transpose else np.array(dbv)
+    #             labels = np.array(dbk).T if transpose else np.array(dbk)
+
+    #             xy = ([str(-(top_d-i)) for i in range(top_d)] + ["0"] + [str(i+1) for i in range(top_d)],[f"D {i+1}" for i in range(top_w)])
+
+    #             x = xy[1] if transpose else xy[0]
+    #             y = xy[0] if transpose else xy[1]
+            
+    #             fig = go.Figure(
+
+    #                 data=go.Heatmap(dict(
+    #                     z= vals,
+    #                     x = x,
+    #                     y = y,
+    #                     colorscale = coolwarm,
+    #                     zmid = 0,
+    #                     xgap = 1,
+    #                     ygap = 1,
+    #                     text = labels,
+    #                     texttemplate="%{text}",
+    #                     textfont={"size":11,"family":"Courier New", "color": 'white',}
+    #                     )
+    #                     ))
+        
+    #     else:
+    #         if len(self.terms)>1:
+    #             return f"SLG [E]: Ploting terms is not yet implemented for partial traces of more than one index"
+    #         if term not in self.elements:
+    #             return f"SLG [E]: The term '{term}' is out of the vocabulary"
+
+    #         top_w = min(top_w,z.shape[0])
+    #         term = self.elements_dict[term]
+    #         eig_sort = np.argsort(z[:top_w])
+    #         term_indeces = np.where(eig_sort==term)
+    #         neighbour_indices = []
+    #         for i,j in zip(*term_indeces):
+    #             indices = eig_sort[i,max(0,j-top_d):j+top_d+1]
+    #             if j-top_d<0:
+    #                 indices = np.concatenate((np.array([-1]*(top_d-j)),indices))
+    #             if j+top_d >= z.shape[1]:
+    #                 indices = np.concatenate((indices,np.array([-1]*(j+top_d+1-z.shape[1]))))
+    #             neighbour_indices.append(indices)
+    #         neighbour_indices = np.array(neighbour_indices)
+    #         vals = np.zeros(neighbour_indices.shape)
+    #         for i in range(neighbour_indices.shape[0]):
+    #             for j in range(neighbour_indices.shape[1]):
+    #                 if neighbour_indices[i,j] != -1:
+    #                     vals[i,j]=z[i,neighbour_indices[i,j]]
+    #         labels = np.vectorize(lambda x: "" if x==-1 else self.terms_labels[x].upper() if x==term  else self.terms_labels[x])(neighbour_indices)
+
+    #         vals = vals.T if transpose else vals
+    #         labels = labels.T if transpose else labels
+
+    #         fig = make_subplots(rows=2, cols=1,row_heights=[0.1, 0.9])
+            
+    #         term_v = z.T[term]
+    #         dist = (z.T@term_v)
+    #         dist_indices = list(reversed(list(np.argsort(dist).flatten())[-top_d:]))
+    #         neighbors = np.array([[dist[i] for i in dist_indices]])
+    #         neighbors = neighbors/(term_v@term_v)
+            
+    #         xy = ([str(-(top_d-i)) for i in range(top_d)] + ["0"] + [str(i+1) for i in range(top_d)],[f"D {i+1}" for i in range(top_w)])
+
+    #         x = xy[1] if transpose else xy[0]
+    #         y = xy[0] if transpose else xy[1]
+
+    #         fig.append_trace(go.Heatmap(dict(
+    #                 z= neighbors,
+
+    #                 # x = [f"D {i+1}" for i in range(top_t)],
+    #                 # y = [str(-(top_k-i)) for i in range(top_k)] + ["0"] + [str(i+1) for i in range(top_k)],
+    #                 colorscale = coolwarm,
+    #                 zmid = 0,
+    #                 xgap = 1,
+    #                 ygap = 1,
+    #                 text = [[self.elements[i] if i!=term else self.elements[i].upper() for i in dist_indices]],
+    #                 texttemplate="%{text}",
+    #                 textfont={"size":12,"family":"Courier New", "color": 'white',},
+    #                 yaxis = "y2"
+    #                 )),
+    #             row=1, col=1)
+
+    #         fig.append_trace(go.Heatmap(dict(
+    #                 z= vals,
+    #                 x = x,
+    #                 y = y,
+    #                 colorscale = coolwarm,
+    #                 zmid = 0,
+    #                 xgap = 1,
+    #                 ygap = 1,
+    #                 text = labels,
+    #                 texttemplate="%{text}",
+    #                 textfont={"size":11,"family":"Courier New", "color": 'white',}
+    #                 )),
+    #             row=2, col=1)
+
+
+    #     fig.update_layout(
+    #         yaxis2 = dict(
+    #             autorange=None if transpose else "reversed",
+    #             ),
+    #         yaxis = dict(
+    #             autorange=None if transpose else "reversed",
+    #             ),
+    #         xaxis = dict(
+    #             side="top"
+    #             ),
+    #         plot_bgcolor='rgba(0,0,0,0)',
+    #         autosize=True,
+    #         minreducedwidth=top_w*100,
+    #         # width = top_t*100,
+    #         height=top_d*80,
+    #         font = dict(
+    #             family = "Courier New"
+    #         ),
+    #         )
+    #     return fig
+
+    def plot_svd_hm(
+        self,
+        top_w = 10,
+        top_d = 10,
+        term = None,
+        syn = False,
+        transpose = False):
+        
+        # z = self.eig_vw.T
+        z = jnp.diag(self.svd_s) @ self.svd_Vh
 
         if term == None:
             dbk = []
@@ -480,15 +797,20 @@ class Tensor():
                 dbk.append(dbk_i_neg+["..."]+dbk_i_pos)
                 dbv.append(dbv_i_neg+[0]+dbv_i_pos)
 
-                vals = np.array(dbv).T
-                labels = np.array(dbk).T
+                vals = np.array(dbv).T if transpose else np.array(dbv)
+                labels = np.array(dbk).T if transpose else np.array(dbk)
+
+                xy = ([str(-(top_d-i)) for i in range(top_d)] + ["0"] + [str(i+1) for i in range(top_d)],[f"D {i+1}" for i in range(top_w)])
+
+                x = xy[1] if transpose else xy[0]
+                y = xy[0] if transpose else xy[1]
             
                 fig = go.Figure(
 
                     data=go.Heatmap(dict(
                         z= vals,
-                        x = [f"D {i+1}" for i in range(top_w)],
-                        y = [str(-(top_d-i)) for i in range(top_d)] + ["0"] + [str(i+1) for i in range(top_d)],
+                        x = x,
+                        y = y,
                         colorscale = coolwarm,
                         zmid = 0,
                         xgap = 1,
@@ -525,8 +847,8 @@ class Tensor():
                         vals[i,j]=z[i,neighbour_indices[i,j]]
             labels = np.vectorize(lambda x: "" if x==-1 else self.terms_labels[x].upper() if x==term  else self.terms_labels[x])(neighbour_indices)
 
-            vals = vals.T
-            labels = labels.T
+            vals = vals.T if transpose else vals
+            labels = labels.T if transpose else labels
 
             fig = make_subplots(rows=2, cols=1,row_heights=[0.1, 0.9])
             
@@ -536,6 +858,11 @@ class Tensor():
             neighbors = np.array([[dist[i] for i in dist_indices]])
             neighbors = neighbors/(term_v@term_v)
             
+            xy = ([str(-(top_d-i)) for i in range(top_d)] + ["0"] + [str(i+1) for i in range(top_d)],[f"D {i+1}" for i in range(top_w)])
+
+            x = xy[1] if transpose else xy[0]
+            y = xy[0] if transpose else xy[1]
+
             fig.append_trace(go.Heatmap(dict(
                     z= neighbors,
 
@@ -548,44 +875,111 @@ class Tensor():
                     text = [[self.elements[i] if i!=term else self.elements[i].upper() for i in dist_indices]],
                     texttemplate="%{text}",
                     textfont={"size":11,"family":"Courier New", "color": 'white',},
+                    yaxis = "y2"
                     )),
                 row=1, col=1)
 
             fig.append_trace(go.Heatmap(dict(
                     z= vals,
-                    x = [f"D {i+1}" for i in range(top_w)],
-                    y = [str(-(top_d-i)) for i in range(top_d)] + ["0"] + [str(i+1) for i in range(top_d)],
+                    x = x,
+                    y = y,
                     colorscale = coolwarm,
                     zmid = 0,
                     xgap = 1,
                     ygap = 1,
                     text = labels,
                     texttemplate="%{text}",
-                    textfont={"size":11,"family":"Courier New", "color": 'white',}
+                    textfont={"family":"Courier New", "color": 'white',}
                     )),
                 row=2, col=1)
 
 
-        if term == None:
-            fig.update_layout(
-                yaxis = dict(
-                    # scaleanchor = 'x',
-                    autorange="reversed"
-                    ),
-                xaxis = dict(
-                    side="top"
-                    ),
-                plot_bgcolor='rgba(0,0,0,0)',
-                autosize=True,
-                minreducedwidth=top_w*100,
-                # width = top_t*100,
-                height=top_d*80,
-                font = dict(
-                    family = "Courier New"
+        fig.update_layout(
+            yaxis2 = dict(
+                autorange=None if transpose else "reversed",
                 ),
-                )
+            yaxis = dict(
+                autorange=None if transpose else "reversed",
+                ),
+            xaxis = dict(
+                side="top"
+                ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            autosize=True,
+            minreducedwidth=top_w*100,
+            # width = top_t*100,
+            height=top_d*80,
+            font = dict(
+                family = "Courier New",
+            ),
+            )
         return fig
-    
+
+    def plot_3d(self, data = "svd"):
+        """
+        data: (x,y,z)
+        """
+        
+        if data == "svd":
+            Vhs = self.svd_Vh.T @ np.diag(self.svd_s/self.svd_s.sum())
+            norm = np.max(np.abs(Vhs[:,:3]))
+            x = Vhs[:,0]/norm
+            y = Vhs[:,1]/norm
+            z = Vhs[:,2]/norm
+
+        else:
+            x,y,z = data
+
+
+        def convert_to_color(data):
+            return (data - np.min(data)) / (np.max(data) - np.min(data))*255
+        fig = go.Figure()
+
+        x_color = convert_to_color(x)
+        y_color = convert_to_color(y)
+        z_color = convert_to_color(z)
+
+        fig.add_trace(
+            go.Scatter3d(
+                x = x, #if xi[0]>0 else -xi, # align signs of eigenvectors across n_rank pt
+                y = y, #if yi[0]>0 else -yi,
+                z = z, #if zi[0]>0 else -zi,
+                mode='markers+text',
+                text=self.elements,
+                textposition="bottom center",
+                marker = dict(
+                    symbol = "circle",
+                    color = [d for d in zip(
+                        x_color,
+                        y_color,
+                        z_color,
+                        )]
+                )
+                )
+            )
+
+        del x_color, y_color, z_color
+
+        max_val = np.abs(np.array([x,y,z])).max()
+        # max_val = 1
+        fig.update_layout(
+            scene = dict(
+                aspectmode='cube',
+                xaxis = dict(range=[-max_val,max_val],),
+                yaxis = dict(range=[-max_val,max_val],),
+                zaxis = dict(range=[-max_val,max_val],),
+                xaxis_title='1D',
+                yaxis_title='2D',
+                zaxis_title='3D',
+                ),
+            margin=dict(l=0, r=0, b=0, t=0),
+            font = dict(
+                family = "Courier New"
+            ),
+            )
+        
+        return fig
+
     def multiplot(self,x,y,z):
 
         def convert_to_color(data):
