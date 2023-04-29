@@ -535,7 +535,8 @@ def plot_hm(
         x=None,
         y=None,
         x_clip:int = None,
-        y_clip:int = None
+        y_clip:int = None,
+        showscale = True,
         ):
     
     if x is [] or x is None:
@@ -560,6 +561,7 @@ def plot_hm(
         zmid = 0,
         xgap = 1,
         ygap = 1,
+        showscale = showscale,
         )))
     
     if x_clip is not None:
