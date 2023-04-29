@@ -530,7 +530,28 @@ def matplotlib_to_plotly(cmap, pl_entries):
 coolwarm_cmap = get_cmap('coolwarm')
 coolwarm = matplotlib_to_plotly(coolwarm_cmap, 255)
 
-def plot_hm(z,x,y):
+def plot_hm(
+        z,
+        x=None,
+        y=None,
+        x_clip:int = None,
+        y_clip:int = None
+        ):
+    
+    if x is [] or x is None:
+        x = [f"{i+1}" for i in range(z.shape[1])]
+
+    if y is [] or y is None:
+        y = [f"{i+1}" for i in range(z.shape[0])]
+
+    if x_clip is not None and x_clip*2 < z.shape[1]:
+        z = np.hstack((z[:,:x_clip],[[None]]*(z.shape[0]),z[:,-x_clip:]))
+        x = x[:x_clip]+["…"]+x[-x_clip:]
+    
+    if y_clip is not None and y_clip*2 < z.shape[0]:
+        z = np.vstack((z[:y_clip],[[None]*(z.shape[1])],z[-y_clip:]))
+        y = y = y[:y_clip]+["⋮"]+y[-y_clip:]
+
     fig = go.Figure(data=go.Heatmap(dict(
         z=z,
         x=x,
@@ -540,6 +561,33 @@ def plot_hm(z,x,y):
         xgap = 1,
         ygap = 1,
         )))
+    
+    if x_clip is not None:
+        z_text = z.copy()
+        z_text[z == None] = "…",
+        z_text[z_text!="…"] = ""
+        z_none = np.zeros_like(z)
+        z_none[z_none==0] = None
+        z_none[z==None] = 0
+    if y_clip is not None:
+        z_text[y_clip,:] = "⋮"
+
+
+        fig.add_trace(
+            go.Heatmap(dict(
+                z=z_none,
+                # x=x,
+                y=y,
+                colorscale = "RdBu",
+                zmid = 0,
+                xgap = 1,
+                ygap = 1,
+                text = z_text,
+                texttemplate="%{text}",
+                showscale=False,
+                ))
+        )
+
     fig.update_layout(
         yaxis = dict(
             scaleanchor = 'x',
@@ -550,6 +598,8 @@ def plot_hm(z,x,y):
             ),
         plot_bgcolor='rgba(0,0,0,0)',
         autosize=False,
+        # width=30*(z.shape[1]),
+        # height=30*(z.shape[0]),
         width=950,
         height=900,
         font = dict(
