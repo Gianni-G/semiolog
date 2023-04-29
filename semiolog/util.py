@@ -582,7 +582,7 @@ def plot_hm(
                 z=z_none,
                 # x=x,
                 y=y,
-                colorscale = "RdBu",
+                colorscale = "Picnic",
                 zmid = 0,
                 xgap = 1,
                 ygap = 1,
