@@ -537,6 +537,8 @@ def plot_hm(
         x_clip:int = None,
         y_clip:int = None,
         showscale = True,
+        width = 950,
+        height = 900,
         ):
     
     if x is [] or x is None:
@@ -574,7 +576,7 @@ def plot_hm(
     if y_clip is not None:
         z_text[y_clip,:] = "⋮"
 
-
+    if x_clip is not None or y_clip is not None:
         fig.add_trace(
             go.Heatmap(dict(
                 z=z_none,
@@ -602,8 +604,8 @@ def plot_hm(
         autosize=False,
         # width=30*(z.shape[1]),
         # height=30*(z.shape[0]),
-        width=950,
-        height=900,
+        width=width,
+        height=height,
         font = dict(
             family = "Courier New"
         ),
